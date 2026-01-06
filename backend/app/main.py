@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .routers import favorites, policies, ai, rpc
+from .routers import favorites, policies, ai, rpc, simulation
 
 app = FastAPI(
     title="Waillet Backend API",
@@ -22,6 +22,7 @@ app.include_router(favorites.router, prefix="/api")
 app.include_router(policies.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
 app.include_router(rpc.router, prefix="/api")
+app.include_router(simulation.router, prefix="/api")
 
 
 @app.get("/")
