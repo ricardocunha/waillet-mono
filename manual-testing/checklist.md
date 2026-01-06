@@ -207,7 +207,7 @@
 **Steps:**
 1. [ ] Open extension
 2. [ ] Click "AI Agent" tab
-3. [ ] Type: `send 0.001 ETH to 0xAeDaa5Ade496A54b1A4afE6eb96B3030ea6Df4fE`
+3. [ ] Type: `send 0.001 ETH to 0xAeDaa5Ade496A54b1A4afE6eb96B3030ea6Df4fE on sepolia`
 4. [ ] AI should parse the intent
 5. [ ] Click "Send Transaction" button
 6. [ ] Confirmation modal should open

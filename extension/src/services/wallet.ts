@@ -182,6 +182,10 @@ export class WalletService {
       throw new Error(`Unsupported chain: ${chain}`);
     }
 
+    if (chainConfig.rpcUrl.startsWith('http')) {
+      return new JsonRpcProvider(chainConfig.rpcUrl);
+    }
+
     return new ProxiedJsonRpcProvider(chainName);
   }
 
