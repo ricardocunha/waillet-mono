@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  width: 432px;
+  height: 600px;
+  margin: 0;
+  background-color: #020617;
+  color: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  height: 100%;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
