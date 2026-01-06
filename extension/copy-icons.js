@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Source icon
-const sourceIcon = path.join(__dirname, '../images/freepik__smart_wallet_with_ai_artificak_intellenge_ins (1).png');
+const sourceIcon = path.join(__dirname, '../images/freepik_smart_wallet.png');
 
 // Destination icons (Chrome needs 16, 48, 128)
 const icons = [
