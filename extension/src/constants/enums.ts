@@ -29,3 +29,10 @@ export enum FavoriteType {
   CONTRACT = 'contract',
   TOKEN = 'token',
 }
+
+// Onboarding Modes
+export enum OnboardingMode {
+  CHOICE = 'choice',
+  CREATE = 'create',
+  IMPORT = 'import',
+}

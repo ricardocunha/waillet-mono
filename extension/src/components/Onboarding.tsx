@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Wallet, Download, AlertCircle, Copy, Check } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
+import { OnboardingMode } from '../constants/enums';
 
 export const Onboarding: React.FC = () => {
   const { createWallet, confirmMnemonic, importWallet } = useWallet();
-  const [mode, setMode] = useState<'choice' | 'create' | 'import'>('choice');
+  const [mode, setMode] = useState<OnboardingMode>(OnboardingMode.CHOICE);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [mnemonic, setMnemonic] = useState('');
@@ -113,7 +114,7 @@ export const Onboarding: React.FC = () => {
     );
   }
 
-  if (mode === 'choice') {
+  if (mode === OnboardingMode.CHOICE) {
     return (
       <div className="h-full bg-slate-900 flex flex-col items-center justify-center p-6">
         <div className="text-center mb-8">
@@ -124,7 +125,7 @@ export const Onboarding: React.FC = () => {
 
         <div className="w-full max-w-sm space-y-3">
           <button
-            onClick={() => setMode('create')}
+            onClick={() => setMode(OnboardingMode.CREATE)}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
           >
             <Wallet size={20} />
@@ -132,7 +133,7 @@ export const Onboarding: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setMode('import')}
+            onClick={() => setMode(OnboardingMode.IMPORT)}
             className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
           >
             <Download size={20} />
@@ -143,11 +144,11 @@ export const Onboarding: React.FC = () => {
     );
   }
 
-  if (mode === 'create') {
+  if (mode === OnboardingMode.CREATE) {
     return (
       <div className="h-full bg-slate-900 flex flex-col p-6">
         <button
-          onClick={() => setMode('choice')}
+          onClick={() => setMode(OnboardingMode.CHOICE)}
           className="text-slate-400 hover:text-white mb-4 text-left"
         >
           ← Back
@@ -200,7 +201,7 @@ export const Onboarding: React.FC = () => {
   return (
     <div className="h-full bg-slate-900 flex flex-col p-6">
       <button
-        onClick={() => setMode('choice')}
+        onClick={() => setMode(OnboardingMode.CHOICE)}
         className="text-slate-400 hover:text-white mb-4 text-left"
       >
         ← Back
