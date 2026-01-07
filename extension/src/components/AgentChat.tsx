@@ -4,10 +4,11 @@ import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
 import type { IntentResponse } from '../types/api';
+import { MessageType, IntentAction } from '../constants/enums';
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant' | 'system';
+  type: MessageType;
   content: string;
   intent?: IntentResponse;
   timestamp: Date;
@@ -18,7 +19,7 @@ export const AgentChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      type: 'system',
+      type: MessageType.SYSTEM,
       content: 'Hi! I\'m your AI wallet assistant. You can ask me to send crypto, check balances, or manage favorites. Try: "send 10 USDC to ricardo" or "show my favorites"',
       timestamp: new Date()
     }
@@ -42,7 +43,7 @@ export const AgentChat: React.FC = () => {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      type: MessageType.USER,
       content: input,
       timestamp: new Date()
     };
@@ -66,7 +67,7 @@ export const AgentChat: React.FC = () => {
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant',
+        type: MessageType.ASSISTANT,
         content: formatIntentResponse(intent),
         intent,
         timestamp: new Date()
@@ -91,7 +92,7 @@ export const AgentChat: React.FC = () => {
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'system',
+        type: MessageType.SYSTEM,
         content: errorMsg,
         timestamp: new Date()
       };
@@ -106,12 +107,12 @@ export const AgentChat: React.FC = () => {
       return `❌ ${intent.error}`;
     }
 
-    if (intent.action === 'transfer' && intent.to && intent.value && intent.token) {
+    if (intent.action === IntentAction.TRANSFER && intent.to && intent.value && intent.token) {
       const fromInfo = intent.resolved_from ? ` (${intent.resolved_from})` : '';
       return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on ${intent.chain}.\n\nClick "Send Transaction" below to proceed.`;
     }
 
-    if (intent.action === 'unknown') {
+    if (intent.action === IntentAction.UNKNOWN) {
       return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance"\n• "transfer 0.1 ETH to 0x123..."\n• "show my favorites"`;
     }
 
@@ -125,7 +126,7 @@ export const AgentChat: React.FC = () => {
     // Add success message
     const successMessage: Message = {
       id: (Date.now() + 2).toString(),
-      type: 'system',
+      type: MessageType.SYSTEM,
       content: `✅ Transaction sent successfully!\n\nTransaction hash: ${txHash}\n\nYou can check its status on the blockchain explorer.`,
       timestamp: new Date()
     };
@@ -138,7 +139,7 @@ export const AgentChat: React.FC = () => {
 
     const cancelMessage: Message = {
       id: (Date.now() + 2).toString(),
-      type: 'system',
+      type: MessageType.SYSTEM,
       content: 'Transaction cancelled.',
       timestamp: new Date()
     };
@@ -172,21 +173,21 @@ export const AgentChat: React.FC = () => {
           <div
             key={message.id}
             className={`flex gap-3 ${
-              message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
+              message.type === MessageType.USER ? 'flex-row-reverse' : 'flex-row'
             }`}
           >
             <div
               className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                message.type === 'user'
+                message.type === MessageType.USER
                   ? 'bg-purple-600'
-                  : message.type === 'assistant'
+                  : message.type === MessageType.ASSISTANT
                   ? 'bg-blue-600'
                   : 'bg-slate-700'
               }`}
             >
-              {message.type === 'user' ? (
+              {message.type === MessageType.USER ? (
                 <User size={16} />
-              ) : message.type === 'assistant' ? (
+              ) : message.type === MessageType.ASSISTANT ? (
                 <Bot size={16} />
               ) : (
                 <AlertCircle size={16} />
@@ -195,16 +196,16 @@ export const AgentChat: React.FC = () => {
 
             <div
               className={`flex-1 p-3 rounded-lg ${
-                message.type === 'user'
+                message.type === MessageType.USER
                   ? 'bg-purple-600 text-white'
-                  : message.type === 'assistant'
+                  : message.type === MessageType.ASSISTANT
                   ? 'bg-slate-800 text-slate-100'
                   : 'bg-slate-700/50 text-slate-300 text-sm'
               }`}
             >
               <div className="whitespace-pre-wrap">{message.content}</div>
 
-              {message.intent && message.intent.action === 'transfer' && !message.intent.error && (
+              {message.intent && message.intent.action === IntentAction.TRANSFER && !message.intent.error && (
                 <div className="mt-3 space-y-2">
                   <div className="p-2 bg-slate-700/50 rounded border border-slate-600 text-xs">
                     <div className="font-semibold mb-1">Transaction Preview:</div>

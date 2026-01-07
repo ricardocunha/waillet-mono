@@ -4,6 +4,7 @@ import { WalletService, CHAINS } from '../services/wallet';
 import { useWallet } from '../context/WalletContext';
 import type { IntentResponse } from '../types/api';
 import { isAddress } from 'ethers';
+import { TransactionStatus } from '../constants/enums';
 
 interface TransactionConfirmModalProps {
   intent: IntentResponse;
@@ -17,7 +18,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
   onCancel,
 }) => {
   const { getPrivateKey, account } = useWallet();
-  const [status, setStatus] = useState<'idle' | 'estimating' | 'confirming' | 'sending' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<TransactionStatus>(TransactionStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [gasEstimate, setGasEstimate] = useState<{ gasLimit: string; gasPrice: string; gasCost: string } | null>(null);
@@ -66,7 +67,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
   const resolveAndEstimate = async () => {
     if (!intent.to || !intent.value || !intent.chain) return;
 
-    setStatus('estimating');
+    setStatus(TransactionStatus.ESTIMATING);
     setError(null);
 
     try {
@@ -87,11 +88,11 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
       );
 
       setGasEstimate(estimate);
-      setStatus('idle');
+      setStatus(TransactionStatus.IDLE);
     } catch (err: any) {
       console.error('Address resolution or gas estimation failed:', err);
       setError(err.message || 'Failed to estimate gas. Please check the recipient address.');
-      setStatus('error');
+      setStatus(TransactionStatus.ERROR);
     }
   };
 
@@ -116,12 +117,12 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
       return;
     }
 
-    setStatus('confirming');
+    setStatus(TransactionStatus.CONFIRMING);
     setError(null);
 
     try {
       const privateKey = await getPrivateKey();
-      setStatus('sending');
+      setStatus(TransactionStatus.SENDING);
 
       const isNativeToken = !intent.token || intent.token === CHAINS[intent.chain.toLowerCase()]?.nativeCurrency;
 
@@ -144,8 +145,8 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
       }
 
       setTxHash(result.hash);
-      setStatus('success');
-      
+      setStatus(TransactionStatus.SUCCESS);
+
       // Wait a bit so user can see success message
       setTimeout(() => {
         onConfirm(result.hash);
@@ -153,7 +154,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
     } catch (err: any) {
       console.error('Transaction failed:', err);
       setError(err.message || 'Transaction failed');
-      setStatus('error');
+      setStatus(TransactionStatus.ERROR);
     }
   };
 
@@ -170,7 +171,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
           <h2 className="text-xl font-bold">Confirm Transaction</h2>
           <button
             onClick={onCancel}
-            disabled={status === 'sending'}
+            disabled={status === TransactionStatus.SENDING}
             className="text-slate-400 hover:text-white disabled:opacity-50"
           >
             <X size={24} />
@@ -237,7 +238,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
         )}
 
         {/* Success Message */}
-        {status === 'success' && explorerUrl && (
+        {status === TransactionStatus.SUCCESS && explorerUrl && (
           <div className="bg-green-900/50 border border-green-700 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 mb-2">
               <Check className="text-green-400" size={20} />
@@ -258,7 +259,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            disabled={status === 'sending' || status === 'success'}
+            disabled={status === TransactionStatus.SENDING || status === TransactionStatus.SUCCESS}
             className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors"
           >
             Cancel
@@ -266,41 +267,41 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
           <button
             onClick={handleConfirm}
             disabled={
-              status === 'sending' ||
-              status === 'success' ||
-              status === 'estimating' ||
+              status === TransactionStatus.SENDING ||
+              status === TransactionStatus.SUCCESS ||
+              status === TransactionStatus.ESTIMATING ||
               hasInsufficientBalance ||
               !intent.to ||
               !intent.value
             }
             className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
           >
-            {status === 'estimating' && (
+            {status === TransactionStatus.ESTIMATING && (
               <>
                 <Loader2 className="animate-spin" size={18} />
                 Estimating...
               </>
             )}
-            {status === 'confirming' && (
+            {status === TransactionStatus.CONFIRMING && (
               <>
                 <Loader2 className="animate-spin" size={18} />
                 Preparing...
               </>
             )}
-            {status === 'sending' && (
+            {status === TransactionStatus.SENDING && (
               <>
                 <Loader2 className="animate-spin" size={18} />
                 Sending...
               </>
             )}
-            {status === 'success' && (
+            {status === TransactionStatus.SUCCESS && (
               <>
                 <Check size={18} />
                 Sent!
               </>
             )}
-            {status === 'idle' && 'Confirm'}
-            {status === 'error' && 'Try Again'}
+            {status === TransactionStatus.IDLE && 'Confirm'}
+            {status === TransactionStatus.ERROR && 'Try Again'}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 // API Types for Backend Communication
+import { IntentAction, FavoriteType } from '../constants/enums';
 
 export interface Favorite {
   id: number;
@@ -7,7 +8,7 @@ export interface Favorite {
   address: string;
   chain: string;
   asset?: string;
-  type: 'address' | 'contract' | 'token';
+  type: FavoriteType;
   value?: string;
   created_at: string;
   updated_at: string;
@@ -19,7 +20,7 @@ export interface FavoriteCreate {
   address: string;
   chain: string;
   asset?: string;
-  type: 'address' | 'contract' | 'token';
+  type: FavoriteType;
   value?: string;
 }
 
@@ -29,7 +30,7 @@ export interface IntentRequest {
 }
 
 export interface IntentResponse {
-  action: 'transfer' | 'swap' | 'approve' | 'unknown';
+  action: IntentAction;
   to?: string;
   value?: string;
   token?: string;

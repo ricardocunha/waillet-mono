@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Send, Download, RefreshCw } from 'lucide-react';
+import { Copy, Check, Send, RefreshCw } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { WalletService, CHAINS } from '../services/wallet';
+import { SendTransactionModal } from './SendTransactionModal';
 
 interface Balance {
   chain: string;
@@ -16,6 +17,7 @@ export const Dashboard: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
 
   const handleCopy = () => {
     if (account) {
@@ -124,19 +126,15 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 p-6">
-        <button className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
-          <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+      <div className="p-6">
+        <button
+          onClick={() => setShowSendModal(true)}
+          className="w-full flex items-center justify-center gap-3 p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+        >
+          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
             <Send size={20} />
           </div>
-          <span className="font-semibold">Send</span>
-        </button>
-
-        <button className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
-          <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-            <Download size={20} />
-          </div>
-          <span className="font-semibold">Receive</span>
+          <span className="font-semibold text-lg">Send Transaction</span>
         </button>
       </div>
 
@@ -196,6 +194,9 @@ export const Dashboard: React.FC = () => {
           <p className="mt-1">• Showing 3 testnets only (safe for testing)</p>
         </div>
       </div>
+
+      {/* Modals */}
+      {showSendModal && <SendTransactionModal onClose={() => setShowSendModal(false)} />}
     </div>
   );
 };
