@@ -7,8 +7,10 @@ import { AgentChat } from './components/AgentChat';
 import { ConnectionApprovalModal } from './components/ConnectionApprovalModal';
 import { DAppTransactionModal } from './components/DAppTransactionModal';
 import { SignatureApprovalModal } from './components/SignatureApprovalModal';
+import { NetworkSwitchModal } from './components/NetworkSwitchModal';
 import { Bot, Wallet } from 'lucide-react';
 import { PendingRequestType, EthMethod } from './types/messaging';
+import { StorageKey } from './constants';
 
 type Mode = 'wallet' | 'agent';
 
@@ -21,6 +23,9 @@ interface PendingRequest {
   typedData?: any;
   method?: EthMethod;
   dangerous?: boolean;
+  chainId?: string;
+  chainIdDecimal?: number;
+  chainName?: string;
   tabId: number;
   timestamp: number;
 }
@@ -29,18 +34,27 @@ function AppContent() {
   const { isUnlocked, hasWallet, isLoading, account } = useWallet();
   const [mode, setMode] = useState<Mode>('wallet');
   const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
+  const [currentChain, setCurrentChain] = useState<string>('sepolia');
 
   // Check for pending dApp requests on mount and when unlocked
   useEffect(() => {
     if (isUnlocked && hasWallet) {
       checkForPendingRequest();
+      loadCurrentChain();
     }
   }, [isUnlocked, hasWallet]);
 
   const checkForPendingRequest = async () => {
-    const result = await chrome.storage.local.get('pendingRequest');
+    const result = await chrome.storage.local.get(StorageKey.PENDING_REQUEST);
     if (result.pendingRequest) {
       setPendingRequest(result.pendingRequest);
+    }
+  };
+
+  const loadCurrentChain = async () => {
+    const result = await chrome.storage.local.get(StorageKey.ACCOUNT);
+    if (result.account?.chain) {
+      setCurrentChain(result.account.chain);
     }
   };
 
@@ -49,13 +63,13 @@ function AppContent() {
 
     if (approved && account) {
       // Save connected site
-      const result = await chrome.storage.local.get('connectedSites');
+      const result = await chrome.storage.local.get(StorageKey.CONNECTED_SITES);
       const connectedSites = result.connectedSites || {};
       connectedSites[pendingRequest.origin] = {
         connected: true,
         timestamp: Date.now()
       };
-      await chrome.storage.local.set({ connectedSites });
+      await chrome.storage.local.set({ [StorageKey.CONNECTED_SITES]: connectedSites });
 
       // Send approval to background
       await chrome.runtime.sendMessage({
@@ -110,7 +124,7 @@ function AppContent() {
       let signature: string;
 
       // Get encrypted wallet
-      const result = await chrome.storage.local.get('encryptedWallet');
+      const result = await chrome.storage.local.get(StorageKey.ENCRYPTED_WALLET);
       if (!result.encryptedWallet) {
         throw new Error('Wallet not found');
       }
@@ -157,6 +171,57 @@ function AppContent() {
       requestId: pendingRequest.id,
       approved: false,
       error: { code: 4001, message: 'User rejected signature request' }
+    });
+
+    setPendingRequest(null);
+  };
+
+  const handleNetworkSwitch = async () => {
+    if (!pendingRequest || !pendingRequest.chainName) return;
+
+    try {
+      // Get current account from storage
+      const storage = await chrome.storage.local.get(StorageKey.ACCOUNT);
+      const currentAccount = storage.account;
+
+      if (!currentAccount) {
+        throw new Error('No account found');
+      }
+
+      // Update the chain
+      const updatedAccount = {
+        ...currentAccount,
+        chain: pendingRequest.chainName
+      };
+
+      await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
+
+      // Send approval to background
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: true,
+        result: null
+      });
+
+      setPendingRequest(null);
+
+      // Reload window to reflect new chain
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Network switch error:', error);
+      await handleNetworkSwitchRejection();
+    }
+  };
+
+  const handleNetworkSwitchRejection = async () => {
+    if (!pendingRequest) return;
+
+    await chrome.runtime.sendMessage({
+      type: 'USER_DECISION',
+      requestId: pendingRequest.id,
+      approved: false,
+      error: { code: 4001, message: 'User rejected network switch' }
     });
 
     setPendingRequest(null);
@@ -241,6 +306,22 @@ function AppContent() {
           dangerous={pendingRequest.dangerous}
           onApprove={handleSignatureApproval}
           onReject={handleSignatureRejection}
+        />
+      )}
+
+      {/* Network Switch Modal */}
+      {pendingRequest?.type === PendingRequestType.SWITCH_NETWORK &&
+        pendingRequest.chainName &&
+        pendingRequest.chainId &&
+        pendingRequest.chainIdDecimal !== undefined && (
+        <NetworkSwitchModal
+          origin={pendingRequest.origin}
+          chainName={pendingRequest.chainName}
+          chainIdDecimal={pendingRequest.chainIdDecimal}
+          chainId={pendingRequest.chainId}
+          currentChain={currentChain}
+          onApprove={handleNetworkSwitch}
+          onReject={handleNetworkSwitchRejection}
         />
       )}
     </>

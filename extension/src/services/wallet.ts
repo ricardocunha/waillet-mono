@@ -113,7 +113,6 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'ETH',
     explorer: 'https://sepolia.basescan.org',
   },
-
   ethereum: {
     name: 'Ethereum',
     rpcUrl: 'https://eth.llamarpc.com',
@@ -121,40 +120,18 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'ETH',
     explorer: 'https://etherscan.io',
   },
-  polygon: {
-    name: 'Polygon',
-    rpcUrl: 'https://polygon-rpc.com',
-    chainId: 137,
-    nativeCurrency: 'MATIC',
-    explorer: 'https://polygonscan.com',
-  },
-  bsc: {
-    name: 'BSC',
-    rpcUrl: 'https://bsc-dataseed.binance.org',
-    chainId: 56,
-    nativeCurrency: 'BNB',
-    explorer: 'https://bscscan.com',
-  },
-  base: {
-    name: 'Base',
-    rpcUrl: 'https://mainnet.base.org',
-    chainId: 8453,
-    nativeCurrency: 'ETH',
-    explorer: 'https://basescan.org',
-  },
 };
 
 export const TOKENS: Record<string, Record<string, string>> = {
-  USDC: {
-    ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    polygon: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-    bsc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-    base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  },
   USDT: {
     ethereum: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    polygon: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-    bsc: '0x55d398326f99059fF775485246999027B3197955',
+    sepolia: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+    'base-sepolia': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+  },
+  LINK: {
+    ethereum: '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+    sepolia: '0x779877A7B0D9E8603169DdbD7836e478b4624789',
+    'base-sepolia': '0x779877A7B0D9E8603169DdbD7836e478b4624789',
   },
 };
 

@@ -13,13 +13,10 @@ export enum StorageKey {
 /**
  * Chain display configuration (only supported chains)
  */
-export const CHAIN_DISPLAY: Record<Chain, { name: string; color: string }> = {
+export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string }>> = {
   [Chain.ETHEREUM]: { name: 'Ethereum', color: '#627EEA' },
   [Chain.SEPOLIA]: { name: 'Sepolia', color: '#A855F7' },
-  [Chain.BASE_SEPOLIA]: { name: 'Base Sepolia', color: '#0052FF' },
-  [Chain.POLYGON]: { name: 'Polygon', color: '#8247E5' },
-  [Chain.BSC]: { name: 'BSC', color: '#F3BA2F' },
-  [Chain.BASE]: { name: 'Base', color: '#0052FF' }
+  [Chain.BASE_SEPOLIA]: { name: 'Base Sepolia', color: '#0052FF' }
 };
 
 /**

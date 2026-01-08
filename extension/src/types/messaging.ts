@@ -22,7 +22,8 @@ export enum PendingRequestType {
   CONNECT = 'connect',
   TRANSACTION = 'transaction',
   SIGN_MESSAGE = 'sign_message',
-  SIGN_TYPED_DATA = 'sign_typed_data'
+  SIGN_TYPED_DATA = 'sign_typed_data',
+  SWITCH_NETWORK = 'switch_network'
 }
 
 // Ethereum JSON-RPC methods
@@ -62,5 +63,33 @@ export enum EthMethod {
 
   // Web3
   WEB3_CLIENT_VERSION = 'web3_clientVersion',
-  WEB3_SHA3 = 'web3_sha3'
+  WEB3_SHA3 = 'web3_sha3',
+
+  // Wallet methods
+  WALLET_SWITCH_ETHEREUM_CHAIN = 'wallet_switchEthereumChain',
+  WALLET_ADD_ETHEREUM_CHAIN = 'wallet_addEthereumChain'
+}
+
+// Supported blockchain networks
+export enum Chain {
+  ETHEREUM = 'ethereum',
+  SEPOLIA = 'sepolia',
+  BASE_SEPOLIA = 'base-sepolia',
+  POLYGON = 'polygon',
+  BSC = 'bsc',
+  BASE = 'base'
+}
+
+// Supported tokens
+export enum Token {
+  ETH = 'ETH',
+  USDT = 'USDT',
+  LINK = 'LINK'
+}
+
+// Token availability per chain
+export const CHAIN_TOKENS: Partial<Record<Chain, Token[]>> = {
+  [Chain.ETHEREUM]: [Token.ETH, Token.USDT, Token.LINK],
+  [Chain.SEPOLIA]: [Token.ETH, Token.USDT, Token.LINK],
+  [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.LINK]
 }

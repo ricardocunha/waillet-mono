@@ -150,6 +150,17 @@ async function handleDAppRequest(request: any, sender: any, sendResponse: Functi
     return;
   }
 
+  // Wallet methods
+  if (method === EthMethod.WALLET_SWITCH_ETHEREUM_CHAIN) {
+    await handleSwitchChain(params[0], origin, tabId, id, sendResponse);
+    return;
+  }
+
+  if (method === EthMethod.WALLET_ADD_ETHEREUM_CHAIN) {
+    await handleAddChain(params[0], origin, tabId, id, sendResponse);
+    return;
+  }
+
   // Unsupported method
   sendResponse({
     error: {
@@ -405,6 +416,97 @@ async function handleEthSign(params: any[], origin: string, tabId: number, reque
   });
 
   console.log(`[Waillet] eth_sign request from ${origin} (ID: ${internalId}) - DANGEROUS`);
+}
+
+/**
+ * Handle wallet_switchEthereumChain
+ */
+async function handleSwitchChain(params: any, origin: string, tabId: number, requestId: number, sendResponse: Function) {
+  const chainId = params?.chainId;
+
+  if (!chainId || typeof chainId !== 'string') {
+    sendResponse({
+      error: {
+        code: 4100,
+        message: 'Invalid chainId parameter'
+      }
+    });
+    return;
+  }
+
+  // Convert hex chainId to decimal
+  const chainIdDecimal = parseInt(chainId, 16);
+
+  // Map known chain IDs to chain names
+  const chainMap: Record<number, string> = {
+    1: 'ethereum',
+    11155111: 'sepolia',
+    84532: 'base-sepolia',
+    137: 'polygon',
+    56: 'bsc',
+    8453: 'base'
+  };
+
+  const chainName = chainMap[chainIdDecimal];
+
+  if (!chainName) {
+    sendResponse({
+      error: {
+        code: 4902,
+        message: `Unrecognized chain ID: ${chainId}. Try adding the chain first with wallet_addEthereumChain.`
+      }
+    });
+    return;
+  }
+
+  // Check if already on this chain
+  const storage = await chrome.storage.local.get('account');
+  if (storage.account?.chain === chainName) {
+    sendResponse({ result: null });
+    return;
+  }
+
+  const internalId = ++requestCounter;
+
+  pendingRequests.set(internalId, {
+    id: requestId,
+    method: EthMethod.WALLET_SWITCH_ETHEREUM_CHAIN,
+    params: [params],
+    origin,
+    timestamp: Date.now(),
+    tabId,
+    sendResponse
+  });
+
+  await chrome.action.openPopup();
+
+  await chrome.storage.local.set({
+    pendingRequest: {
+      id: internalId,
+      type: PendingRequestType.SWITCH_NETWORK,
+      chainId,
+      chainIdDecimal,
+      chainName,
+      origin,
+      tabId,
+      timestamp: Date.now()
+    }
+  });
+
+  console.log(`[Waillet] Switch chain request to ${chainName} (${chainId}) from ${origin}`);
+}
+
+/**
+ * Handle wallet_addEthereumChain
+ */
+async function handleAddChain(_params: any, _origin: string, _tabId: number, _requestId: number, sendResponse: Function) {
+  // For now, reject adding custom chains (future feature)
+  sendResponse({
+    error: {
+      code: 4902,
+      message: 'Adding custom chains is not yet supported. Supported chains: Ethereum, Sepolia, Base, Polygon, BSC'
+    }
+  });
 }
 
 /**
