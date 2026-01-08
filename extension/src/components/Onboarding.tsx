@@ -119,7 +119,7 @@ export const Onboarding: React.FC = () => {
       <div className="h-full bg-slate-900 flex flex-col items-center justify-center p-6">
         <div className="text-center mb-8">
           <Wallet className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">Welcome to Waillet</h1>
+          <h1 className="text-2xl font-bold">Welcome to wAIllet</h1>
           <p className="text-slate-400 mt-2">Your AI-powered crypto wallet</p>
         </div>
 

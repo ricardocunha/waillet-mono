@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waillet Test dApp</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        h1 {
+            color: #a855f7;
+        }
+        .section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+        }
+        button {
+            background: #a855f7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #9333ea;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #065f46;
+            color: #6ee7b7;
+        }
+        .error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        .info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+        .warning {
+            background: #78350f;
+            color: #fcd34d;
+        }
+        code {
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #a5b4fc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Waillet Test dApp</h1>
+    <p>This page tests the Waillet extension's dApp interception functionality.</p>
+
+    <!-- Provider Detection -->
+    <div class="section">
+        <h2>1️⃣ Provider Detection</h2>
+        <button onclick="detectProvider()">Detect Provider</button>
+        <div id="provider-status"></div>
+    </div>
+
+    <!-- Connection Test -->
+    <div class="section">
+        <h2>2️⃣ Connection Test</h2>
+        <button onclick="connectWallet()">Connect Wallet</button>
+        <div id="connect-status"></div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="section">
+        <h2>3️⃣ Account Information</h2>
+        <button onclick="getAccounts()">Get Accounts</button>
+        <button onclick="getChainId()">Get Chain ID</button>
+        <button onclick="getBalance()">Get Balance</button>
+        <div id="account-status"></div>
+    </div>
+
+    <!-- Transaction Test -->
+    <div class="section">
+        <h2>4️⃣ Transaction Test</h2>
+        <p>Send a small amount of ETH to test address:</p>
+        <label>
+            To Address:
+            <input type="text" id="toAddress" value="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+                   style="width: 100%; padding: 8px; margin-top: 5px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 4px;">
+        </label>
+        <br><br>
+        <label>
+            Amount (ETH):
+            <input type="text" id="amount" value="0.001"
+                   style="padding: 8px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 4px;">
+        </label>
+        <br><br>
+        <button onclick="sendTransaction()">Send Transaction</button>
+        <div id="transaction-status"></div>
+    </div>
+
+    <!-- Event Listeners -->
+    <div class="section">
+        <h2>5️⃣ Event Listeners</h2>
+        <button onclick="setupListeners()">Setup Event Listeners</button>
+        <div id="events-status"></div>
+    </div>
+
+    <script>
+        let currentAccount = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.innerHTML = `<div class="status ${type}">[${timestamp}] ${message}</div>`;
+        }
+
+        async function detectProvider() {
+            if (typeof window.ethereum !== 'undefined') {
+                const isWaillet = window.ethereum.isWaillet;
+                const isMetaMask = window.ethereum.isMetaMask;
+
+                log('provider-status',
+                    `✅ Provider detected!<br>` +
+                    `Is Waillet: <code>${isWaillet}</code><br>` +
+                    `Is MetaMask: <code>${isMetaMask}</code>`,
+                    'success');
+            } else {
+                log('provider-status', '❌ No Ethereum provider found. Make sure Waillet extension is installed.', 'error');
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                log('connect-status', 'Requesting accounts...', 'info');
+
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                currentAccount = accounts[0];
+
+                log('connect-status',
+                    `✅ Connected!<br>` +
+                    `Account: <code>${currentAccount}</code>`,
+                    'success');
+            } catch (error) {
+                log('connect-status', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getAccounts() {
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_accounts'
+                });
+
+                if (accounts.length === 0) {
+                    log('account-status', '⚠️ No accounts found. Connect wallet first.', 'warning');
+                } else {
+                    currentAccount = accounts[0];
+                    log('account-status',
+                        `✅ Accounts: <code>${accounts.join(', ')}</code>`,
+                        'success');
+                }
+            } catch (error) {
+                log('account-status', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getChainId() {
+            try {
+                const chainId = await window.ethereum.request({
+                    method: 'eth_chainId'
+                });
+
+                const chainName = {
+                    '0x1': 'Ethereum Mainnet',
+                    '0xaa36a7': 'Sepolia Testnet',
+                    '0x89': 'Polygon',
+                    '0x2105': 'Base'
+                }[chainId] || 'Unknown Chain';
+
+                log('account-status',
+                    `✅ Chain ID: <code>${chainId}</code><br>` +
+                    `Network: <code>${chainName}</code>`,
+                    'success');
+            } catch (error) {
+                log('account-status', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getBalance() {
+            try {
+                if (!currentAccount) {
+                    log('account-status', '⚠️ Connect wallet first', 'warning');
+                    return;
+                }
+
+                const balance = await window.ethereum.request({
+                    method: 'eth_getBalance',
+                    params: [currentAccount, 'latest']
+                });
+
+                const balanceInEth = parseInt(balance, 16) / 1e18;
+
+                log('account-status',
+                    `✅ Balance: <code>${balanceInEth.toFixed(6)} ETH</code><br>` +
+                    `Raw: <code>${balance}</code>`,
+                    'success');
+            } catch (error) {
+                log('account-status', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendTransaction() {
+            try {
+                if (!currentAccount) {
+                    log('transaction-status', '⚠️ Connect wallet first', 'warning');
+                    return;
+                }
+
+                const toAddress = document.getElementById('toAddress').value;
+                const amount = document.getElementById('amount').value;
+
+                if (!toAddress || !amount) {
+                    log('transaction-status', '⚠️ Please enter both address and amount', 'warning');
+                    return;
+                }
+
+                log('transaction-status', 'Sending transaction...', 'info');
+
+                const amountInWei = '0x' + Math.floor(parseFloat(amount) * 1e18).toString(16);
+
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [{
+                        from: currentAccount,
+                        to: toAddress,
+                        value: amountInWei,
+                        gas: '0x5208' // 21000 in hex
+                    }]
+                });
+
+                log('transaction-status',
+                    `✅ Transaction sent!<br>` +
+                    `Hash: <code>${txHash}</code>`,
+                    'success');
+            } catch (error) {
+                log('transaction-status', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function setupListeners() {
+            if (!window.ethereum) {
+                log('events-status', '❌ No provider found', 'error');
+                return;
+            }
+
+            window.ethereum.on('accountsChanged', (accounts) => {
+                log('events-status',
+                    `🔄 Account changed: <code>${accounts[0]}</code>`,
+                    'info');
+                currentAccount = accounts[0];
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                log('events-status',
+                    `🔄 Chain changed: <code>${chainId}</code>`,
+                    'info');
+            });
+
+            log('events-status', '✅ Event listeners setup successfully', 'success');
+        }
+
+        // Auto-detect provider on load
+        window.addEventListener('load', () => {
+            setTimeout(detectProvider, 500);
+        });
+    </script>
+</body>
+</html>
