@@ -43,6 +43,16 @@ npm install
 
 # Start development server
 npm run dev
+
+# Build for production
+npm run build
+```
+
+## Environment Variables
+
+```env
+VITE_RPC_URL=https://mainnet.infura.io/v3/YOUR_KEY
+VITE_BASE_RPC_URL=https://mainnet.base.org
 ```
 
 ## License
