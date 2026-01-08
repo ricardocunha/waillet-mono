@@ -7,16 +7,22 @@ export default defineConfig({
   plugins: [react()],
   publicDir: 'public',
   build: {
-    minify: false, // Disable minification for easier debugging
+    minify: false, // Disable minification for debugging
     sourcemap: true, // Generate source maps for debugging
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
         background: resolve(__dirname, 'src/background.ts'),
+        content: resolve(__dirname, 'src/content.ts'),
+        inpage: resolve(__dirname, 'src/inpage.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
-          return chunkInfo.name === 'background' ? 'src/[name].js' : 'assets/[name]-[hash].js';
+          // Put background, content, and inpage scripts in src/ directory
+          if (['background', 'content', 'inpage'].includes(chunkInfo.name)) {
+            return 'src/[name].js';
+          }
+          return 'assets/[name]-[hash].js';
         },
       },
     },

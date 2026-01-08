@@ -101,7 +101,7 @@ export const Dashboard: React.FC = () => {
     <div className="h-full bg-slate-900 flex flex-col overflow-y-auto">
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Waillet</h1>
+          <h1 className="text-xl font-bold">wAIllet</h1>
           <button
             onClick={fetchBalances}
             disabled={isRefreshing}
