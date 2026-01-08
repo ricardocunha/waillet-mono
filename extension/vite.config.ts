@@ -3,27 +3,23 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 
+// Extension scripts (background, content, inpage) are built separately
+// via build-extension-scripts.js to ensure they are standalone IIFE bundles
 export default defineConfig({
   plugins: [react()],
   publicDir: 'public',
   build: {
-    minify: false, // Disable minification for debugging
-    sourcemap: true, // Generate source maps for debugging
+    minify: false,
+    sourcemap: true,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        background: resolve(__dirname, 'src/background.ts'),
-        content: resolve(__dirname, 'src/content.ts'),
-        inpage: resolve(__dirname, 'src/inpage.ts'),
       },
       output: {
-        entryFileNames: (chunkInfo) => {
-          // Put background, content, and inpage scripts in src/ directory
-          if (['background', 'content', 'inpage'].includes(chunkInfo.name)) {
-            return 'src/[name].js';
-          }
-          return 'assets/[name]-[hash].js';
-        },
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        format: 'es',
       },
     },
   },

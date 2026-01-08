@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node copy-icons.js && tsc && vite build",
+    "build": "node copy-icons.js && tsc && vite build && node build-extension-scripts.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

@@ -9,7 +9,6 @@ function injectInpageScript() {
   try {
     const script = document.createElement('script');
     script.src = chrome.runtime.getURL('src/inpage.js');
-    script.type = 'module';
 
     script.onload = function() {
       script.remove();
