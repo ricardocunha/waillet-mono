@@ -6,6 +6,14 @@
 
 import { WindowMessageType, EthMethod } from './types/messaging';
 
+// Extend Window interface
+declare global {
+  interface Window {
+    ethereum?: any;
+    waillet?: any;
+  }
+}
+
 interface RequestArguments {
   method: string;
   params?: Array<any>;
@@ -59,6 +67,21 @@ class WailletProvider {
     if (event.source !== window) return;
 
     const message = event.data;
+
+    // Handle provider updates (chainChanged, accountsChanged)
+    if (message.type === WindowMessageType.WAILLET_PROVIDER_UPDATE) {
+      if (message.chainId !== undefined) {
+        console.log('[Waillet Provider] Chain changed to:', message.chainId);
+        this._updateChainId(message.chainId);
+      }
+      if (message.accounts !== undefined) {
+        console.log('[Waillet Provider] Accounts changed to:', message.accounts);
+        this._updateAccounts(message.accounts);
+      }
+      return;
+    }
+
+    // Handle RPC responses
     if (message.type !== WindowMessageType.WAILLET_RESPONSE) return;
 
     const pending = this.pendingRequests.get(message.id);
@@ -198,25 +221,55 @@ class WailletProvider {
 
 const provider = new WailletProvider();
 
-Object.defineProperty(window, 'ethereum', {
-  value: provider,
-  writable: false,
-  configurable: false
-});
+if (!window.ethereum) {
+  Object.defineProperty(window, 'ethereum', {
+    value: provider,
+    writable: true, // Allow other wallets to override if needed
+    configurable: true
+  });
+}
 
-window.dispatchEvent(new Event('ethereum#initialized'));
+// Also set as waillet specifically
+window.waillet = provider;
 
 // EIP-6963 multi-provider discovery
-window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
-  detail: Object.freeze({
-    info: {
-      uuid: crypto.randomUUID(),
-      name: 'Waillet',
-      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23a855f7" width="100" height="100" rx="20"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white" font-family="Arial">W</text></svg>',
-      rdns: 'com.waillet'
-    },
-    provider
-  })
-}));
+const getUUID = () => {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    // Fallback if crypto.randomUUID() not available
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+};
 
-console.log('[Waillet] Provider injected successfully');
+const announceProvider = () => {
+  window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
+    detail: Object.freeze({
+      info: {
+        uuid: getUUID(),
+        name: 'Waillet',
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23a855f7" width="100" height="100" rx="20"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white" font-family="Arial">W</text></svg>',
+        rdns: 'com.waillet'
+      },
+      provider
+    })
+  }));
+};
+
+// Announce immediately
+announceProvider();
+
+// Re-announce when requested
+window.addEventListener('eip6963:requestProvider', announceProvider);
+
+// Legacy event
+window.dispatchEvent(new Event('ethereum#initialized'));
+
+console.log('[Waillet] Provider injected successfully', {
+  hasEthereum: !!window.ethereum,
+  isWaillet: window.ethereum?.isWaillet
+});
