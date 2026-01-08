@@ -1,16 +1,10 @@
 /**
- * Waillet Content Script
- *
- * This script acts as a bridge between the inpage script (webpage context) and
- * the background script (extension context). It:
- * 1. Injects the inpage script into every webpage
- * 2. Relays messages between webpage and extension
- * 3. Validates message structure and origin for security
- *
- * Runs in an isolated context with access to both DOM and Chrome APIs.
+ * Bridge between webpage and extension
+ * Injects inpage script, relays messages, validates origins
  */
 
-// Inject inpage script into the webpage
+import { BackgroundMessageType, WindowMessageType } from './types/messaging';
+
 function injectInpageScript() {
   try {
     const script = document.createElement('script');
@@ -18,7 +12,6 @@ function injectInpageScript() {
     script.type = 'module';
 
     script.onload = function() {
-      // Remove script tag after execution to clean up DOM
       script.remove();
       console.log('[Waillet Content] Inpage script injected successfully');
     };
@@ -27,34 +20,25 @@ function injectInpageScript() {
       console.error('[Waillet Content] Failed to inject inpage script');
     };
 
-    // Inject before any other scripts
     (document.head || document.documentElement).appendChild(script);
   } catch (error) {
     console.error('[Waillet Content] Error injecting inpage script:', error);
   }
 }
 
-// Inject immediately at document_start
 if (document.readyState === 'loading') {
   injectInpageScript();
 } else {
-  // DOM already loaded, inject now
   injectInpageScript();
 }
 
-/**
- * Handle messages from inpage script (webpage)
- */
 window.addEventListener('message', async (event) => {
-  // Security: Only accept messages from same window
   if (event.source !== window) return;
 
   const message = event.data;
 
-  // Filter for our messages only
-  if (!message || message.type !== 'WAILLET_REQUEST') return;
+  if (!message || message.type !== WindowMessageType.WAILLET_REQUEST) return;
 
-  // Validate message structure
   if (!message.method || !Array.isArray(message.params) || typeof message.id !== 'number') {
     console.error('[Waillet Content] Invalid message format:', message);
     sendErrorToInpage(message.id, 'Invalid request format', 4200);
@@ -62,9 +46,8 @@ window.addEventListener('message', async (event) => {
   }
 
   try {
-    // Forward to background script
     const response = await chrome.runtime.sendMessage({
-      type: 'DAPP_REQUEST',
+      type: BackgroundMessageType.DAPP_REQUEST,
       method: message.method,
       params: message.params,
       origin: window.location.origin,
@@ -72,9 +55,8 @@ window.addEventListener('message', async (event) => {
       timestamp: Date.now()
     });
 
-    // Send response back to inpage
     window.postMessage({
-      type: 'WAILLET_RESPONSE',
+      type: WindowMessageType.WAILLET_RESPONSE,
       id: message.id,
       result: response.result,
       error: response.error
@@ -86,15 +68,10 @@ window.addEventListener('message', async (event) => {
   }
 });
 
-/**
- * Handle messages from background script
- */
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  // Handle responses from background (e.g., after user approval)
-  if (request.type === 'WAILLET_RESPONSE') {
-    // Forward to inpage
+  if (request.type === WindowMessageType.WAILLET_RESPONSE) {
     window.postMessage({
-      type: 'WAILLET_RESPONSE',
+      type: WindowMessageType.WAILLET_RESPONSE,
       id: request.id,
       result: request.result,
       error: request.error
@@ -104,10 +81,9 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     return true;
   }
 
-  // Handle provider state updates
-  if (request.type === 'PROVIDER_UPDATE') {
+  if (request.type === WindowMessageType.WAILLET_PROVIDER_UPDATE) {
     window.postMessage({
-      type: 'WAILLET_PROVIDER_UPDATE',
+      type: WindowMessageType.WAILLET_PROVIDER_UPDATE,
       accounts: request.accounts,
       chainId: request.chainId
     }, '*');
@@ -119,12 +95,9 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   return false;
 });
 
-/**
- * Send error message to inpage script
- */
 function sendErrorToInpage(id: number, message: string, code: number = 4001) {
   window.postMessage({
-    type: 'WAILLET_RESPONSE',
+    type: WindowMessageType.WAILLET_RESPONSE,
     id,
     result: null,
     error: {
@@ -134,15 +107,10 @@ function sendErrorToInpage(id: number, message: string, code: number = 4001) {
   }, '*');
 }
 
-/**
- * Notify background that content script is ready
- */
 chrome.runtime.sendMessage({
-  type: 'CONTENT_SCRIPT_READY',
+  type: BackgroundMessageType.CONTENT_SCRIPT_READY,
   origin: window.location.origin,
   url: window.location.href
-}).catch(() => {
-  // Extension context may not be ready yet, ignore
-});
+}).catch(() => {});
 
 console.log('[Waillet Content] Content script loaded for:', window.location.origin);
