@@ -134,6 +134,22 @@ async function handleDAppRequest(request: any, sender: any, sendResponse: Functi
     return;
   }
 
+  // Signature methods
+  if (method === EthMethod.PERSONAL_SIGN) {
+    await handlePersonalSign(params, origin, tabId, id, sendResponse);
+    return;
+  }
+
+  if (method === EthMethod.SIGN_TYPED_DATA_V4) {
+    await handleSignTypedDataV4(params, origin, tabId, id, sendResponse);
+    return;
+  }
+
+  if (method === EthMethod.SIGN) {
+    await handleEthSign(params, origin, tabId, id, sendResponse);
+    return;
+  }
+
   // Unsupported method
   sendResponse({
     error: {
@@ -270,6 +286,125 @@ async function handleSendTransaction(txParams: any, origin: string, tabId: numbe
 
   // Response sent after user decision
   // Don't call sendResponse here - keep the channel open
+}
+
+/**
+ * Handle personal_sign
+ */
+async function handlePersonalSign(params: any[], origin: string, tabId: number, requestId: number, sendResponse: Function) {
+  const internalId = ++requestCounter;
+  const [message, address] = params;
+
+  pendingRequests.set(internalId, {
+    id: requestId,
+    method: EthMethod.PERSONAL_SIGN,
+    params,
+    origin,
+    timestamp: Date.now(),
+    tabId,
+    sendResponse
+  });
+
+  await chrome.action.openPopup();
+
+  await chrome.storage.local.set({
+    pendingRequest: {
+      id: internalId,
+      type: PendingRequestType.SIGN_MESSAGE,
+      message,
+      address,
+      method: EthMethod.PERSONAL_SIGN,
+      origin,
+      tabId,
+      timestamp: Date.now()
+    }
+  });
+
+  console.log(`[Waillet] personal_sign request from ${origin} (ID: ${internalId})`);
+}
+
+/**
+ * Handle eth_signTypedData_v4
+ */
+async function handleSignTypedDataV4(params: any[], origin: string, tabId: number, requestId: number, sendResponse: Function) {
+  const internalId = ++requestCounter;
+  const [address, typedData] = params;
+
+  let parsedData;
+  try {
+    parsedData = typeof typedData === 'string' ? JSON.parse(typedData) : typedData;
+  } catch (e) {
+    sendResponse({
+      error: {
+        code: 4100,
+        message: 'Invalid typed data format'
+      }
+    });
+    return;
+  }
+
+  pendingRequests.set(internalId, {
+    id: requestId,
+    method: EthMethod.SIGN_TYPED_DATA_V4,
+    params,
+    origin,
+    timestamp: Date.now(),
+    tabId,
+    sendResponse
+  });
+
+  await chrome.action.openPopup();
+
+  await chrome.storage.local.set({
+    pendingRequest: {
+      id: internalId,
+      type: PendingRequestType.SIGN_TYPED_DATA,
+      address,
+      typedData: parsedData,
+      method: EthMethod.SIGN_TYPED_DATA_V4,
+      origin,
+      tabId,
+      timestamp: Date.now()
+    }
+  });
+
+  console.log(`[Waillet] signTypedData_v4 request from ${origin} (ID: ${internalId})`);
+}
+
+/**
+ * Handle eth_sign (dangerous, warn user)
+ */
+async function handleEthSign(params: any[], origin: string, tabId: number, requestId: number, sendResponse: Function) {
+  const internalId = ++requestCounter;
+  const [address, message] = params;
+
+  pendingRequests.set(internalId, {
+    id: requestId,
+    method: EthMethod.SIGN,
+    params,
+    origin,
+    timestamp: Date.now(),
+    tabId,
+    sendResponse
+  });
+
+  await chrome.action.openPopup();
+
+  await chrome.storage.local.set({
+    pendingRequest: {
+      id: internalId,
+      type: PendingRequestType.SIGN_MESSAGE,
+      message,
+      address,
+      method: EthMethod.SIGN,
+      origin,
+      tabId,
+      timestamp: Date.now(),
+      dangerous: true // Flag this as dangerous
+    }
+  });
+
+  console.log(`[Waillet] eth_sign request from ${origin} (ID: ${internalId}) - DANGEROUS`);
 }
 
 /**

@@ -20,7 +20,9 @@ export enum WindowMessageType {
 // Types of pending requests from dApps
 export enum PendingRequestType {
   CONNECT = 'connect',
-  TRANSACTION = 'transaction'
+  TRANSACTION = 'transaction',
+  SIGN_MESSAGE = 'sign_message',
+  SIGN_TYPED_DATA = 'sign_typed_data'
 }
 
 // Ethereum JSON-RPC methods

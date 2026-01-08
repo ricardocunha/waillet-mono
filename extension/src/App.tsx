@@ -6,8 +6,9 @@ import { Dashboard } from './components/Dashboard';
 import { AgentChat } from './components/AgentChat';
 import { ConnectionApprovalModal } from './components/ConnectionApprovalModal';
 import { DAppTransactionModal } from './components/DAppTransactionModal';
+import { SignatureApprovalModal } from './components/SignatureApprovalModal';
 import { Bot, Wallet } from 'lucide-react';
-import { PendingRequestType } from './types/messaging';
+import { PendingRequestType, EthMethod } from './types/messaging';
 
 type Mode = 'wallet' | 'agent';
 
@@ -16,6 +17,10 @@ interface PendingRequest {
   type: PendingRequestType;
   origin: string;
   txParams?: any;
+  message?: string;
+  typedData?: any;
+  method?: EthMethod;
+  dangerous?: boolean;
   tabId: number;
   timestamp: number;
 }
@@ -98,6 +103,65 @@ function AppContent() {
     setPendingRequest(null);
   };
 
+  const handleSignatureApproval = async () => {
+    if (!pendingRequest || !account) return;
+
+    try {
+      let signature: string;
+
+      // Get encrypted wallet
+      const result = await chrome.storage.local.get('encryptedWallet');
+      if (!result.encryptedWallet) {
+        throw new Error('Wallet not found');
+      }
+
+      const { WalletService } = await import('./services/wallet');
+      const privateKey = account.privateKey;
+
+      // Sign based on method type
+      if (pendingRequest.type === PendingRequestType.SIGN_MESSAGE) {
+        if (!pendingRequest.message) {
+          throw new Error('No message to sign');
+        }
+        signature = await WalletService.signMessage(privateKey, pendingRequest.message);
+      } else if (pendingRequest.type === PendingRequestType.SIGN_TYPED_DATA) {
+        if (!pendingRequest.typedData) {
+          throw new Error('No typed data to sign');
+        }
+        const { domain, types, message: msgValue } = pendingRequest.typedData;
+        signature = await WalletService.signTypedData(privateKey, domain, types, msgValue);
+      } else {
+        throw new Error('Unknown signature type');
+      }
+
+      // Send signature to background
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: true,
+        result: signature
+      });
+
+      setPendingRequest(null);
+    } catch (error: any) {
+      console.error('Signature error:', error);
+      await handleSignatureRejection();
+    }
+  };
+
+  const handleSignatureRejection = async () => {
+    if (!pendingRequest) return;
+
+    await chrome.runtime.sendMessage({
+      type: 'USER_DECISION',
+      requestId: pendingRequest.id,
+      approved: false,
+      error: { code: 4001, message: 'User rejected signature request' }
+    });
+
+    setPendingRequest(null);
+  };
+
   if (isLoading) {
     return (
       <div className="h-full bg-slate-900 flex items-center justify-center">
@@ -162,6 +226,21 @@ function AppContent() {
           origin={pendingRequest.origin}
           onApprove={handleTransactionApproval}
           onReject={handleTransactionRejection}
+        />
+      )}
+
+      {/* Signature Request Modals */}
+      {(pendingRequest?.type === PendingRequestType.SIGN_MESSAGE ||
+        pendingRequest?.type === PendingRequestType.SIGN_TYPED_DATA) &&
+        pendingRequest.method && (
+        <SignatureApprovalModal
+          origin={pendingRequest.origin}
+          message={pendingRequest.message}
+          typedData={pendingRequest.typedData}
+          method={pendingRequest.method as EthMethod.PERSONAL_SIGN | EthMethod.SIGN | EthMethod.SIGN_TYPED_DATA_V4}
+          dangerous={pendingRequest.dangerous}
+          onApprove={handleSignatureApproval}
+          onReject={handleSignatureRejection}
         />
       )}
     </>

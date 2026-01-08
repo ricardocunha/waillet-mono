@@ -316,6 +316,34 @@ export class WalletService {
       gasCost: formatUnits(gasCost, 18),
     };
   }
+
+  static async signMessage(privateKey: string, message: string): Promise<string> {
+    const wallet = new Wallet(privateKey);
+
+    // If message starts with 0x, it's hex-encoded
+    if (message.startsWith('0x')) {
+      const bytes = message.slice(2);
+      const messageBytes = new Uint8Array(bytes.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+      return await wallet.signMessage(messageBytes);
+    }
+
+    return await wallet.signMessage(message);
+  }
+
+  static async signTypedData(
+    privateKey: string,
+    domain: any,
+    types: any,
+    value: any
+  ): Promise<string> {
+    const wallet = new Wallet(privateKey);
+
+    // Remove EIP712Domain from types if present (ethers adds it automatically)
+    const cleanTypes = { ...types };
+    delete cleanTypes.EIP712Domain;
+
+    return await wallet.signTypedData(domain, cleanTypes, value);
+  }
 }
 
 
