@@ -123,7 +123,7 @@ export const Onboarding: React.FC = () => {
           <p className="text-slate-400 mt-2">Your AI-powered crypto wallet</p>
         </div>
 
-        <div className="w-full max-w-sm space-y-3">
+        <div className="w-full max-w-md space-y-3">
           <button
             onClick={() => setMode(OnboardingMode.CREATE)}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"

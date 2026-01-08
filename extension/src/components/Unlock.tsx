@@ -24,7 +24,7 @@ export const Unlock: React.FC = () => {
 
   return (
     <div className="h-full bg-slate-900 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Lock className="w-16 h-16 text-purple-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold">Welcome Back</h1>
