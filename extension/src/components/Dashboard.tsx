@@ -187,12 +187,6 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-6 p-4 bg-slate-800/50 rounded-lg text-sm text-slate-400">
-          <p className="mb-2">💡 <span className="font-semibold">Tip:</span></p>
-          <p>• Click the refresh button (↻) to update balances</p>
-          <p className="mt-1">• Get free test tokens from faucets (see docs)</p>
-          <p className="mt-1">• Showing 3 testnets only (safe for testing)</p>
-        </div>
       </div>
 
       {/* Modals */}
