@@ -164,7 +164,6 @@ export const AgentChat: React.FC = () => {
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-purple-400" />
           <h2 className="text-lg font-semibold">AI Agent</h2>
-          <span className="text-xs text-slate-400 ml-auto">Phase 2B ✅</span>
         </div>
       </div>
 

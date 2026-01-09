@@ -64,7 +64,7 @@ export const DAppTransactionModal: React.FC<DAppTransactionModalProps> = ({
         to_address: txParams.to,
         value: txParams.value || '0x0',
         data: txParams.data || '0x',
-        chain: 'sepolia' // TODO: Get from account storage
+        chain: account.chain || 'ethereum' // Use actual chain from account
       });
 
       console.log('[DAppTransactionModal] Risk analysis complete:', analysis);
@@ -95,7 +95,7 @@ export const DAppTransactionModal: React.FC<DAppTransactionModalProps> = ({
         to: txParams.to,
         value: txParams.value || '0x0',
         data: txParams.data || '0x',
-        chain: 'sepolia' // TODO: Get from account storage
+        chain: account.chain || 'ethereum' // Use actual chain from account
       });
 
       // Record decision

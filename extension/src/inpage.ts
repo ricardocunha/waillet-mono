@@ -85,9 +85,19 @@ class WailletProvider {
     if (message.type !== WindowMessageType.WAILLET_RESPONSE) return;
 
     const pending = this.pendingRequests.get(message.id);
-    if (!pending) return;
+    if (!pending) {
+      console.warn('[Waillet Provider] Received response for unknown request:', message.id);
+      return;
+    }
 
     this.pendingRequests.delete(message.id);
+
+    console.log('[Waillet Provider] Processing response for request:', message.id, {
+      error: message.error,
+      result: message.result,
+      resultType: typeof message.result,
+      isArray: Array.isArray(message.result)
+    });
 
     if (message.error) {
       const error = new Error(message.error.message) as ProviderRpcError;
@@ -95,12 +105,14 @@ class WailletProvider {
       error.data = message.error.data;
       pending.reject(error);
     } else {
-      // Update accounts if returned
-      if (Array.isArray(message.result) && message.result.length > 0 && message.result[0].startsWith('0x')) {
+      // Update accounts if returned (check it's a string array of addresses)
+      if (Array.isArray(message.result) && message.result.length > 0 && typeof message.result[0] === 'string' && message.result[0].startsWith('0x')) {
+        console.log('[Waillet Provider] 🔄 Updating accounts from response:', message.result);
         this._updateAccounts(message.result);
       }
       // Update chain ID if returned
       if (typeof message.result === 'string' && message.result.startsWith('0x') && !message.result.includes('.')) {
+        console.log('[Waillet Provider] 🔄 Updating chainId from response:', message.result);
         this._updateChainId(message.result);
       }
       pending.resolve(message.result);
@@ -110,11 +122,14 @@ class WailletProvider {
   async request(args: RequestArguments): Promise<unknown> {
     const { method, params = [] } = args;
 
+    console.log('[Waillet Provider] request:', method, params);
+
     if (!method || typeof method !== 'string') {
       throw this.createError(4200, 'Invalid method');
     }
 
     if (method === EthMethod.ACCOUNTS) {
+      console.log('[Waillet Provider] Returning accounts:', this._accounts);
       return this._accounts;
     }
 
@@ -124,16 +139,18 @@ class WailletProvider {
 
     const id = ++this.requestId;
 
-    window.postMessage({
-      type: WindowMessageType.WAILLET_REQUEST,
-      method,
-      params,
-      id,
-      origin: window.location.origin
-    }, '*');
-
+    // CRITICAL: Add to pending requests BEFORE posting message to avoid race condition
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
+
+      // Now post the message after the pending request is registered
+      window.postMessage({
+        type: WindowMessageType.WAILLET_REQUEST,
+        method,
+        params,
+        id,
+        origin: window.location.origin
+      }, '*');
 
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
@@ -198,9 +215,13 @@ class WailletProvider {
   }
 
   _updateAccounts(accounts: string[]): void {
+    console.log('[Waillet Provider] _updateAccounts called with:', accounts);
+    console.log('[Waillet Provider] Current _accounts:', this._accounts);
     const changed = JSON.stringify(accounts) !== JSON.stringify(this._accounts);
     this._accounts = accounts;
+    console.log('[Waillet Provider] ✅ _accounts updated to:', this._accounts);
     if (changed) {
+      console.log('[Waillet Provider] 🔔 Emitting accountsChanged event');
       this.emit('accountsChanged', accounts);
     }
   }

@@ -87,17 +87,16 @@ export function RiskAnalysisModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-3">
           {/* HIGH RISK WARNING BANNER */}
           {risk_level === RiskLevel.HIGH && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
-                <div>
-                  <div className="font-semibold text-red-400 mb-1">⚠️ High Risk Transaction</div>
-                  <div className="text-sm text-red-300">
-                    This transaction shows patterns commonly associated with scams or dangerous operations.
-                    Proceed only if you absolutely trust this source.
+                <AlertTriangle className="text-red-400 flex-shrink-0 mt-0.5" size={18} />
+                <div className="text-sm">
+                  <div className="font-semibold text-red-400 mb-1">⚠️ High Risk</div>
+                  <div className="text-red-300">
+                    Potential scam pattern detected. Only proceed if you fully trust this site.
                   </div>
                 </div>
               </div>
@@ -111,39 +110,36 @@ export function RiskAnalysisModal({
           </div>
 
           {/* Risk Score Badge */}
-          <div className={`${styles.bg} ${styles.border} border rounded-lg p-4`}>
-            <div className="flex items-center justify-between mb-2">
+          <div className={`${styles.bg} ${styles.border} border rounded-lg p-3`}>
+            <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 {styles.icon}
-                <span className={`font-semibold ${styles.text}`}>{risk_level} RISK</span>
+                <span className={`font-semibold ${styles.text} text-sm`}>{risk_level} RISK</span>
               </div>
-              <div className="text-2xl font-bold text-white">
-                {risk_score}<span className="text-sm text-slate-400">/100</span>
+              <div className="text-xl font-bold text-white">
+                {risk_score}<span className="text-xs text-slate-400">/100</span>
               </div>
             </div>
 
-            {/* AI Summary */}
-            <div className="text-sm text-slate-300 leading-relaxed">
-              {ai_summary}
+            {/* AI Summary - Compact */}
+            <div className="text-xs text-slate-300 leading-snug">
+              {ai_summary.split('.')[0]}.
             </div>
           </div>
 
           {/* Contract Info (if applicable) */}
           {contract_info.is_contract && (
-            <div className="bg-slate-700/50 rounded-lg p-3 text-sm">
-              <div className="font-medium text-white mb-1">Contract Interaction</div>
-              <div className="space-y-1 text-slate-300">
+            <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
+              <div className="font-medium text-white mb-1.5">Contract Details</div>
+              <div className="space-y-0.5 text-slate-300">
                 {contract_info.name && (
-                  <div>Name: <span className="text-purple-400">{contract_info.name}</span></div>
+                  <div>• <span className="text-purple-400">{contract_info.name}</span></div>
                 )}
                 <div>
-                  Verification:{' '}
-                  <span className={contract_info.verified ? 'text-green-400' : 'text-yellow-400'}>
-                    {contract_info.verified ? '✓ Verified' : '⚠ Unverified'}
-                  </span>
+                  • {contract_info.verified ? '✓ Verified' : '⚠ Unverified'}
                 </div>
                 {value_usd > 0 && (
-                  <div>Value: <span className="text-white font-medium">${value_usd.toFixed(2)} USD</span></div>
+                  <div>• <span className="text-white font-medium">${value_usd.toFixed(2)} USD</span></div>
                 )}
               </div>
             </div>
@@ -151,10 +147,10 @@ export function RiskAnalysisModal({
 
           {/* Recommendations */}
           <div>
-            <div className="font-medium text-white mb-2 text-sm">Recommendations:</div>
-            <div className="space-y-2">
+            <div className="font-medium text-white mb-1.5 text-sm">Tips:</div>
+            <div className="space-y-1">
               {recommendations.map((rec, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-sm">
+                <div key={idx} className="flex items-start gap-2 text-xs">
                   <span className="flex-shrink-0 mt-0.5">{rec.icon}</span>
                   <span className="text-slate-300">{rec.text}</span>
                 </div>
@@ -166,19 +162,19 @@ export function RiskAnalysisModal({
           <div>
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center justify-between w-full text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+              className="flex items-center justify-between w-full text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors"
             >
-              <span>Why is this {risk_level.toLowerCase()} risk?</span>
-              {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              <span>Why {risk_level.toLowerCase()} risk?</span>
+              {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
 
             {showDetails && (
-              <div className="mt-3 space-y-2">
+              <div className="mt-2 space-y-1.5">
                 {factors.map((factor, idx) => (
-                  <div key={idx} className="bg-slate-700/30 rounded p-3 text-sm">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                  <div key={idx} className="bg-slate-700/30 rounded p-2 text-xs">
+                    <div className="flex items-start justify-between gap-2 mb-0.5">
                       <div className="font-medium text-white">{factor.title}</div>
-                      <div className="text-xs text-slate-400 flex-shrink-0">+{factor.points} pts</div>
+                      <div className="text-xs text-slate-400 flex-shrink-0">+{factor.points}</div>
                     </div>
                     <div className="text-slate-300 text-xs">{factor.description}</div>
                   </div>
@@ -227,8 +223,8 @@ export function RiskAnalysisModal({
           </div>
 
           {/* Footer Note */}
-          <div className="text-xs text-slate-500 text-center pt-2">
-            Powered by AI risk analysis • Not financial advice
+          <div className="text-xs text-slate-500 text-center pt-1">
+            AI-powered • Not financial advice
           </div>
         </div>
       </div>

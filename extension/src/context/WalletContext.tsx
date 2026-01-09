@@ -8,7 +8,7 @@ interface WalletContextType {
   hasWallet: boolean;
   unlock: (password: string) => Promise<void>;
   createWallet: (password: string) => Promise<string>;
-  confirmMnemonic: (mnemonic: string) => void;
+  confirmMnemonic: (mnemonic: string) => Promise<void>;
   importWallet: (mnemonic: string, password: string) => Promise<void>;
   getPrivateKey: () => Promise<string>;
   isLoading: boolean;
@@ -87,7 +87,16 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             console.log('Session found, restoring wallet...');
             try {
               const wallet = WalletService.fromMnemonic(sessionMnemonic);
-              setAccount(wallet);
+
+              // Load chain from storage or use default
+              const result = await chrome.storage.local.get('account');
+              const chain = result.account?.chain || 'ethereum';
+              const walletWithChain = { ...wallet, chain };
+
+              // Save to chrome.storage
+              await chrome.storage.local.set({ account: walletWithChain });
+
+              setAccount(walletWithChain);
               setIsUnlocked(true);
               console.log('Session restored successfully');
             } catch (err) {
@@ -107,13 +116,38 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     checkWallet();
   }, []);
 
+  // Listen for storage changes to keep account in sync
+  useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.account && changes.account.newValue) {
+        console.log('🔄 WalletContext: Storage changed, updating account:', changes.account.newValue);
+        setAccount(changes.account.newValue);
+      }
+    };
+
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
+
   const unlock = async (password: string) => {
     const encrypted = localStorage.getItem('wallet');
     if (!encrypted) throw new Error('No wallet found');
-    
+
     const mnemonic = await decrypt(encrypted, password);
     const wallet = WalletService.fromMnemonic(mnemonic);
-    setAccount(wallet);
+
+    // Load chain from storage or use default
+    const result = await chrome.storage.local.get('account');
+    const chain = result.account?.chain || 'ethereum';
+    const walletWithChain = { ...wallet, chain };
+
+    // Save to chrome.storage
+    await chrome.storage.local.set({ account: walletWithChain });
+
+    setAccount(walletWithChain);
     setIsUnlocked(true);
 
     saveSession(mnemonic);
@@ -127,9 +161,14 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return mnemonic;
   };
 
-  const confirmMnemonic = (mnemonic: string) => {
+  const confirmMnemonic = async (mnemonic: string) => {
     const wallet = WalletService.fromMnemonic(mnemonic);
-    setAccount(wallet);
+
+    // Set default chain and save to chrome.storage
+    const walletWithChain = { ...wallet, chain: 'ethereum' };
+    await chrome.storage.local.set({ account: walletWithChain });
+
+    setAccount(walletWithChain);
     setIsUnlocked(true);
     setHasWallet(true);
 
@@ -139,9 +178,14 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const importWallet = async (mnemonic: string, password: string) => {
     const encrypted = await encrypt(mnemonic, password);
     localStorage.setItem('wallet', encrypted);
-    
+
     const wallet = WalletService.fromMnemonic(mnemonic);
-    setAccount(wallet);
+
+    // Set default chain and save to chrome.storage
+    const walletWithChain = { ...wallet, chain: 'ethereum' };
+    await chrome.storage.local.set({ account: walletWithChain });
+
+    setAccount(walletWithChain);
     setIsUnlocked(true);
     setHasWallet(true);
 

@@ -64,6 +64,7 @@ export interface WalletAccount {
   address: string;
   privateKey: string;
   index: number;
+  chain?: string; // Current chain (ethereum, sepolia, base, base-sepolia)
 }
 
 export interface ChainConfig {
@@ -164,6 +165,30 @@ export class WalletService {
     }
 
     return new ProxiedJsonRpcProvider(chainName);
+  }
+
+  static async sendTransaction(
+    privateKey: string,
+    to: string,
+    value: string,
+    data: string,
+    chain: string
+  ): Promise<string> {
+    const provider = await this.getProvider(chain);
+    const wallet = new Wallet(privateKey, provider);
+
+    const tx = await wallet.sendTransaction({
+      to,
+      value: value === '0x0' || value === '0' ? 0 : value,
+      data: data || '0x',
+    });
+
+    const receipt = await tx.wait();
+    if (!receipt) {
+      throw new Error('Transaction failed');
+    }
+
+    return tx.hash;
   }
 
   static async sendNativeToken(

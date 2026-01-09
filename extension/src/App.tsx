@@ -11,6 +11,7 @@ import { NetworkSwitchModal } from './components/NetworkSwitchModal';
 import { Bot, Wallet } from 'lucide-react';
 import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
+import { Chain } from './types/messaging';
 
 type Mode = 'wallet' | 'agent';
 
@@ -44,9 +45,31 @@ function AppContent() {
     }
   }, [isUnlocked, hasWallet]);
 
+  // Listen for storage changes to detect new pending requests
+  useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes[StorageKey.PENDING_REQUEST]) {
+        const newValue = changes[StorageKey.PENDING_REQUEST].newValue;
+        console.log('🔔 Storage change detected - pending request:', newValue);
+        if (newValue) {
+          setPendingRequest(newValue);
+        } else {
+          setPendingRequest(null);
+        }
+      }
+    };
+
+    chrome.storage.local.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
+
   const checkForPendingRequest = async () => {
     const result = await chrome.storage.local.get(StorageKey.PENDING_REQUEST);
     if (result.pendingRequest) {
+      console.log('📋 Pending request detected:', result.pendingRequest);
       setPendingRequest(result.pendingRequest);
     }
   };
@@ -179,18 +202,16 @@ function AppContent() {
   const handleNetworkSwitch = async () => {
     if (!pendingRequest || !pendingRequest.chainName) return;
 
+    if (!account) {
+      console.error('❌ No account available');
+      await handleNetworkSwitchRejection();
+      return;
+    }
+
     try {
-      // Get current account from storage
-      const storage = await chrome.storage.local.get(StorageKey.ACCOUNT);
-      const currentAccount = storage.account;
-
-      if (!currentAccount) {
-        throw new Error('No account found');
-      }
-
-      // Update the chain
+      // Update the chain in storage using the account from context
       const updatedAccount = {
-        ...currentAccount,
+        ...account,
         chain: pendingRequest.chainName
       };
 
@@ -245,36 +266,39 @@ function AppContent() {
 
   return (
     <>
-      <div className="h-full flex flex-col">
-        <div className="bg-slate-800 border-b border-slate-700 flex">
-          <button
-            onClick={() => setMode('wallet')}
-            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
-              mode === 'wallet'
-                ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
-                : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <Wallet size={18} />
-            Wallet
-          </button>
-          <button
-            onClick={() => setMode('agent')}
-            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
-              mode === 'agent'
-                ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
-                : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <Bot size={18} />
-            AI Agent
-          </button>
-        </div>
+      {/* Hide main content when modal is showing */}
+      {!pendingRequest && (
+        <div className="h-full flex flex-col">
+          <div className="bg-slate-800 border-b border-slate-700 flex">
+            <button
+              onClick={() => setMode('wallet')}
+              className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
+                mode === 'wallet'
+                  ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              <Wallet size={18} />
+              Wallet
+            </button>
+            <button
+              onClick={() => setMode('agent')}
+              className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
+                mode === 'agent'
+                  ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              <Bot size={18} />
+              AI Agent
+            </button>
+          </div>
 
-        <div className="flex-1 overflow-hidden">
-          {mode === 'wallet' ? <Dashboard /> : <AgentChat />}
+          <div className="flex-1 overflow-hidden">
+            {mode === 'wallet' ? <Dashboard /> : <AgentChat />}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* dApp Request Modals */}
       {pendingRequest?.type === PendingRequestType.CONNECT && (
@@ -310,20 +334,32 @@ function AppContent() {
       )}
 
       {/* Network Switch Modal */}
-      {pendingRequest?.type === PendingRequestType.SWITCH_NETWORK &&
-        pendingRequest.chainName &&
-        pendingRequest.chainId &&
-        pendingRequest.chainIdDecimal !== undefined && (
-        <NetworkSwitchModal
-          origin={pendingRequest.origin}
-          chainName={pendingRequest.chainName}
-          chainIdDecimal={pendingRequest.chainIdDecimal}
-          chainId={pendingRequest.chainId}
-          currentChain={currentChain}
-          onApprove={handleNetworkSwitch}
-          onReject={handleNetworkSwitchRejection}
-        />
-      )}
+      {(() => {
+        const shouldShow = pendingRequest?.type === PendingRequestType.SWITCH_NETWORK &&
+          pendingRequest.chainName &&
+          pendingRequest.chainId &&
+          pendingRequest.chainIdDecimal !== undefined;
+
+        console.log('🔍 Network Switch Modal Check:', {
+          pendingRequestType: pendingRequest?.type,
+          chainName: pendingRequest?.chainName,
+          chainId: pendingRequest?.chainId,
+          chainIdDecimal: pendingRequest?.chainIdDecimal,
+          shouldShow
+        });
+
+        return shouldShow ? (
+          <NetworkSwitchModal
+            origin={pendingRequest!.origin}
+            chainName={pendingRequest!.chainName as Chain}
+            chainIdDecimal={pendingRequest!.chainIdDecimal!}
+            chainId={pendingRequest!.chainId!}
+            currentChain={currentChain as Chain}
+            onApprove={handleNetworkSwitch}
+            onReject={handleNetworkSwitchRejection}
+          />
+        ) : null;
+      })()}
     </>
   );
 }

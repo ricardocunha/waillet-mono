@@ -5,6 +5,13 @@
 
 import { BackgroundMessageType, WindowMessageType } from './types/messaging';
 
+// Prevent duplicate content script injection
+if ((window as any).__WAILLET_CONTENT_SCRIPT_LOADED__) {
+  console.log('[Waillet Content] Already loaded, skipping...');
+  throw new Error('Waillet content script already loaded');
+}
+(window as any).__WAILLET_CONTENT_SCRIPT_LOADED__ = true;
+
 function injectInpageScript() {
   try {
     const script = document.createElement('script');
@@ -38,6 +45,8 @@ window.addEventListener('message', async (event) => {
 
   if (!message || message.type !== WindowMessageType.WAILLET_REQUEST) return;
 
+  console.log('[Waillet Content] 📨 Received request from page:', message.method, message);
+
   if (!message.method || !Array.isArray(message.params) || typeof message.id !== 'number') {
     console.error('[Waillet Content] Invalid message format:', message);
     sendErrorToInpage(message.id, 'Invalid request format', 4200);
@@ -45,21 +54,21 @@ window.addEventListener('message', async (event) => {
   }
 
   try {
-    const response = await chrome.runtime.sendMessage({
+    chrome.runtime.sendMessage({
       type: BackgroundMessageType.DAPP_REQUEST,
       method: message.method,
       params: message.params,
       origin: window.location.origin,
       id: message.id,
       timestamp: Date.now()
+    }).catch((error) => {
+      // Handle errors
+      console.error('[Waillet Content] Error sending to background:', error);
+      sendErrorToInpage(message.id, error.message || 'Failed to communicate with extension', 4900);
     });
 
-    window.postMessage({
-      type: WindowMessageType.WAILLET_RESPONSE,
-      id: message.id,
-      result: response.result,
-      error: response.error
-    }, '*');
+    // Response will be sent back via chrome.runtime.onMessage listener
+    // (handled by the listener below that forwards WAILLET_RESPONSE messages)
 
   } catch (error: any) {
     console.error('[Waillet Content] Error forwarding request:', error);
@@ -113,7 +122,11 @@ window.addEventListener('message', async (event) => {
 });
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  console.log('[Waillet Content] 📬 Received from background:', request);
+
   if (request.type === WindowMessageType.WAILLET_RESPONSE) {
+    console.log('[Waillet Content] 📤 Forwarding response to page:', { id: request.id, result: request.result, error: request.error });
+
     window.postMessage({
       type: WindowMessageType.WAILLET_RESPONSE,
       id: request.id,

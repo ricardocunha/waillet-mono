@@ -25,24 +25,32 @@ def get_rpc_url(chain: str) -> str:
     chain = chain.lower()
 
     if settings.ALCHEMY_API_KEY:
-        if chain == "sepolia":
+        if chain == "ethereum":
+            return f"https://eth-mainnet.g.alchemy.com/v2/{settings.ALCHEMY_API_KEY}"
+        elif chain == "sepolia":
             return f"https://eth-sepolia.g.alchemy.com/v2/{settings.ALCHEMY_API_KEY}"
         elif chain == "base-sepolia":
             return f"https://base-sepolia.g.alchemy.com/v2/{settings.ALCHEMY_API_KEY}"
+        elif chain == "base":
+            return f"https://base-mainnet.g.alchemy.com/v2/{settings.ALCHEMY_API_KEY}"
 
     if settings.INFURA_API_KEY:
-        if chain == "sepolia":
+        if chain == "ethereum":
+            return f"https://mainnet.infura.io/v3/{settings.INFURA_API_KEY}"
+        elif chain == "sepolia":
             return f"https://sepolia.infura.io/v3/{settings.INFURA_API_KEY}"
 
     fallback_urls = {
+        "ethereum": "https://eth.llamarpc.com",
         "sepolia": "https://rpc2.sepolia.org",
         "base-sepolia": "https://sepolia.base.org",
+        "base": "https://mainnet.base.org",
     }
-    
+
     url = fallback_urls.get(chain)
     if not url:
         raise HTTPException(status_code=400, detail=f"Unsupported chain: {chain}")
-    
+
     logger.warning(f"⚠️ No API key configured for {chain}. Using public endpoint (unreliable).")
     return url
 
@@ -102,6 +110,6 @@ async def rpc_health():
         "status": "ok",
         "alchemy_configured": alchemy_configured,
         "infura_configured": infura_configured,
-        "supported_chains": ["sepolia", "base-sepolia"],
+        "supported_chains": ["ethereum", "sepolia", "base", "base-sepolia"],
         "recommended": "Add ALCHEMY_API_KEY to backend/.env for best reliability"
     }
