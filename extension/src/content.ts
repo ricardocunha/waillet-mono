@@ -63,7 +63,52 @@ window.addEventListener('message', async (event) => {
 
   } catch (error: any) {
     console.error('[Waillet Content] Error forwarding request:', error);
-    sendErrorToInpage(message.id, error.message || 'Internal error', 4900);
+
+    // Handle extension context invalidation
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      console.warn('[Waillet Content] Extension was reloaded. Please refresh this page to reconnect.');
+      sendErrorToInpage(message.id, 'Waillet extension was updated. Please refresh this page.', 4900);
+
+      // Show a user-friendly notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 16px 24px;
+        border-radius: 8px;
+        border: 2px solid #a855f7;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        z-index: 999999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 300px;
+      `;
+      notification.innerHTML = `
+        <strong style="color: #a855f7;">Waillet Updated</strong><br>
+        Please refresh this page to reconnect.
+        <button onclick="window.location.reload()" style="
+          display: block;
+          margin-top: 12px;
+          width: 100%;
+          padding: 8px;
+          background: #a855f7;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+        ">Refresh Now</button>
+      `;
+      document.body.appendChild(notification);
+
+      // Auto-remove after 10 seconds if not clicked
+      setTimeout(() => notification.remove(), 10000);
+    } else {
+      sendErrorToInpage(message.id, error.message || 'Internal error', 4900);
+    }
   }
 });
 
