@@ -60,6 +60,11 @@ export const Dashboard: React.FC = () => {
   const handleNetworkSwitch = async (newChain: Chain) => {
     console.log('🔄 Network switch clicked!', newChain);
 
+    if (!account) {
+      console.error('❌ No account available');
+      return;
+    }
+
     try {
       // Update state immediately for UI
       setCurrentChain(newChain);
@@ -76,36 +81,31 @@ export const Dashboard: React.FC = () => {
       setTokenBalances(loadingBalances);
       setTotalUsd(0);
 
-      // Get current account from storage
-      const result = await chrome.storage.local.get(StorageKey.ACCOUNT);
-      console.log('📦 Storage retrieved:', result);
+      // Update the chain in storage using the account we already have
+      const updatedAccount = { ...account, chain: newChain };
+      await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
+      console.log('✅ Storage updated with new chain:', newChain);
 
-      // Update the chain in storage if account exists
-      if (result.account) {
-        const updatedAccount = { ...result.account, chain: newChain };
-        await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
-        console.log('✅ Storage updated with new chain:', newChain);
-      } else {
-        console.warn('⚠️ No account in storage, only updating UI state');
-      }
-
-      // Fetch new balances
+      // Fetch new balances - PASS the chain explicitly to avoid using stale state
       console.log('⏳ Fetching balances for', newChain);
       setIsRefreshing(true);
-      await fetchBalances();
+      await fetchBalances(newChain);
       console.log('✅ Network switch complete!');
     } catch (error) {
       console.error('❌ Error switching network:', error);
     }
   };
 
-  const fetchBalances = async () => {
+  const fetchBalances = async (chainToFetch?: Chain) => {
     if (!account) return;
+
+    // Use the passed chain or fall back to current state
+    const targetChain = chainToFetch || currentChain;
 
     setIsRefreshing(true);
 
-    // Determine which tokens are available on current chain
-    const availableTokens = CHAIN_TOKENS[currentChain] || [];
+    // Determine which tokens are available on target chain
+    const availableTokens = CHAIN_TOKENS[targetChain] || [];
 
     const initialBalances: TokenBalance[] = availableTokens.map(symbol => ({
       symbol,
