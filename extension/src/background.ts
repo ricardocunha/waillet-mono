@@ -1,4 +1,4 @@
-import { BackgroundMessageType, EthMethod, PendingRequestType } from './types/messaging';
+import { BackgroundMessageType, EthMethod, PendingRequestType, WindowMessageType } from './types/messaging';
 
 console.log('Waillet background loaded');
 
@@ -181,7 +181,15 @@ async function executeRPCCall(method: string, params: any[], sendResponse: Funct
 
     console.log(`[Waillet] Executing RPC call: ${method} on chain: ${chain}`);
 
-    // Use existing RPC proxy
+    // Optimize: Return chainId directly from storage without RPC call
+    if (method === EthMethod.CHAIN_ID) {
+      const chainId = getChainIdHex(chain);
+      console.log(`[Waillet] Returning cached chainId: ${chainId}`);
+      sendResponse({ result: chainId });
+      return;
+    }
+
+    // Use existing RPC proxy for other methods
     const response = await fetch('http://localhost:8000/api/rpc/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -532,11 +540,47 @@ async function handleUserDecision(request: any, sendResponse: Function) {
     }
   }
 
+  // If this was a network switch approval, emit chainChanged event
+  if (approved && pending.method === EthMethod.WALLET_SWITCH_ETHEREUM_CHAIN) {
+    const storage = await chrome.storage.local.get('account');
+    if (storage.account?.chain) {
+      const chainId = getChainIdHex(storage.account.chain);
+
+      // Notify the tab about chain change
+      try {
+        await chrome.tabs.sendMessage(pending.tabId, {
+          type: WindowMessageType.WAILLET_PROVIDER_UPDATE,
+          chainId
+        });
+        console.log(`[Waillet] Emitted chainChanged event: ${chainId}`);
+      } catch (err) {
+        console.error('[Waillet] Failed to emit chainChanged event:', err);
+      }
+    }
+  }
+
   // Cleanup
   pendingRequests.delete(requestId);
   await chrome.storage.local.remove('pendingRequest');
 
   sendResponse({ success: true });
+}
+
+/**
+ * Convert chain name to hex chainId
+ */
+function getChainIdHex(chainName: string): string {
+  const chainIds: Record<string, number> = {
+    'ethereum': 1,
+    'sepolia': 11155111,
+    'base-sepolia': 84532,
+    'polygon': 137,
+    'bsc': 56,
+    'base': 8453
+  };
+
+  const chainId = chainIds[chainName.toLowerCase()];
+  return chainId ? `0x${chainId.toString(16)}` : '0x1';
 }
 
 // Cleanup old pending requests (older than 5 minutes)
