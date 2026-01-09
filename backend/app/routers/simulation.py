@@ -137,8 +137,10 @@ async def analyze_risk(
     """
     try:
         logger.info(f"🔍 Risk analysis request for {request.chain}")
-        logger.debug(f"   Wallet: {request.wallet_address[:10]}...")
-        logger.debug(f"   To: {request.to_address[:10]}...")
+        logger.info(f"   Wallet: {request.wallet_address}")
+        logger.info(f"   To: {request.to_address}")
+        logger.info(f"   Value: {request.value}")
+        logger.info(f"   Data: {request.data[:20] if request.data else '0x'}...")
 
         # Run risk analysis
         risk_service = RiskService(request.chain, db)
@@ -173,7 +175,15 @@ async def analyze_risk(
             decision=Decision.pending
         )
         db.add(risk_log)
-        db.commit()
+
+        try:
+            db.commit()
+            logger.info(f"💾 Database commit successful")
+        except Exception as commit_error:
+            logger.error(f"❌ Database commit failed: {commit_error}")
+            db.rollback()
+            raise
+
         db.refresh(risk_log)
 
         logger.info(f"✅ Risk analysis complete - Score: {analysis['risk_score']}/100 (ID: {risk_log.id})")
@@ -210,11 +220,18 @@ async def record_risk_decision(
         risk_log = db.query(RiskLog).filter(RiskLog.id == request.risk_log_id).first()
         if not risk_log:
             raise HTTPException(status_code=404, detail="Risk log not found")
+
         risk_log.decision = Decision.approved if request.approved else Decision.blocked
         if request.approved and request.tx_hash:
             risk_log.tx_hash = request.tx_hash
 
-        db.commit()
+        try:
+            db.commit()
+            logger.info(f"💾 Risk decision commit successful")
+        except Exception as commit_error:
+            logger.error(f"❌ Risk decision commit failed: {commit_error}")
+            db.rollback()
+            raise
 
         decision_str = "approved" if request.approved else "blocked"
         logger.info(f"✅ Risk decision recorded: {decision_str}")
