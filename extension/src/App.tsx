@@ -39,6 +39,7 @@ function AppContent() {
 
   // Check for pending dApp requests on mount and when unlocked
   useEffect(() => {
+    console.log('[App] Checking for pending requests, isUnlocked:', isUnlocked, 'hasWallet:', hasWallet);
     if (isUnlocked && hasWallet) {
       checkForPendingRequest();
       loadCurrentChain();
@@ -66,11 +67,22 @@ function AppContent() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (pendingRequest) {
+        console.log('[App] Component unmounting with pending request, cleaning up');
+        chrome.storage.local.remove(StorageKey.PENDING_REQUEST).catch(console.error);
+      }
+    };
+  }, [pendingRequest]);
+
   const checkForPendingRequest = async () => {
     const result = await chrome.storage.local.get(StorageKey.PENDING_REQUEST);
     if (result.pendingRequest) {
-      console.log('📋 Pending request detected:', result.pendingRequest);
+      console.log('[App] 📋 Pending request detected on mount/unlock:', result.pendingRequest);
       setPendingRequest(result.pendingRequest);
+    } else {
+      console.log('[App] ✅ No pending request found');
     }
   };
 
@@ -84,104 +96,142 @@ function AppContent() {
   const handleConnectionApproval = async (approved: boolean) => {
     if (!pendingRequest) return;
 
-    if (approved && account) {
-      // Save connected site
-      const result = await chrome.storage.local.get(StorageKey.CONNECTED_SITES);
-      const connectedSites = result.connectedSites || {};
-      connectedSites[pendingRequest.origin] = {
-        connected: true,
-        timestamp: Date.now()
-      };
-      await chrome.storage.local.set({ [StorageKey.CONNECTED_SITES]: connectedSites });
+    try {
+      if (approved && account) {
+        // Save connected site
+        const result = await chrome.storage.local.get(StorageKey.CONNECTED_SITES);
+        const connectedSites = result.connectedSites || {};
+        connectedSites[pendingRequest.origin] = {
+          connected: true,
+          timestamp: Date.now()
+        };
+        await chrome.storage.local.set({ [StorageKey.CONNECTED_SITES]: connectedSites });
 
-      // Send approval to background
-      await chrome.runtime.sendMessage({
-        type: 'USER_DECISION',
-        requestId: pendingRequest.id,
-        approved: true,
-        result: [account.address]
-      });
-    } else {
-      // Send rejection to background
-      await chrome.runtime.sendMessage({
-        type: 'USER_DECISION',
-        requestId: pendingRequest.id,
-        approved: false,
-        error: { code: 4001, message: 'User rejected request' }
-      });
+        // Send approval to background
+        await chrome.runtime.sendMessage({
+          type: 'USER_DECISION',
+          requestId: pendingRequest.id,
+          approved: true,
+          result: [account.address]
+        });
+      } else {
+        // Send rejection to background
+        await chrome.runtime.sendMessage({
+          type: 'USER_DECISION',
+          requestId: pendingRequest.id,
+          approved: false,
+          error: { code: 4001, message: 'User rejected request' }
+        });
+      }
+    } catch (err) {
+      console.error('[App] Failed to send connection decision to background:', err);
     }
 
+    // Always clean up local state and storage
     setPendingRequest(null);
+    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleTransactionApproval = async (txHash: string) => {
     if (!pendingRequest) return;
 
-    await chrome.runtime.sendMessage({
-      type: 'USER_DECISION',
-      requestId: pendingRequest.id,
-      approved: true,
-      result: txHash
-    });
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: true,
+        result: txHash
+      });
+    } catch (err) {
+      console.error('[App] Failed to send transaction approval to background:', err);
+    }
 
+    // Always clean up local state and storage
     setPendingRequest(null);
+    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleTransactionRejection = async (error?: string) => {
     if (!pendingRequest) return;
 
-    await chrome.runtime.sendMessage({
-      type: 'USER_DECISION',
-      requestId: pendingRequest.id,
-      approved: false,
-      error: { code: 4001, message: error || 'User rejected transaction' }
-    });
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: false,
+        error: { code: 4001, message: error || 'User rejected transaction' }
+      });
+    } catch (err) {
+      console.error('[App] Failed to send rejection to background:', err);
+    }
 
+    // Always clean up local state and storage
     setPendingRequest(null);
+    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleSignatureApproval = async () => {
-    if (!pendingRequest || !account) return;
+    console.log('[App] 🖊️ handleSignatureApproval called');
+    console.log('[App] pendingRequest:', pendingRequest);
+    console.log('[App] account:', account ? 'exists' : 'null');
+
+    if (!pendingRequest || !account) {
+      console.error('[App] Missing pendingRequest or account');
+      return;
+    }
 
     try {
       let signature: string;
 
-      // Get encrypted wallet
-      const result = await chrome.storage.local.get(StorageKey.ENCRYPTED_WALLET);
-      if (!result.encryptedWallet) {
-        throw new Error('Wallet not found');
-      }
-
       const { WalletService } = await import('./services/wallet');
       const privateKey = account.privateKey;
+
+      if (!privateKey) {
+        throw new Error('Private key not available');
+      }
+
+      console.log('[App] Signing with type:', pendingRequest.type);
 
       // Sign based on method type
       if (pendingRequest.type === PendingRequestType.SIGN_MESSAGE) {
         if (!pendingRequest.message) {
           throw new Error('No message to sign');
         }
+        console.log('[App] Signing message...');
         signature = await WalletService.signMessage(privateKey, pendingRequest.message);
       } else if (pendingRequest.type === PendingRequestType.SIGN_TYPED_DATA) {
         if (!pendingRequest.typedData) {
           throw new Error('No typed data to sign');
         }
+        console.log('[App] Signing typed data...');
         const { domain, types, message: msgValue } = pendingRequest.typedData;
         signature = await WalletService.signTypedData(privateKey, domain, types, msgValue);
       } else {
         throw new Error('Unknown signature type');
       }
 
-      // Send signature to background
-      await chrome.runtime.sendMessage({
-        type: 'USER_DECISION',
-        requestId: pendingRequest.id,
-        approved: true,
-        result: signature
-      });
+      console.log('[App] ✅ Signature created:', signature.substring(0, 20) + '...');
 
+      // Send signature to background
+      try {
+        console.log('[App] Sending signature to background, requestId:', pendingRequest.id);
+        await chrome.runtime.sendMessage({
+          type: 'USER_DECISION',
+          requestId: pendingRequest.id,
+          approved: true,
+          result: signature
+        });
+        console.log('[App] ✅ Signature sent to background');
+      } catch (err) {
+        console.error('[App] ❌ Failed to send signature approval to background:', err);
+      }
+
+      // Always clean up local state and storage
       setPendingRequest(null);
+      await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+      console.log('[App] ✅ Cleanup complete');
     } catch (error: any) {
-      console.error('Signature error:', error);
+      console.error('[App] ❌ Signature error:', error);
       await handleSignatureRejection();
     }
   };
@@ -189,14 +239,20 @@ function AppContent() {
   const handleSignatureRejection = async () => {
     if (!pendingRequest) return;
 
-    await chrome.runtime.sendMessage({
-      type: 'USER_DECISION',
-      requestId: pendingRequest.id,
-      approved: false,
-      error: { code: 4001, message: 'User rejected signature request' }
-    });
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: false,
+        error: { code: 4001, message: 'User rejected signature request' }
+      });
+    } catch (err) {
+      console.error('[App] Failed to send signature rejection to background:', err);
+    }
 
+    // Always clean up local state and storage
     setPendingRequest(null);
+    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleNetworkSwitch = async () => {
@@ -218,17 +274,23 @@ function AppContent() {
       await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
 
       // Send approval to background
-      await chrome.runtime.sendMessage({
-        type: 'USER_DECISION',
-        requestId: pendingRequest.id,
-        approved: true,
-        result: null
-      });
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'USER_DECISION',
+          requestId: pendingRequest.id,
+          approved: true,
+          result: null
+        });
+      } catch (err) {
+        console.error('[App] Failed to send network switch approval to background:', err);
+      }
 
+      // Always clean up local state and storage
       setPendingRequest(null);
+      await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
 
-      // Reload window to reflect new chain
-      window.location.reload();
+      // No need to reload - WalletContext storage listener will auto-update
+      // and Dashboard will sync with the new chain
     } catch (error: any) {
       console.error('Network switch error:', error);
       await handleNetworkSwitchRejection();
@@ -238,14 +300,20 @@ function AppContent() {
   const handleNetworkSwitchRejection = async () => {
     if (!pendingRequest) return;
 
-    await chrome.runtime.sendMessage({
-      type: 'USER_DECISION',
-      requestId: pendingRequest.id,
-      approved: false,
-      error: { code: 4001, message: 'User rejected network switch' }
-    });
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'USER_DECISION',
+        requestId: pendingRequest.id,
+        approved: false,
+        error: { code: 4001, message: 'User rejected network switch' }
+      });
+    } catch (err) {
+      console.error('[App] Failed to send network switch rejection to background:', err);
+    }
 
+    // Always clean up local state and storage
     setPendingRequest(null);
+    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   if (isLoading) {
@@ -262,6 +330,16 @@ function AppContent() {
 
   if (!isUnlocked) {
     return <Unlock />;
+  }
+
+  // Log what modal should be shown
+  if (pendingRequest) {
+    console.log('[App] 🎯 Pending request detected:', {
+      id: pendingRequest.id,
+      type: pendingRequest.type,
+      method: pendingRequest.method,
+      origin: pendingRequest.origin
+    });
   }
 
   return (
