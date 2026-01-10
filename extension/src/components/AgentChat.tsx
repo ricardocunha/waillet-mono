@@ -167,7 +167,7 @@ export const AgentChat: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}

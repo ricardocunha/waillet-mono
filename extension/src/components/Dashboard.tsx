@@ -289,7 +289,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Token Balances */}
-      <div className="flex-1 px-4 pb-4 overflow-y-auto">
+      <div className="flex-1 px-4 pb-4 overflow-y-auto scrollbar-hide">
         <h2 className="text-sm font-bold mb-3">Tokens</h2>
 
         {tokenBalances.length === 0 ? (

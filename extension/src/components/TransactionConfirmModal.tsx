@@ -165,7 +165,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+      <div className="bg-slate-800 rounded-lg max-w-md w-full max-h-[90vh] p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Confirm Transaction</h2>
@@ -179,7 +179,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
         </div>
 
         {/* Transaction Details */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-6 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(90vh - 200px)' }}>
           <div className="bg-slate-700 rounded-lg p-4">
             <div className="text-sm text-slate-400 mb-1">To</div>
             <div className="font-mono text-sm break-all">{intent.to}</div>

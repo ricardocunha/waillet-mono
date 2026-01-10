@@ -2,25 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  width: 506px;
-  height: 600px;
-  margin: 0;
-  background-color: #020617;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, sans-serif;
+@layer base {
+  html {
+    overflow: hidden !important;
+  }
+
+  body {
+    width: 506px;
+    height: 600px;
+    margin: 0;
+    background-color: #020617;
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow: hidden !important;
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden !important;
+  }
 }
 
-#root {
-  height: 100%;
-}
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none !important;
+  }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  .scrollbar-hide {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
 }
 

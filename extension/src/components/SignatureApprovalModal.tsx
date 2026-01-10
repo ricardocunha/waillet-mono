@@ -85,7 +85,7 @@ export const SignatureApprovalModal: React.FC<SignatureApprovalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-3 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-3 z-50">
       <div className="bg-slate-800 rounded-lg max-w-lg w-full p-3 my-2">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
@@ -135,7 +135,7 @@ export const SignatureApprovalModal: React.FC<SignatureApprovalModalProps> = ({
                 {showRawData ? <><EyeOff size={12} /> Hide Raw</> : <><Eye size={12} /> Show Raw</>}
               </button>
             </div>
-            <div className="bg-slate-800 rounded p-2 font-mono text-xs break-all max-h-32 overflow-y-auto">
+            <div className="bg-slate-800 rounded p-2 font-mono text-xs break-all max-h-32 overflow-y-auto scrollbar-hide">
               {showRawData ? message : displayMessage}
             </div>
           </div>
@@ -145,7 +145,7 @@ export const SignatureApprovalModal: React.FC<SignatureApprovalModalProps> = ({
         {isEthSign && message && (
           <div className="bg-slate-700 rounded-lg p-2 mb-2">
             <div className="text-xs text-slate-400 mb-1">Data to sign (hex)</div>
-            <div className="bg-slate-800 rounded p-2 font-mono text-xs break-all max-h-32 overflow-y-auto text-red-300">
+            <div className="bg-slate-800 rounded p-2 font-mono text-xs break-all max-h-32 overflow-y-auto scrollbar-hide text-red-300">
               {message}
             </div>
           </div>
@@ -180,7 +180,7 @@ export const SignatureApprovalModal: React.FC<SignatureApprovalModalProps> = ({
               <div className="bg-slate-800 rounded p-2">
                 <div className="text-xs text-slate-400 mb-1">Message</div>
                 {expanded ? (
-                  <pre className="text-xs font-mono overflow-x-auto max-h-40 overflow-y-auto">
+                  <pre className="text-xs font-mono overflow-x-auto scrollbar-hide max-h-40 overflow-y-auto scrollbar-hide">
                     {JSON.stringify(typedData.message, null, 2)}
                   </pre>
                 ) : (
