@@ -80,3 +80,4 @@ tmp/
 temp/
 *.tmp
 
+/env
