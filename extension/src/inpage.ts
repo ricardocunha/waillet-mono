@@ -41,7 +41,7 @@ type EventName = keyof EthereumEvent;
 
 class WailletProvider {
   private requestId: number = 0;
-  private pendingRequests: Map<number, { resolve: Function; reject: Function }> = new Map();
+  private pendingRequests: Map<number, { resolve: Function; reject: Function; method: string }> = new Map();
   private eventListeners: Map<EventName, Set<Function>> = new Map();
   public isWaillet: boolean = true;
   public isMetaMask: boolean = false; // dApp compatibility
@@ -105,13 +105,14 @@ class WailletProvider {
       error.data = message.error.data;
       pending.reject(error);
     } else {
-      // Update accounts if returned (check it's a string array of addresses)
+      // Update accounts if the method was eth_requestAccounts or eth_accounts
       if (Array.isArray(message.result) && message.result.length > 0 && typeof message.result[0] === 'string' && message.result[0].startsWith('0x')) {
         console.log('[Waillet Provider] 🔄 Updating accounts from response:', message.result);
         this._updateAccounts(message.result);
       }
-      // Update chain ID if returned
-      if (typeof message.result === 'string' && message.result.startsWith('0x') && !message.result.includes('.')) {
+      // ONLY update chain ID if the method was eth_chainId
+      // This prevents block numbers, signatures, and other hex strings from being mistaken for chainIds
+      if (pending.method === EthMethod.CHAIN_ID && typeof message.result === 'string') {
         console.log('[Waillet Provider] 🔄 Updating chainId from response:', message.result);
         this._updateChainId(message.result);
       }
@@ -141,7 +142,7 @@ class WailletProvider {
 
     // CRITICAL: Add to pending requests BEFORE posting message to avoid race condition
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject });
+      this.pendingRequests.set(id, { resolve, reject, method });
 
       // Now post the message after the pending request is registered
       window.postMessage({
@@ -152,13 +153,27 @@ class WailletProvider {
         origin: window.location.origin
       }, '*');
 
+      // Use longer timeout for methods requiring user interaction
+      const timeout = this.requiresUserInteraction(method) ? 300000 : 120000; // 5 minutes for user interaction, 2 minutes for read-only
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
           reject(this.createError(4900, 'Request timeout'));
         }
-      }, 60000);
+      }, timeout);
     });
+  }
+
+  private requiresUserInteraction(method: string): boolean {
+    return [
+      EthMethod.REQUEST_ACCOUNTS,
+      EthMethod.SEND_TRANSACTION,
+      EthMethod.SIGN,
+      EthMethod.PERSONAL_SIGN,
+      EthMethod.SIGN_TYPED_DATA_V4,
+      EthMethod.WALLET_SWITCH_ETHEREUM_CHAIN,
+      EthMethod.WALLET_ADD_ETHEREUM_CHAIN
+    ].includes(method as EthMethod);
   }
 
   // Legacy methods for compatibility
