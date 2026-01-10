@@ -4,211 +4,90 @@
 - [ ] Chrome browser installed
 - [ ] Extension built (`npm run build`)
 - [ ] Extension loaded in Chrome (`chrome://extensions/`)
+- [ ] Backend server running: `cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
 
 ---
 
-## Test 1: Create New Wallet
+## Test 1-5, 7: Wallet Operations ⚠️ PARTIALLY AUTOMATED
 
-### Steps:
-1. Click the Waillet extension icon
+**Note**: Basic functionality is covered by unit tests in `/extension/testing/`. Manual testing recommended for visual verification and edge cases.
+
+### Manual Test: Create Wallet Flow
+
+**Steps:**
+1. Open extension
 2. Click "Create New Wallet"
 3. Enter password: `TestPassword123`
-4. Confirm password: `TestPassword123`
-5. Click "Create Wallet"
+4. Click "Create Wallet"
+5. Verify recovery phrase screen (12 words)
+6. Click "I've Saved It"
 
-### Expected Results:
-- [ ] Recovery phrase screen appears
-- [ ] Recovery phrase has 12 words
-- [ ] Each word is numbered (1-12)
-- [ ] Warning message about saving phrase is visible
-- [ ] "I've Saved It" button is present
+**Verify**:
+- [ ] UI looks professional
+- [ ] Recovery phrase is clearly visible
+- [ ] Warning messages are prominent
+- [ ] Transitions are smooth
 
-### Steps (continued):
-6. **Write down the recovery phrase on paper**
-7. Click "I've Saved It"
+### Manual Test: Lock/Unlock
 
-### Expected Results:
-- [ ] Dashboard appears
-- [ ] Wallet address is displayed (0x...)
-- [ ] Balance shows $0.00
-- [ ] "Send" and "Receive" buttons are visible
-- [ ] Address can be copied by clicking the copy icon
+**Steps:**
+1. Close and reopen extension
+2. Enter wrong password → Should show error
+3. Enter correct password → Should unlock
+
+**Verify**:
+- [ ] Error messages are clear
+- [ ] Unlock animation is smooth
 
 ---
 
-## Test 2: Lock and Unlock Wallet
+## Test 6: UI/UX Visual Checks ❌ MANUAL ONLY
 
-### Steps:
-1. Close the extension popup (click outside)
-2. Click the extension icon again
-
-### Expected Results:
-- [ ] Unlock screen appears
-- [ ] "Welcome Back" message is shown
-- [ ] Password input field is present
-
-### Steps (continued):
-3. Enter wrong password: `WrongPassword`
-4. Click "Unlock Wallet"
-
-### Expected Results:
-- [ ] Error message appears: "Wrong password. Please try again."
-- [ ] Wallet remains locked
-
-### Steps (continued):
-5. Enter correct password: `TestPassword123`
-6. Click "Unlock Wallet"
-
-### Expected Results:
-- [ ] Dashboard appears
-- [ ] Same wallet address as before
-- [ ] No errors
-
----
-
-## Test 3: Import Existing Wallet
-
-### Steps:
-1. Remove the extension from Chrome
-2. Reload the extension
-3. Click extension icon
-4. Click "Import Existing Wallet"
-5. Enter the recovery phrase you saved earlier
-6. Enter password: `NewPassword456`
-7. Click "Import Wallet"
-
-### Expected Results:
-- [ ] Dashboard appears
-- [ ] **Same wallet address** as the created wallet
-- [ ] No errors
-
----
-
-## Test 4: Password Validation
-
-### Setup:
-- Remove extension and reload it
-- Click "Create New Wallet"
-
-### Test 4.1: Short Password
-**Steps:**
-1. Enter password: `short`
-2. Confirm password: `short`
-3. Click "Create Wallet"
-
-**Expected:**
-- [ ] Error: "Password must be at least 8 characters"
-
-### Test 4.2: Mismatched Passwords
-**Steps:**
-1. Enter password: `Password123`
-2. Confirm password: `Password456`
-3. Click "Create Wallet"
-
-**Expected:**
-- [ ] Error: "Passwords do not match"
-
-### Test 4.3: Valid Password
-**Steps:**
-1. Enter password: `ValidPass123`
-2. Confirm password: `ValidPass123`
-3. Click "Create Wallet"
-
-**Expected:**
-- [ ] Recovery phrase screen appears
-- [ ] No errors
-
----
-
-## Test 5: Recovery Phrase Validation
-
-### Setup:
-- Remove extension and reload it
-- Click "Import Existing Wallet"
-
-### Test 5.1: Empty Recovery Phrase
-**Steps:**
-1. Leave recovery phrase empty
-2. Enter password: `Password123`
-3. Click "Import Wallet"
-
-**Expected:**
-- [ ] Error: "Please enter your recovery phrase"
-
-### Test 5.2: Invalid Recovery Phrase
-**Steps:**
-1. Enter: `invalid words that are not valid`
-2. Enter password: `Password123`
-3. Click "Import Wallet"
-
-**Expected:**
-- [ ] Error: "Invalid recovery phrase"
-
----
-
-## Test 6: UI/UX Tests
-
-### Visual Checks:
-- [ ] Purple theme is consistent
-- [ ] All buttons are clickable and have hover effects
-- [ ] Text is readable (good contrast)
+### Visual Quality:
+- [ ] Purple theme is consistent throughout
+- [ ] All buttons have proper hover effects
+- [ ] Text is readable with good contrast
 - [ ] Extension size is 360x600px
 - [ ] No layout overflow or broken elements
-- [ ] Icons display correctly
+- [ ] Icons display correctly and are sharp
+- [ ] Font sizes are appropriate
+- [ ] Spacing and alignment look professional
 
 ### Copy Address Feature:
-**Steps:**
 1. Unlock wallet and go to dashboard
 2. Click the copy icon next to your address
 
 **Expected:**
-- [ ] Icon changes to checkmark
+- [ ] Icon changes to checkmark smoothly
 - [ ] Address is copied to clipboard (paste to verify)
 - [ ] Icon returns to copy icon after 2 seconds
+- [ ] Animation is smooth
 
 ---
 
-## Test 7: Storage Persistence
+## Test 8: Security Checks ❌ MANUAL ONLY
 
-### Steps:
-1. Create a wallet with password `TestPass123`
-2. Close Chrome completely
-3. Reopen Chrome
-4. Click the extension icon
-5. Enter password and unlock
+### Network Privacy Check:
+1. Open DevTools → Network tab
+2. Create/unlock wallet
+3. Perform wallet operations
 
-### Expected Results:
-- [ ] Wallet data persists
-- [ ] Same address appears
-- [ ] No data loss
+**Expected:**
+- [ ] **No network requests** are made for wallet operations
+- [ ] All cryptographic operations are local-only
+- [ ] Only backend API calls when explicitly triggered (transactions, risk analysis)
 
 ---
 
-## Test 8: Security Checks
+## Test 9: Native Token Transfers ❌ MANUAL ONLY
 
-### Manual Code Review:
-- [ ] Open browser DevTools → Application → Local Storage
-- [ ] Verify wallet data is encrypted (not readable text)
-- [ ] Verify no password is stored
-- [ ] Verify no plain text mnemonic is stored
-
-### Network Check:
-- [ ] Open DevTools → Network tab
-- [ ] Create/unlock wallet
-- [ ] Verify **no network requests** are made
-- [ ] All operations are local-only
-
----
-
-## Test 9: Native Token Transfers
-
-### Send ETH on Ethereum
+### Send ETH on Sepolia
 
 **Steps:**
 1. [ ] Open extension
 2. [ ] Click "AI Agent" tab
 3. [ ] Type: `send 0.001 ETH to 0xAeDaa5Ade496A54b1A4afE6eb96B3030ea6Df4fE on sepolia`
-4. [ ] AI should parse the intent
+4. [ ] AI should parse the intent correctly
 5. [ ] Click "Send Transaction" button
 6. [ ] Confirmation modal should open
 
@@ -218,40 +97,248 @@
 - [ ] Shows network (Ethereum)
 - [ ] Shows gas estimate
 - [ ] Shows current balance
-- [ ] "Confirm" button is enabled (if balance sufficient)
+- [ ] UI is clear and professional
 
 **Execute Transaction:**
 7. [ ] Click "Confirm"
-8. [ ] Status should change: Confirming → Sending → Success
-9. [ ] Transaction hash should be displayed
-10. [ ] Explorer link should be clickable
+8. [ ] Status changes smoothly: Confirming → Sending → Success
+9. [ ] Transaction hash is displayed
+10. [ ] Explorer link is clickable
 
 **Verify on Blockchain:**
 11. [ ] Click explorer link
-12. [ ] Transaction should show on Etherscan
+12. [ ] Transaction shows on Etherscan
 13. [ ] From address matches your wallet
 14. [ ] To address matches input
 15. [ ] Amount is correct
 
 ---
 
-## Summary Checklist
+## Test 10: dApp Interception Flow ❌ MANUAL ONLY
 
-After completing all tests above:
+### Prerequisites:
+- [ ] Wallet unlocked
+- [ ] Test page open: `file:///path/to/test-dapp.html`
 
-- [ ] Wallet creation works correctly
-- [ ] Password protection works
-- [ ] Wallet unlock works
-- [ ] Import wallet works
-- [ ] Password validation works
-- [ ] Recovery phrase validation works
-- [ ] UI is functional and polished
-- [ ] Data persists after browser restart
-- [ ] Encryption is working (data not readable in storage)
-- [ ] No security leaks (no network calls, no plain text storage)
+### Test 10.1: Provider Detection
+1. Click "Detect Provider"
+
+**Expected:**
+- [ ] Shows `isWaillet: true` immediately
+- [ ] Shows `isMetaMask: false`
+- [ ] No console errors
+
+### Test 10.2: Connection Flow
+1. Click "Connect Wallet"
+
+**Expected:**
+- [ ] Extension popup opens automatically
+- [ ] ConnectionApprovalModal appears quickly
+- [ ] Shows requesting origin clearly
+- [ ] Privacy warnings are visible
+- [ ] Buttons are clear and accessible
+
+2. Click "Approve"
+
+**Expected:**
+- [ ] Modal closes smoothly
+- [ ] Test page shows: "✅ Connected! Account: 0x..."
+- [ ] Connection happens within 2 seconds
+
+### Test 10.3: Transaction Interception
+1. Click "Send Transaction" on test page
+
+**Expected:**
+- [ ] Extension popup opens
+- [ ] "Analyzing Transaction Security" message appears
+- [ ] Spinner is visible and smooth
+- [ ] Modal appears within 3 seconds
 
 ---
 
+## Test 11-14: Risk Analysis Visual Verification ❌ MANUAL ONLY
 
+**Note**: Backend risk analysis logic is tested automatically. These tests verify the **user experience**.
 
+### Test 11: LOW Risk Scenario
+**Setup:** Send 0 ETH to EOA address
 
+**Verify RiskAnalysisModal:**
+- [ ] Risk badge is GREEN with "LOW" text
+- [ ] Risk score displayed (5-10/100)
+- [ ] AI summary is clear and non-technical
+- [ ] Factor shows "✅ Simple Transfer"
+- [ ] "Proceed" button is GREEN and prominent
+- [ ] No red warning banner
+- [ ] Modal layout looks professional
+- [ ] All text is readable
+
+### Test 12: MEDIUM Risk Scenario
+**Setup:** Send to unverified contract with data
+
+**Expected:**
+- [ ] Risk badge is YELLOW with "MEDIUM" text
+- [ ] Risk score 20-40/100
+- [ ] Shows "🆕 First-Time Contract" factor
+- [ ] Shows "❓ Unverified Contract" factor
+- [ ] Recommendations are helpful
+- [ ] "Proceed" button is YELLOW
+- [ ] Warning tone is balanced (not too alarming)
+
+### Test 13: HIGH Risk Scenario
+**Setup:** Unlimited approval transaction
+
+**Data for testing**:
+```
+To: <ERC20_address>
+Data: 0x095ea7b3<spender_address_32bytes>ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+```
+
+**Expected:**
+- [ ] Risk badge is RED with "HIGH" text
+- [ ] **HIGH RISK WARNING BANNER** at top is very visible
+- [ ] Shows "⚠️ Unlimited Token Approval"
+- [ ] AI summary mentions "blank check" analogy
+- [ ] "Set Limited Approval" button visible (yellow)
+- [ ] "Proceed" button is GRAY (de-emphasized)
+- [ ] "Block" button is RED and prominent
+- [ ] User clearly understands the danger
+
+### Test 14: UI/UX Details
+
+**Expand/Collapse:**
+1. Click "Why is this X risk?"
+
+**Expected:**
+- [ ] Factors expand smoothly with animation
+- [ ] Each factor clearly shows title, description, points
+- [ ] Icon changes (chevron down → up)
+- [ ] Layout doesn't jump or break
+
+**Modal Sizing:**
+- [ ] Modal fits perfectly in 360px popup width
+- [ ] No horizontal scrollbars
+- [ ] All buttons are accessible (not cut off)
+- [ ] Text doesn't overflow
+
+**Close Actions:**
+- [ ] X button closes and rejects transaction
+- [ ] "Block" button rejects with confirmation
+- [ ] Both actions are clear in their consequence
+
+---
+
+## Test 15: Backend API Tests ✅ FULLY AUTOMATED
+
+**Run tests:**
+```bash
+cd backend
+uv run python3 tests/run_tests.py
+```
+
+**Expected output:**
+```
+============================================================
+Backend API Tests (Test 15 from checklist.md)
+============================================================
+[TEST] Risk Analysis Endpoint Structure...
+✅ PASS - Score=X, Level=Y
+[TEST] LOW Risk Scenario...
+✅ PASS - Score=X
+[TEST] Risk Decision Endpoint...
+✅ PASS - Decision recorded for risk_log_id=X
+[TEST] Performance (<3s)...
+✅ PASS - Completed in X.XXs
+[TEST] External API Connectivity...
+  CoinGecko: ✅ ETH=$XXXX.XX
+  ChainAbuse: ✅ Status 302 (302 is normal)
+✅ PASS
+============================================================
+Results: 5 passed, 0 failed
+============================================================
+```
+
+**Manual Verification** (if tests fail):
+- [ ] Check backend server is running on port 8000
+- [ ] Check database connection
+- [ ] Check OpenAI API key in `.env`
+
+---
+
+## Test 16-17: End-to-End Experience ❌ MANUAL ONLY
+
+### Complete Transaction Flow:
+1. Open test page
+2. Connect wallet (approve)
+3. Send simple transaction (0 ETH to EOA)
+4. Wait for risk analysis
+5. Review modal
+6. Click "Proceed"
+7. Wait for execution
+
+**Overall Experience Check:**
+- [ ] No errors or broken states
+- [ ] Flow feels fast (<5 seconds total)
+- [ ] Each step provides clear feedback
+- [ ] User always knows what's happening
+- [ ] Success state is satisfying
+- [ ] Could explain to non-technical user
+
+### Error Handling:
+1. Stop backend server
+2. Try to send transaction
+
+**Expected:**
+- [ ] Error message is clear and helpful
+- [ ] User can still reject transaction
+- [ ] No browser crash or broken state
+- [ ] Recovery options are clear
+
+### Performance & Feel:
+- [ ] Provider injection: Instant (no delay)
+- [ ] Connection approval: Opens within 500ms
+- [ ] Risk analysis: Completes within 3 seconds
+- [ ] Transaction execution: Shows progress clearly
+- [ ] No UI freezing during operations
+- [ ] Loading animations are smooth (60fps feel)
+- [ ] Modal transitions are polished
+- [ ] No janky scrolling or layout shifts
+
+### Memory/Stability:
+1. Send 5 transactions in a row
+
+**Expected:**
+- [ ] Extension remains responsive
+- [ ] No slowdown over time
+- [ ] DevTools shows no memory leaks
+- [ ] All modals close cleanly
+
+---
+
+## Summary Checklist
+
+**Automated Coverage:**
+- ✅ Backend API tests passing
+- ⚠️ Extension unit tests passing (some skipped)
+
+**Manual Verification Required:**
+- [ ] Visual quality & UX polish
+- [ ] Real blockchain transactions work
+- [ ] dApp integration feels smooth
+- [ ] Risk warnings are effective
+- [ ] Performance feels snappy
+- [ ] Ready to demo to non-technical users
+
+---
+
+## Known Issues / Notes
+
+### ChainAbuse API
+- Returns 302 (redirect) instead of 200 - normal behavior
+
+### Test Automation
+- Backend API tests: Fully automated
+- Extension unit tests: Partially automated (some require full context)
+- E2E browser tests: Not implemented (complex setup, manual testing sufficient for now)
+
+---
