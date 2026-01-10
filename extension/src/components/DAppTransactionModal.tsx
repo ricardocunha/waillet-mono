@@ -4,6 +4,7 @@ import { formatUnits } from 'ethers';
 import { api, type RiskAnalysisResponse } from '../services/api';
 import { RiskAnalysisModal } from './RiskAnalysisModal';
 import { useWallet } from '../context/WalletContext';
+import { WalletService } from '../services/wallet';
 
 interface DAppTransactionModalProps {
   txParams: {
@@ -44,6 +45,9 @@ export const DAppTransactionModal: React.FC<DAppTransactionModalProps> = ({
 
   // Auto-trigger risk analysis on mount
   useEffect(() => {
+    console.log('[DAppTransactionModal] Component mounted with txParams:', txParams);
+    console.log('[DAppTransactionModal] Origin:', origin);
+    console.log('[DAppTransactionModal] Account:', account);
     performRiskAnalysis();
   }, []);
 
@@ -89,14 +93,14 @@ export const DAppTransactionModal: React.FC<DAppTransactionModalProps> = ({
     try {
       console.log('[DAppTransactionModal] Executing transaction...');
 
-      // Send transaction via background script
-      const txHash = await sendTransaction({
-        from: account.address,
-        to: txParams.to,
-        value: txParams.value || '0x0',
-        data: txParams.data || '0x',
-        chain: account.chain || 'ethereum' // Use actual chain from account
-      });
+      // Send transaction using WalletService
+      const txHash = await WalletService.sendTransaction(
+        account.privateKey,
+        txParams.to,
+        txParams.value || '0x0',
+        txParams.data || '0x',
+        account.chain || 'ethereum'
+      );
 
       // Record decision
       await api.recordRiskDecision({
@@ -148,33 +152,6 @@ export const DAppTransactionModal: React.FC<DAppTransactionModalProps> = ({
     }
 
     onReject('User rejected transaction');
-  };
-
-  // Helper function to send transaction
-  const sendTransaction = async (_params: {
-    from: string;
-    to: string;
-    value: string;
-    data: string;
-    chain: string;
-  }): Promise<string> => {
-    // TODO: Integrate with actual transaction sending logic
-    // For now, simulate transaction execution
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulate random success/failure for testing
-        const success = Math.random() > 0.1; // 90% success rate
-        if (success) {
-          // Generate fake tx hash
-          const fakeTxHash = '0x' + Array.from({ length: 64 }, () =>
-            Math.floor(Math.random() * 16).toString(16)
-          ).join('');
-          resolve(fakeTxHash);
-        } else {
-          reject(new Error('Insufficient funds for gas'));
-        }
-      }, 2000);
-    });
   };
 
   return (

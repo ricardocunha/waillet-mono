@@ -2,6 +2,17 @@ import { HDNodeWallet, Wallet, JsonRpcProvider, parseUnits, formatUnits, Contrac
 
 const BACKEND_RPC_PROXY = 'http://localhost:8000/api/rpc/proxy';
 
+// Ethers error codes
+enum EthersErrorCode {
+  INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS',
+  CALL_EXCEPTION = 'CALL_EXCEPTION',
+  NONCE_EXPIRED = 'NONCE_EXPIRED',
+  REPLACEMENT_UNDERPRICED = 'REPLACEMENT_UNDERPRICED',
+  UNPREDICTABLE_GAS_LIMIT = 'UNPREDICTABLE_GAS_LIMIT',
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  TIMEOUT = 'TIMEOUT',
+}
+
 class ProxiedJsonRpcProvider extends JsonRpcProvider {
   private chainName: string;
 
@@ -177,18 +188,61 @@ export class WalletService {
     const provider = await this.getProvider(chain);
     const wallet = new Wallet(privateKey, provider);
 
-    const tx = await wallet.sendTransaction({
-      to,
-      value: value === '0x0' || value === '0' ? 0 : value,
-      data: data || '0x',
-    });
+    try {
+      // Check if user has enough ETH for gas
+      const balance = await provider.getBalance(wallet.address);
+      if (balance === BigInt(0)) {
+        throw new Error(`Insufficient ETH for gas on ${chain}. Your balance is 0 ETH.`);
+      }
 
-    const receipt = await tx.wait();
-    if (!receipt) {
-      throw new Error('Transaction failed');
+      console.log(`[WalletService] Sending transaction on ${chain}:`, { to, value, data: data?.slice(0, 20) });
+
+      const tx = await wallet.sendTransaction({
+        to,
+        value: value === '0x0' || value === '0' ? 0 : value,
+        data: data || '0x',
+      });
+
+      console.log(`[WalletService] Transaction sent:`, tx.hash);
+
+      const receipt = await tx.wait();
+      if (!receipt) {
+        throw new Error('Transaction failed');
+      }
+
+      console.log(`[WalletService] Transaction confirmed:`, tx.hash);
+      return tx.hash;
+    } catch (error: any) {
+      console.error('[WalletService] Transaction error:', error);
+
+      // Parse ethers errors to provide better messages
+      switch (error.code) {
+        case EthersErrorCode.INSUFFICIENT_FUNDS:
+          throw new Error(`Insufficient ETH for gas on ${chain}. Please add ETH to your wallet.`);
+
+        case EthersErrorCode.CALL_EXCEPTION:
+          throw new Error(`Transaction would fail: ${error.reason || 'Contract execution reverted'}. You may not have enough ETH for gas.`);
+
+        case EthersErrorCode.UNPREDICTABLE_GAS_LIMIT:
+          throw new Error(`Cannot estimate gas. You may not have enough ETH for gas on ${chain}.`);
+
+        case EthersErrorCode.NONCE_EXPIRED:
+          throw new Error('Transaction nonce expired. Please try again.');
+
+        case EthersErrorCode.REPLACEMENT_UNDERPRICED:
+          throw new Error('Gas price too low. Please try again with higher gas.');
+
+        case EthersErrorCode.NETWORK_ERROR:
+          throw new Error('Network error. Please check your connection and try again.');
+
+        case EthersErrorCode.TIMEOUT:
+          throw new Error('Transaction timed out. Please try again.');
+
+        default:
+          // Re-throw with original message if we don't have a better one
+          throw new Error(error.message || 'Transaction failed');
+      }
     }
-
-    return tx.hash;
   }
 
   static async sendNativeToken(
