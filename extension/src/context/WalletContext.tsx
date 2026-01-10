@@ -16,7 +16,7 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
-const SESSION_TIMEOUT = 30 * 1000; // 30 seconds in milliseconds
+const SESSION_TIMEOUT = 300 * 1000; // 300 seconds (5 minutes) in milliseconds
 
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [account, setAccount] = useState<WalletAccount | null>(null);
@@ -32,7 +32,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       sessionStorage.setItem('walletSession', JSON.stringify(sessionData));
       localStorage.setItem('walletSession', JSON.stringify(sessionData));
-      console.log('✅ Session saved, expires in 30 seconds');
+      console.log('✅ Session saved, expires in 300 seconds (5 minutes)');
     } catch (err) {
       console.error('Failed to save session:', err);
     }
@@ -53,7 +53,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const elapsed = now - session.timestamp;
       const remaining = SESSION_TIMEOUT - elapsed;
 
-      console.log(`⏱️  Session age: ${Math.round(elapsed/1000)}s / 30s (${Math.round(remaining/1000)}s remaining)`);
+      console.log(`⏱️  Session age: ${Math.round(elapsed/1000)}s / 300s (${Math.round(remaining/1000)}s remaining)`);
 
       if (elapsed < SESSION_TIMEOUT) {
         console.log('✅ Session valid, auto-unlocking');
