@@ -19,6 +19,7 @@
 
 - **Go** 1.23+
 - **Node.js** 20+
+- **Python** 3.11+
 - **Docker & Docker Compose** (for MySQL)
 - **Chrome** or **Firefox** browser
 
