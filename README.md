@@ -18,7 +18,7 @@
 ## Prerequisites
 
 - **Go** 1.23+
-- **Node.js** 18+
+- **Node.js** 20+
 - **Docker & Docker Compose** (for MySQL)
 - **Chrome** or **Firefox** browser
 
