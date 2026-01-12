@@ -20,6 +20,7 @@ export enum IntentAction {
   TRANSFER = 'transfer',
   SWAP = 'swap',
   APPROVE = 'approve',
+  SAVE_FAVORITE = 'save_favorite',
   UNKNOWN = 'unknown',
 }
 

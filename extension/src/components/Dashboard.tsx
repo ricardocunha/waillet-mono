@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Send, RefreshCw, ChevronDown } from 'lucide-react';
+import { Copy, Check, Send, RefreshCw, ChevronDown, Star } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { WalletService, TOKENS } from '../services/wallet';
 import { SendTransactionModal } from './SendTransactionModal';
+import { SaveFavoriteModal } from './SaveFavoriteModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
 import { CHAIN_DISPLAY, SUPPORTED_CHAINS, StorageKey } from '../constants';
 
@@ -18,7 +19,7 @@ interface TokenBalance {
 const TOKEN_PRICES: Partial<Record<Token, number>> = {
   [Token.ETH]: 2500,
   [Token.USDT]: 1,
-  [Token.LINK]: 15,
+  [Token.USDC]: 1,
 };
 
 export const Dashboard: React.FC = () => {
@@ -32,6 +33,7 @@ export const Dashboard: React.FC = () => {
   const [totalUsd, setTotalUsd] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [showSaveFavoriteModal, setShowSaveFavoriteModal] = useState(false);
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
 
   console.log('📊 Dashboard render:', {
@@ -275,16 +277,26 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Send Button */}
-      <div className="p-4">
+      {/* Action Buttons */}
+      <div className="p-4 flex gap-2">
         <button
           onClick={() => setShowSendModal(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
         >
           <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
             <Send size={16} />
           </div>
-          <span className="font-semibold text-sm">Send Transaction</span>
+          <span className="font-semibold text-sm">Send</span>
+        </button>
+
+        <button
+          onClick={() => setShowSaveFavoriteModal(true)}
+          className="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+        >
+          <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center">
+            <Star size={16} />
+          </div>
+          <span className="font-semibold text-sm">Favorite</span>
         </button>
       </div>
 
@@ -341,6 +353,9 @@ export const Dashboard: React.FC = () => {
 
       {/* Modals */}
       {showSendModal && <SendTransactionModal onClose={() => setShowSendModal(false)} />}
+      {showSaveFavoriteModal && (
+        <SaveFavoriteModal onClose={() => setShowSaveFavoriteModal(false)} />
+      )}
     </div>
   );
 };

@@ -84,12 +84,12 @@ export enum Chain {
 export enum Token {
   ETH = 'ETH',
   USDT = 'USDT',
-  LINK = 'LINK'
+  USDC = 'USDC'
 }
 
 // Token availability per chain
 export const CHAIN_TOKENS: Partial<Record<Chain, Token[]>> = {
-  [Chain.ETHEREUM]: [Token.ETH, Token.USDT, Token.LINK],
-  [Chain.SEPOLIA]: [Token.ETH, Token.USDT, Token.LINK],
-  [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.LINK]
+  [Chain.ETHEREUM]: [Token.ETH, Token.USDT, Token.USDC],
+  [Chain.SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC],
+  [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC]
 }

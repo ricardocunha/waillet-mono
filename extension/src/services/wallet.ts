@@ -140,10 +140,10 @@ export const TOKENS: Record<string, Record<string, string>> = {
     sepolia: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
     'base-sepolia': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
   },
-  LINK: {
-    ethereum: '0x514910771AF9Ca656af840dff83E8264EcF986CA',
-    sepolia: '0x779877A7B0D9E8603169DdbD7836e478b4624789',
-    'base-sepolia': '0x779877A7B0D9E8603169DdbD7836e478b4624789',
+  USDC: {
+    ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    sepolia: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   },
 };
 

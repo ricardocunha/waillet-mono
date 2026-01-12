@@ -36,6 +36,7 @@ export interface IntentResponse {
   token?: string;
   chain?: string;
   resolved_from?: string;
+  alias?: string;
   confidence: number;
   error?: string;
 }
