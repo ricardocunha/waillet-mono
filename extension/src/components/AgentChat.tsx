@@ -3,6 +3,7 @@ import { Send, Bot, User, AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
+import { SaveFavoriteModal } from './SaveFavoriteModal';
 import type { IntentResponse } from '../types/api';
 import { MessageType, IntentAction } from '../constants/enums';
 
@@ -27,7 +28,9 @@ export const AgentChat: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSaveFavoriteModal, setShowSaveFavoriteModal] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<IntentResponse | null>(null);
+  const [saveFavoriteIntent, setSaveFavoriteIntent] = useState<IntentResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -112,8 +115,19 @@ export const AgentChat: React.FC = () => {
       return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on ${intent.chain}.\n\nClick "Send Transaction" below to proceed.`;
     }
 
+    if (intent.action === IntentAction.SAVE_FAVORITE) {
+      const parts = [];
+      if (intent.alias) parts.push(`Alias: **${intent.alias}**`);
+      if (intent.to) parts.push(`Address: ${intent.to}`);
+      if (intent.token) parts.push(`Token: ${intent.token}`);
+      if (intent.chain) parts.push(`Network: ${intent.chain}`);
+
+      const details = parts.length > 0 ? '\n' + parts.join('\n') : '';
+      return `Got it! I'll help you save this favorite.${details}\n\nClick "Save Favorite" below to confirm.`;
+    }
+
     if (intent.action === IntentAction.UNKNOWN) {
-      return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance"\n• "transfer 0.1 ETH to 0x123..."\n• "show my favorites"`;
+      return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance"\n• "transfer 0.1 ETH to 0x123..."\n• "save favorite johndoe eth"`;
     }
 
     return `Parsed action: ${intent.action}\nConfidence: ${intent.confidence}%`;
@@ -149,6 +163,37 @@ export const AgentChat: React.FC = () => {
   const handleExecuteTransaction = (intent: IntentResponse) => {
     setPendingIntent(intent);
     setShowConfirmModal(true);
+  };
+
+  const handleExecuteSaveFavorite = (intent: IntentResponse) => {
+    setSaveFavoriteIntent(intent);
+    setShowSaveFavoriteModal(true);
+  };
+
+  const handleSaveFavoriteComplete = () => {
+    setShowSaveFavoriteModal(false);
+    setSaveFavoriteIntent(null);
+
+    const successMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      type: MessageType.SYSTEM,
+      content: '✅ Favorite saved successfully! You can now use it in transactions.',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, successMessage]);
+  };
+
+  const handleSaveFavoriteCancel = () => {
+    setShowSaveFavoriteModal(false);
+    setSaveFavoriteIntent(null);
+
+    const cancelMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      type: MessageType.SYSTEM,
+      content: 'Save favorite cancelled.',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, cancelMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -224,6 +269,25 @@ export const AgentChat: React.FC = () => {
                   </button>
                 </div>
               )}
+
+              {message.intent && message.intent.action === IntentAction.SAVE_FAVORITE && !message.intent.error && (
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 bg-slate-700/50 rounded border border-slate-600 text-xs">
+                    <div className="font-semibold mb-1">Favorite Preview:</div>
+                    {message.intent.alias && <div>Alias: {message.intent.alias}</div>}
+                    {message.intent.to && <div>Address: {message.intent.to}</div>}
+                    {message.intent.token && <div>Token: {message.intent.token}</div>}
+                    {message.intent.chain && <div>Network: {message.intent.chain}</div>}
+                    <div className="mt-1 text-slate-400">Confidence: {message.intent.confidence}%</div>
+                  </div>
+                  <button
+                    onClick={() => handleExecuteSaveFavorite(message.intent!)}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded text-sm font-semibold transition-colors"
+                  >
+                    Save Favorite
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -271,6 +335,14 @@ export const AgentChat: React.FC = () => {
           intent={pendingIntent}
           onConfirm={handleTransactionConfirm}
           onCancel={handleTransactionCancel}
+        />
+      )}
+
+      {showSaveFavoriteModal && (
+        <SaveFavoriteModal
+          prefilledIntent={saveFavoriteIntent}
+          onClose={handleSaveFavoriteCancel}
+          onSuccess={handleSaveFavoriteComplete}
         />
       )}
     </div>
