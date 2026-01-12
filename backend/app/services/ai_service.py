@@ -34,16 +34,18 @@ Saved favorites (shortcuts):
 
 Parse the user's command and return ONLY a JSON object (no markdown, no explanation) with these fields:
 {{
-    "action": "transfer" | "swap" | "approve" | "unknown",
+    "action": "transfer" | "swap" | "approve" | "save_favorite" | "unknown",
     "to": recipient address - use ONE of these:
         - If favorite mentioned: use exact address from favorites list above
         - If ENS name (*.eth): preserve it exactly as given (e.g., "vitalik.eth")
         - If 0x address: use it exactly as given
         - If unknown recipient: set action="unknown" and explain in error
-    "value": amount as string,
+        - For save_favorite: the address to save
+    "value": amount as string (null for save_favorite),
     "token": token symbol (e.g., "USDC", "ETH"),
-    "chain": blockchain name (e.g., "ethereum", "polygon", "bsc"),
+    "chain": blockchain name (e.g., "ethereum", "base", "sepolia"),
     "resolved_from": favorite alias if used (or null),
+    "alias": ONLY for save_favorite action - the nickname/alias to save (or null for other actions),
     "confidence": 0-100 (how confident you are),
     "error": error message if command is unclear (or null)
 }}
@@ -52,7 +54,12 @@ IMPORTANT:
 - If a favorite is mentioned, use its exact address and chain from the list above
 - If an ENS name is mentioned (like "vitalik.eth"), return it EXACTLY as given (don't make up addresses)
 - Never invent placeholder addresses like "0xVitalikAddress" - if you don't know the address, return the ENS name or set action="unknown"
-- Use common token symbols (USDC, ETH, BNB, MATIC, etc.)"""
+- Use common token symbols (USDC, ETH, USDT, etc.)
+
+SAVE FAVORITE EXAMPLES:
+- "save favorite johndoe eth" → {{"action": "save_favorite", "alias": "johndoe", "token": "ETH", "chain": "ethereum", "to": null}}
+- "save 0x123... as binance on ethereum" → {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "chain": "ethereum"}}
+- "add favorite alice.eth USDT" → {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "token": "USDT", "chain": "ethereum"}}"""
 
         try:
             response = self.client.chat.completions.create(
