@@ -76,7 +76,7 @@ window.addEventListener('message', async (event) => {
     // Handle extension context invalidation
     if (error.message && error.message.includes('Extension context invalidated')) {
       console.warn('[Waillet Content] Extension was reloaded. Please refresh this page to reconnect.');
-      sendErrorToInpage(message.id, 'Waillet extension was updated. Please refresh this page.', 4900);
+      sendErrorToInpage(message.id, 'wAIllet extension was updated. Please refresh this page.', 4900);
 
       // Show a user-friendly notification
       const notification = document.createElement('div');
@@ -96,7 +96,7 @@ window.addEventListener('message', async (event) => {
         max-width: 300px;
       `;
       notification.innerHTML = `
-        <strong style="color: #a855f7;">Waillet Updated</strong><br>
+        <strong style="color: #a855f7;">wAIllet Updated</strong><br>
         Please refresh this page to reconnect.
         <button onclick="window.location.reload()" style="
           display: block;

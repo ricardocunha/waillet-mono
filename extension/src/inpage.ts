@@ -287,7 +287,7 @@ const announceProvider = () => {
     detail: Object.freeze({
       info: {
         uuid: getUUID(),
-        name: 'Waillet',
+        name: 'wAIllet',
         icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23a855f7" width="100" height="100" rx="20"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white" font-family="Arial">W</text></svg>',
         rdns: 'com.waillet'
       },

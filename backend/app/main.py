@@ -4,7 +4,7 @@ from .config import settings
 from .routers import favorites, policies, ai, rpc, simulation
 
 app = FastAPI(
-    title="Waillet Backend API",
+    title="wAIllet Backend API",
     description="AI-powered wallet backend with favorites and security policies",
     version="0.1.0",
     debug=settings.DEBUG
@@ -29,7 +29,7 @@ app.include_router(simulation.router, prefix="/api")
 def root():
     return {
         "status": "ok",
-        "service": "Waillet Backend API",
+        "service": "wAIllet Backend API",
         "version": "0.1.0"
     }
 
