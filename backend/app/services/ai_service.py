@@ -34,14 +34,15 @@ Saved favorites (shortcuts):
 
 Parse the user's command and return ONLY a JSON object (no markdown, no explanation) with these fields:
 {{
-    "action": "transfer" | "swap" | "approve" | "save_favorite" | "unknown",
+    "action": "transfer" | "swap" | "approve" | "save_favorite" | "list_favorites" | "unknown",
     "to": recipient address - use ONE of these:
         - If favorite mentioned: use exact address from favorites list above
         - If ENS name (*.eth): preserve it exactly as given (e.g., "vitalik.eth")
         - If 0x address: use it exactly as given
         - If unknown recipient: set action="unknown" and explain in error
         - For save_favorite: the address to save
-    "value": amount as string (null for save_favorite),
+        - For list_favorites: null
+    "value": amount as string (null for save_favorite/list_favorites),
     "token": token symbol (e.g., "USDC", "ETH"),
     "chain": blockchain name (e.g., "ethereum", "base", "sepolia"),
     "resolved_from": favorite alias if used (or null),
@@ -59,7 +60,14 @@ IMPORTANT:
 SAVE FAVORITE EXAMPLES:
 - "save favorite johndoe eth" → {{"action": "save_favorite", "alias": "johndoe", "token": "ETH", "chain": "ethereum", "to": null}}
 - "save 0x123... as binance on ethereum" → {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "chain": "ethereum"}}
-- "add favorite alice.eth USDT" → {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "token": "USDT", "chain": "ethereum"}}"""
+- "add favorite alice.eth USDT" → {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "token": "USDT", "chain": "ethereum"}}
+
+LIST FAVORITES EXAMPLES:
+- "show my favorites" → {{"action": "list_favorites", "confidence": 100}}
+- "list favorites" → {{"action": "list_favorites", "confidence": 100}}
+- "what are my saved addresses" → {{"action": "list_favorites", "confidence": 95}}
+- "my contacts" → {{"action": "list_favorites", "confidence": 90}}
+- "show saved" → {{"action": "list_favorites", "confidence": 85}}"""
 
         try:
             response = self.client.chat.completions.create(

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Send, RefreshCw, ChevronDown, Star } from 'lucide-react';
+import { Copy, Check, Send, RefreshCw, ChevronDown, Star, MoreVertical, Settings } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { WalletService, TOKENS } from '../services/wallet';
 import { SendTransactionModal } from './SendTransactionModal';
 import { SaveFavoriteModal } from './SaveFavoriteModal';
+import { AccountSettingsModal } from './AccountSettingsModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
 import { CHAIN_DISPLAY, SUPPORTED_CHAINS, StorageKey } from '../constants';
 
@@ -35,6 +36,8 @@ export const Dashboard: React.FC = () => {
   const [showSendModal, setShowSendModal] = useState(false);
   const [showSaveFavoriteModal, setShowSaveFavoriteModal] = useState(false);
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
 
   console.log('📊 Dashboard render:', {
     accountChain: account?.chain,
@@ -191,14 +194,42 @@ export const Dashboard: React.FC = () => {
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-bold">wAIllet</h1>
-          <button
-            onClick={() => fetchBalances()}
-            disabled={isRefreshing}
-            className="p-1.5 bg-purple-700/50 hover:bg-purple-700 rounded-full transition-colors disabled:opacity-50"
-            title="Refresh balances"
-          >
-            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => fetchBalances()}
+              disabled={isRefreshing}
+              className="p-1.5 bg-purple-700/50 hover:bg-purple-700 rounded-full transition-colors disabled:opacity-50"
+              title="Refresh balances"
+            >
+              <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+
+            {/* Settings Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSettingsMenu(prev => !prev)}
+                className="p-1.5 bg-purple-700/50 hover:bg-purple-700 rounded-full transition-colors"
+                title="Menu"
+              >
+                <MoreVertical size={14} />
+              </button>
+
+              {showSettingsMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50">
+                  <button
+                    onClick={() => {
+                      setShowSettingsMenu(false);
+                      setShowAccountSettingsModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors rounded-lg"
+                  >
+                    <Settings size={16} className="text-purple-400" />
+                    <span className="font-medium">Account Settings</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Total USD Value */}
@@ -355,6 +386,9 @@ export const Dashboard: React.FC = () => {
       {showSendModal && <SendTransactionModal onClose={() => setShowSendModal(false)} />}
       {showSaveFavoriteModal && (
         <SaveFavoriteModal onClose={() => setShowSaveFavoriteModal(false)} />
+      )}
+      {showAccountSettingsModal && (
+        <AccountSettingsModal onClose={() => setShowAccountSettingsModal(false)} />
       )}
     </div>
   );

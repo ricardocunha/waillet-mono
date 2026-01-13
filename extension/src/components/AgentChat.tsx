@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, Bot, User, AlertCircle, Loader2, Star } from 'lucide-react';
 import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
@@ -124,6 +124,13 @@ export const AgentChat: React.FC = () => {
 
       const details = parts.length > 0 ? '\n' + parts.join('\n') : '';
       return `Got it! I'll help you save this favorite.${details}\n\nClick "Save Favorite" below to confirm.`;
+    }
+
+    if (intent.action === IntentAction.LIST_FAVORITES) {
+      if (!intent.favorites || intent.favorites.length === 0) {
+        return `You don't have any saved favorites yet.\n\nTry saving one with: "save favorite binance 0x123..."`;
+      }
+      return `Here are your saved favorites:`;
     }
 
     if (intent.action === IntentAction.UNKNOWN) {
@@ -286,6 +293,26 @@ export const AgentChat: React.FC = () => {
                   >
                     Save Favorite
                   </button>
+                </div>
+              )}
+
+              {message.intent && message.intent.action === IntentAction.LIST_FAVORITES && message.intent.favorites && message.intent.favorites.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {message.intent.favorites.map((fav, index) => (
+                    <div key={index} className="p-3 bg-slate-700/50 rounded border border-slate-600 text-xs">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star size={14} className="text-purple-400" />
+                        <span className="font-semibold text-sm">{fav.alias}</span>
+                      </div>
+                      <div className="space-y-1 text-slate-300">
+                        <div className="font-mono text-xs break-all">{fav.address}</div>
+                        <div className="flex gap-2 text-slate-400">
+                          <span>{fav.chain}</span>
+                          {fav.asset && <span>• {fav.asset}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

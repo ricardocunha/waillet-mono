@@ -29,6 +29,13 @@ export interface IntentRequest {
   wallet_address: string;
 }
 
+export interface FavoriteItem {
+  alias: string;
+  address: string;
+  chain: string;
+  asset?: string;
+}
+
 export interface IntentResponse {
   action: IntentAction;
   to?: string;
@@ -39,6 +46,7 @@ export interface IntentResponse {
   alias?: string;
   confidence: number;
   error?: string;
+  favorites?: FavoriteItem[];
 }
 
 export interface Transaction {
