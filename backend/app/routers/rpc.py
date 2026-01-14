@@ -34,24 +34,21 @@ def get_rpc_url(chain: str) -> str:
         elif chain == "base":
             return f"https://base-mainnet.g.alchemy.com/v2/{settings.ALCHEMY_API_KEY}"
 
-    if settings.INFURA_API_KEY:
-        if chain == "ethereum":
-            return f"https://mainnet.infura.io/v3/{settings.INFURA_API_KEY}"
-        elif chain == "sepolia":
-            return f"https://sepolia.infura.io/v3/{settings.INFURA_API_KEY}"
-
     fallback_urls = {
         "ethereum": "https://eth.llamarpc.com",
         "sepolia": "https://rpc2.sepolia.org",
         "base-sepolia": "https://sepolia.base.org",
         "base": "https://mainnet.base.org",
+        "bsc": "https://bsc-dataseed.binance.org",
+        "bsc-testnet": "https://data-seed-prebsc-1-s1.binance.org:8545",
     }
 
     url = fallback_urls.get(chain)
     if not url:
         raise HTTPException(status_code=400, detail=f"Unsupported chain: {chain}")
 
-    logger.warning(f"⚠️ No API key configured for {chain}. Using public endpoint (unreliable).")
+    if chain not in ["bsc", "bsc-testnet"]:
+        logger.warning(f"⚠️ No API key configured for {chain}. Using public endpoint (unreliable).")
     return url
 
 @router.post("/proxy")
@@ -105,11 +102,11 @@ async def proxy_rpc(request: RPCRequest) -> Dict[str, Any]:
 async def rpc_health():
     alchemy_configured = bool(settings.ALCHEMY_API_KEY and settings.ALCHEMY_API_KEY != "your_alchemy_api_key_here")
     infura_configured = bool(settings.INFURA_API_KEY and settings.INFURA_API_KEY != "your_infura_key_here")
-    
+
     return {
         "status": "ok",
         "alchemy_configured": alchemy_configured,
         "infura_configured": infura_configured,
-        "supported_chains": ["ethereum", "sepolia", "base", "base-sepolia"],
+        "supported_chains": ["ethereum", "sepolia", "base", "base-sepolia", "bsc", "bsc-testnet"],
         "recommended": "Add ALCHEMY_API_KEY to backend/.env for best reliability"
     }

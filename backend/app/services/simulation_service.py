@@ -188,6 +188,7 @@ class SimulationService:
             "ethereum": "ETH",
             "polygon": "MATIC",
             "bsc": "BNB",
+            "bsc-testnet": "BNB",
             "base": "ETH"
         }
         return native_tokens.get(self.chain.lower(), "ETH")
