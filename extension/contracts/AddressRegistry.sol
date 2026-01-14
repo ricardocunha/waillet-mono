@@ -63,4 +63,135 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
     // ==================== CONSTRUCTOR ====================
 
     constructor() Ownable(msg.sender) {}
+
+    // ==================== EXTERNAL FUNCTIONS ====================
+
+    /**
+     * @notice Register a new identifier hash to caller's address
+     * @param identifierHash keccak256 hash of the identifier (email or alias)
+     * @dev Identifier should be normalized (lowercase, trimmed) before hashing off-chain
+     */
+    function register(bytes32 identifierHash) external nonReentrant {
+        if (paused) revert RegistryPaused();
+        if (registry[identifierHash] != address(0)) revert AliasAlreadyRegistered();
+        if (userAliases[msg.sender].length >= MAX_ALIASES_PER_ADDRESS) revert MaxAliasesReached();
+
+        registry[identifierHash] = msg.sender;
+        aliasIndex[identifierHash] = userAliases[msg.sender].length;
+        userAliases[msg.sender].push(identifierHash);
+
+        emit AliasRegistered(identifierHash, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @notice Update an existing registration to a new address
+     * @param identifierHash The identifier hash to update
+     * @param newAddress The new wallet address to register
+     * @dev Only the current owner of the alias can update it
+     */
+    function updateRegistration(bytes32 identifierHash, address newAddress) external nonReentrant {
+        if (paused) revert RegistryPaused();
+        if (registry[identifierHash] != msg.sender) revert NotAliasOwner();
+        if (newAddress == address(0)) revert InvalidAddress();
+        if (newAddress == msg.sender) return; // No change needed
+
+        // Check new address has room for aliases
+        if (userAliases[newAddress].length >= MAX_ALIASES_PER_ADDRESS) revert MaxAliasesReached();
+
+        address oldAddress = msg.sender;
+
+        // Remove from old address's alias list
+        _removeFromUserAliases(oldAddress, identifierHash);
+
+        // Add to new address's alias list
+        registry[identifierHash] = newAddress;
+        aliasIndex[identifierHash] = userAliases[newAddress].length;
+        userAliases[newAddress].push(identifierHash);
+
+        emit AliasUpdated(identifierHash, oldAddress, newAddress, block.timestamp);
+    }
+
+    /**
+     * @notice Remove a registration
+     * @param identifierHash The identifier hash to remove
+     * @dev Only the current owner can remove their alias
+     */
+    function removeRegistration(bytes32 identifierHash) external nonReentrant {
+        if (registry[identifierHash] != msg.sender) revert NotAliasOwner();
+
+        _removeFromUserAliases(msg.sender, identifierHash);
+        delete registry[identifierHash];
+
+        emit AliasRemoved(identifierHash, msg.sender, block.timestamp);
+    }
+
+    // ==================== VIEW FUNCTIONS ====================
+
+    /**
+     * @notice Resolve an identifier hash to its registered address
+     * @param identifierHash keccak256 hash of the identifier
+     * @return The registered wallet address, or address(0) if not found
+     */
+    function resolve(bytes32 identifierHash) external view returns (address) {
+        return registry[identifierHash];
+    }
+
+    /**
+     * @notice Check if an identifier hash is already registered
+     * @param identifierHash The identifier hash to check
+     * @return True if registered, false otherwise
+     */
+    function isRegistered(bytes32 identifierHash) external view returns (bool) {
+        return registry[identifierHash] != address(0);
+    }
+
+    /**
+     * @notice Get all identifier hashes registered to an address
+     * @param wallet The wallet address to query
+     * @return Array of identifier hashes
+     */
+    function getAliases(address wallet) external view returns (bytes32[] memory) {
+        return userAliases[wallet];
+    }
+
+    /**
+     * @notice Get the number of aliases registered to an address
+     * @param wallet The wallet address to query
+     * @return Number of registered aliases
+     */
+    function getAliasCount(address wallet) external view returns (uint256) {
+        return userAliases[wallet].length;
+    }
+
+    // ==================== ADMIN FUNCTIONS ====================
+
+    /**
+     * @notice Pause or unpause the registry
+     * @param _paused New pause state
+     */
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+        emit RegistryPaused(_paused);
+    }
+
+    // ==================== INTERNAL FUNCTIONS ====================
+
+    /**
+     * @dev Remove an identifier hash from a user's alias list
+     * Uses swap-and-pop for gas efficiency
+     */
+    function _removeFromUserAliases(address user, bytes32 identifierHash) internal {
+        bytes32[] storage aliases = userAliases[user];
+        uint256 index = aliasIndex[identifierHash];
+        uint256 lastIndex = aliases.length - 1;
+
+        if (index != lastIndex) {
+            bytes32 lastHash = aliases[lastIndex];
+            aliases[index] = lastHash;
+            aliasIndex[lastHash] = index;
+        }
+
+        aliases.pop();
+        delete aliasIndex[identifierHash];
+    }
 }
