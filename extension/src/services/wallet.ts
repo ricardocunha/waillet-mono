@@ -132,6 +132,20 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'ETH',
     explorer: 'https://etherscan.io',
   },
+  bsc: {
+    name: 'BNB Smart Chain',
+    rpcUrl: 'https://bsc-dataseed.binance.org',
+    chainId: 56,
+    nativeCurrency: 'BNB',
+    explorer: 'https://bscscan.com',
+  },
+  'bsc-testnet': {
+    name: 'BSC Testnet',
+    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    chainId: 97,
+    nativeCurrency: 'BNB',
+    explorer: 'https://testnet.bscscan.com',
+  },
 };
 
 export const TOKENS: Record<string, Record<string, string>> = {
@@ -139,11 +153,13 @@ export const TOKENS: Record<string, Record<string, string>> = {
     ethereum: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     sepolia: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
     'base-sepolia': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+    bsc: '0x55d398326f99059fF775485246999027B3197955',
   },
   USDC: {
     ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     sepolia: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+    bsc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
   },
 };
 

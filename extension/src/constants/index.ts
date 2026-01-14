@@ -16,7 +16,8 @@ export enum StorageKey {
 export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string }>> = {
   [Chain.ETHEREUM]: { name: 'Ethereum', color: '#627EEA' },
   [Chain.SEPOLIA]: { name: 'Sepolia', color: '#A855F7' },
-  [Chain.BASE_SEPOLIA]: { name: 'Base Sepolia', color: '#0052FF' }
+  [Chain.BASE_SEPOLIA]: { name: 'Base Sepolia', color: '#0052FF' },
+  [Chain.BSC]: { name: 'BNB Chain', color: '#F0B90B' }
 };
 
 /**
@@ -25,5 +26,6 @@ export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string 
 export const SUPPORTED_CHAINS: Chain[] = [
   Chain.SEPOLIA,
   Chain.ETHEREUM,
-  Chain.BASE_SEPOLIA
+  Chain.BASE_SEPOLIA,
+  Chain.BSC
 ];

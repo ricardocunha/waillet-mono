@@ -83,6 +83,7 @@ export enum Chain {
 // Supported tokens
 export enum Token {
   ETH = 'ETH',
+  BNB = 'BNB',
   USDT = 'USDT',
   USDC = 'USDC'
 }
@@ -91,5 +92,6 @@ export enum Token {
 export const CHAIN_TOKENS: Partial<Record<Chain, Token[]>> = {
   [Chain.ETHEREUM]: [Token.ETH, Token.USDT, Token.USDC],
   [Chain.SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC],
-  [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC]
+  [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC],
+  [Chain.BSC]: [Token.BNB, Token.USDT, Token.USDC]
 }
