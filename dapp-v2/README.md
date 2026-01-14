@@ -15,6 +15,26 @@ This project is being built incrementally. Check back for updates!
 - Tailwind CSS v4
 - ethers.js v6
 
+## Supported Networks
+
+### Mainnet
+- Ethereum
+- Base
+- BNB Smart Chain
+
+### Testnet
+- Sepolia
+- Base Sepolia
+
+## Bridge Pairs
+
+| Source | Target |
+|--------|--------|
+| Ethereum | Base |
+| Base | Ethereum |
+| Sepolia | Base Sepolia |
+| Base Sepolia | Sepolia |
+
 ## Getting Started
 
 ```bash
