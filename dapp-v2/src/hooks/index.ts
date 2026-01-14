@@ -1,2 +1,2 @@
-// Hooks will be added here
-export {}
+export { useWallet } from './useWallet'
+export type { UseWalletReturn, WalletProviderType } from './useWallet'
