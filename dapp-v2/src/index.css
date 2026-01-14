@@ -1,11 +1,11 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  min-width: 320px;
-  min-height: 100vh;
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
