@@ -19,6 +19,7 @@ interface TokenBalance {
 //TODO connect with coin market kap or coingecko to get tokens real price
 const TOKEN_PRICES: Partial<Record<Token, number>> = {
   [Token.ETH]: 2500,
+  [Token.BNB]: 600,
   [Token.USDT]: 1,
   [Token.USDC]: 1,
 };
@@ -129,8 +130,8 @@ export const Dashboard: React.FC = () => {
       try {
         let balance: string;
 
-        if (symbol === Token.ETH) {
-          // Native token balance
+        if (symbol === Token.ETH || symbol === Token.BNB) {
+          // Native token balance (ETH for Ethereum/Sepolia, BNB for BSC)
           balance = await WalletService.getBalance(account.address, targetChain);
         } else {
           // ERC-20 token balance

@@ -122,59 +122,50 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-40">
-      <div className="bg-slate-800 rounded-lg max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-2 z-40">
+      <div className="bg-slate-800 rounded-lg max-w-md w-full p-4 max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">Account Settings</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Account Settings</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Private Key Section */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Key size={18} className="text-purple-400" />
+            <div className="flex items-center gap-2 mb-1">
+              <Key size={16} className="text-purple-400" />
               <label className="text-sm font-semibold text-slate-300">
                 Private Key
               </label>
             </div>
-
-            {/* Warning */}
-            <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 mb-4">
-              <div className="flex gap-2">
-                <AlertCircle className="flex-shrink-0 text-yellow-400 mt-0.5" size={16} />
-                <p className="text-xs text-yellow-200">
-                  Never share your private key. Anyone with this key can access your funds.
-                </p>
-              </div>
-            </div>
+            <p className="text-xs text-yellow-400 mb-2">Never share your private key - anyone with it can access your funds.</p>
 
             {/* Private Key Display */}
-            <div className="bg-slate-700 border border-slate-600 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 font-mono text-sm break-all">
+            <div className="bg-slate-700 border border-slate-600 rounded-lg p-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 font-mono text-xs break-all text-slate-400 overflow-hidden" style={{ maxHeight: '2.5rem' }}>
                   {showPrivateKey ? account.privateKey : maskPrivateKey()}
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-1 flex-shrink-0">
                   <button
                     onClick={() => setShowPrivateKey(!showPrivateKey)}
-                    className="p-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
-                    title={showPrivateKey ? 'Hide private key' : 'Show private key'}
+                    className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded transition-colors"
+                    title={showPrivateKey ? 'Hide' : 'Show'}
                   >
-                    {showPrivateKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPrivateKey ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                   <button
                     onClick={handleCopyPrivateKey}
-                    className="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
-                    title="Copy to clipboard"
+                    className="p-1.5 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+                    title="Copy"
                   >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                 </div>
               </div>
@@ -183,50 +174,44 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 flex gap-2">
-              <AlertCircle className="flex-shrink-0 text-red-400 mt-0.5" size={16} />
-              <div className="text-sm text-red-200">{error}</div>
+            <div className="bg-red-900/50 border border-red-700 rounded p-2 flex gap-2">
+              <AlertCircle className="flex-shrink-0 text-red-400" size={14} />
+              <div className="text-xs text-red-200">{error}</div>
             </div>
           )}
 
           {/* Address Shortcut Section */}
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <div className="flex items-center gap-2 mb-3">
-              <AtSign size={18} className="text-purple-400" />
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <div className="flex items-center gap-2 mb-1">
+              <AtSign size={16} className="text-purple-400" />
               <label className="text-sm font-semibold text-slate-300">
                 Address Shortcut
               </label>
+              <span className="text-xs text-slate-500 ml-auto">Base Sepolia</span>
             </div>
-
-            {/* Info */}
-            <div className="bg-slate-700/50 rounded-lg p-3 mb-4">
-              <p className="text-xs text-slate-300">
-                Register an email or alias that others can use to send you crypto.
-                Stored on Base Sepolia as a hash for privacy.
-              </p>
-            </div>
+            <p className="text-xs text-slate-400 mb-3">Register an email or alias so others can send you crypto easily.</p>
 
             {/* Registered Shortcuts Display */}
             {registeredShortcuts.length > 0 && (
-              <div className="mb-4">
-                <div className="text-xs text-slate-400 mb-2">Your registered shortcuts:</div>
-                <div className="space-y-2">
+              <div className="mb-3">
+                <div className="text-xs text-slate-400 mb-1">Registered:</div>
+                <div className="space-y-1">
                   {registeredShortcuts.map((shortcut, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-slate-700 rounded-lg px-3 py-2"
+                      className="flex items-center justify-between bg-slate-700 rounded px-2 py-1.5"
                     >
-                      <span className="text-sm font-mono truncate">{shortcut}</span>
+                      <span className="text-xs font-mono truncate">{shortcut}</span>
                       <button
                         onClick={() => handleRemoveShortcut(shortcut)}
                         disabled={isRemoving === shortcut}
-                        className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50"
-                        title="Remove shortcut"
+                        className="text-red-400 hover:text-red-300 p-0.5 disabled:opacity-50"
+                        title="Remove"
                       >
                         {isRemoving === shortcut ? (
-                          <Loader2 className="animate-spin" size={14} />
+                          <Loader2 className="animate-spin" size={12} />
                         ) : (
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                         )}
                       </button>
                     </div>
@@ -236,7 +221,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
             )}
 
             {/* Input for new shortcut */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <input
                 type="text"
                 value={shortcutInput}
@@ -246,30 +231,27 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                   setGasEstimate(null);
                 }}
                 placeholder="email@example.com or myname.waillet"
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-purple-500"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
               />
 
               {/* Gas Estimate Display */}
               {gasEstimate && (
-                <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
-                  <div className="text-slate-400">Estimated Gas Cost:</div>
-                  <div className="text-white font-semibold">
-                    ~{parseFloat(gasEstimate.gasCost).toFixed(6)} ETH
-                  </div>
-                  <div className="text-slate-400 mt-1">Network: Base Sepolia</div>
+                <div className="bg-slate-700/50 rounded p-2 text-xs flex items-center justify-between">
+                  <span className="text-slate-400">Gas:</span>
+                  <span className="text-white font-semibold">~{parseFloat(gasEstimate.gasCost).toFixed(6)} ETH</span>
                 </div>
               )}
 
               {/* Registration Error */}
               {registrationError && (
-                <div className="bg-red-900/50 border border-red-700 rounded-lg p-2 text-xs text-red-200">
+                <div className="bg-red-900/50 border border-red-700 rounded p-1.5 text-xs text-red-200">
                   {registrationError}
                 </div>
               )}
 
               {/* Registration Success */}
               {registrationSuccess && (
-                <div className="bg-green-900/50 border border-green-700 rounded-lg p-2 text-xs text-green-200">
+                <div className="bg-green-900/50 border border-green-700 rounded p-1.5 text-xs text-green-200">
                   {registrationSuccess}
                 </div>
               )}
@@ -279,25 +261,25 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                 <button
                   onClick={handleEstimateGas}
                   disabled={!shortcutInput.trim() || isEstimating || isRegistering}
-                  className="flex-1 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   {isEstimating ? (
                     <>
-                      <Loader2 className="animate-spin" size={14} />
+                      <Loader2 className="animate-spin" size={12} />
                       Estimating...
                     </>
                   ) : (
-                    'Estimate Gas'
+                    'Estimate'
                   )}
                 </button>
                 <button
                   onClick={handleRegisterShortcut}
                   disabled={!shortcutInput.trim() || !gasEstimate || isRegistering}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   {isRegistering ? (
                     <>
-                      <Loader2 className="animate-spin" size={14} />
+                      <Loader2 className="animate-spin" size={12} />
                       Registering...
                     </>
                   ) : (
@@ -310,10 +292,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
         </div>
 
         {/* Close Button */}
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             onClick={onClose}
-            className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-semibold transition-colors"
+            className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded font-semibold transition-colors text-sm"
           >
             Close
           </button>

@@ -2,8 +2,7 @@
 
 export const ADDRESS_REGISTRY = {
   // Deployed contract address on Base Sepolia
-  // TODO: Update after deployment
-  address: '0x0000000000000000000000000000000000000000',
+  address: '0x3a3f6A7bf012bFcb03e187C3D43364a6834c9A81',
 
   // Chain where registry is deployed
   chain: 'base-sepolia',

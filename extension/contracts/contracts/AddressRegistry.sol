@@ -53,7 +53,7 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
 
     // ==================== ERRORS ====================
 
-    error RegistryPaused();
+    error RegistryIsPaused();
     error AliasAlreadyRegistered();
     error NotAliasOwner();
     error MaxAliasesReached();
@@ -72,7 +72,7 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
      * @dev Identifier should be normalized (lowercase, trimmed) before hashing off-chain
      */
     function register(bytes32 identifierHash) external nonReentrant {
-        if (paused) revert RegistryPaused();
+        if (paused) revert RegistryIsPaused();
         if (registry[identifierHash] != address(0)) revert AliasAlreadyRegistered();
         if (userAliases[msg.sender].length >= MAX_ALIASES_PER_ADDRESS) revert MaxAliasesReached();
 
@@ -90,7 +90,7 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
      * @dev Only the current owner of the alias can update it
      */
     function updateRegistration(bytes32 identifierHash, address newAddress) external nonReentrant {
-        if (paused) revert RegistryPaused();
+        if (paused) revert RegistryIsPaused();
         if (registry[identifierHash] != msg.sender) revert NotAliasOwner();
         if (newAddress == address(0)) revert InvalidAddress();
         if (newAddress == msg.sender) return; // No change needed

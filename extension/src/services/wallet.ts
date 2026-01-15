@@ -120,7 +120,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   },
   'base-sepolia': {
     name: 'Base Sepolia',
-    rpcUrl: 'base-sepolia',
+    rpcUrl: 'https://sepolia.base.org',
     chainId: 84532,
     nativeCurrency: 'ETH',
     explorer: 'https://sepolia.basescan.org',
