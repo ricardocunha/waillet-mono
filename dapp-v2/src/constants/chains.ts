@@ -1,4 +1,4 @@
-import { Chain, ChainConfig } from '../types'
+import { Chain, type ChainConfig } from '../types'
 
 // Chain configurations for all supported networks
 export const CHAIN_CONFIG: Record<Chain, ChainConfig> = {

@@ -1,4 +1,4 @@
-import { Token, TokenConfig } from '../types'
+import { Token, type TokenConfig } from '../types'
 
 // Token configurations
 export const TOKEN_CONFIG: Record<Token, TokenConfig> = {

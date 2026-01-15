@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
+import { BrowserProvider, JsonRpcSigner, type Eip1193Provider } from 'ethers'
 import { Chain } from '../types'
 import { getChainFromId } from '../constants'
 
