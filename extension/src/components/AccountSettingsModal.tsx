@@ -189,7 +189,124 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
             </div>
           )}
 
-          {/* TODO: Address Shortcut UI will be added */}
+          {/* Address Shortcut Section */}
+          <div className="mt-6 pt-6 border-t border-slate-700">
+            <div className="flex items-center gap-2 mb-3">
+              <AtSign size={18} className="text-purple-400" />
+              <label className="text-sm font-semibold text-slate-300">
+                Address Shortcut
+              </label>
+            </div>
+
+            {/* Info */}
+            <div className="bg-slate-700/50 rounded-lg p-3 mb-4">
+              <p className="text-xs text-slate-300">
+                Register an email or alias that others can use to send you crypto.
+                Stored on Base Sepolia as a hash for privacy.
+              </p>
+            </div>
+
+            {/* Registered Shortcuts Display */}
+            {registeredShortcuts.length > 0 && (
+              <div className="mb-4">
+                <div className="text-xs text-slate-400 mb-2">Your registered shortcuts:</div>
+                <div className="space-y-2">
+                  {registeredShortcuts.map((shortcut, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-slate-700 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-sm font-mono truncate">{shortcut}</span>
+                      <button
+                        onClick={() => handleRemoveShortcut(shortcut)}
+                        disabled={isRemoving === shortcut}
+                        className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50"
+                        title="Remove shortcut"
+                      >
+                        {isRemoving === shortcut ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Input for new shortcut */}
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={shortcutInput}
+                onChange={(e) => {
+                  setShortcutInput(e.target.value);
+                  setRegistrationError(null);
+                  setGasEstimate(null);
+                }}
+                placeholder="email@example.com or myname.waillet"
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-purple-500"
+              />
+
+              {/* Gas Estimate Display */}
+              {gasEstimate && (
+                <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
+                  <div className="text-slate-400">Estimated Gas Cost:</div>
+                  <div className="text-white font-semibold">
+                    ~{parseFloat(gasEstimate.gasCost).toFixed(6)} ETH
+                  </div>
+                  <div className="text-slate-400 mt-1">Network: Base Sepolia</div>
+                </div>
+              )}
+
+              {/* Registration Error */}
+              {registrationError && (
+                <div className="bg-red-900/50 border border-red-700 rounded-lg p-2 text-xs text-red-200">
+                  {registrationError}
+                </div>
+              )}
+
+              {/* Registration Success */}
+              {registrationSuccess && (
+                <div className="bg-green-900/50 border border-green-700 rounded-lg p-2 text-xs text-green-200">
+                  {registrationSuccess}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEstimateGas}
+                  disabled={!shortcutInput.trim() || isEstimating || isRegistering}
+                  className="flex-1 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  {isEstimating ? (
+                    <>
+                      <Loader2 className="animate-spin" size={14} />
+                      Estimating...
+                    </>
+                  ) : (
+                    'Estimate Gas'
+                  )}
+                </button>
+                <button
+                  onClick={handleRegisterShortcut}
+                  disabled={!shortcutInput.trim() || !gasEstimate || isRegistering}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  {isRegistering ? (
+                    <>
+                      <Loader2 className="animate-spin" size={14} />
+                      Registering...
+                    </>
+                  ) : (
+                    'Register'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Close Button */}

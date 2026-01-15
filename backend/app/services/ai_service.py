@@ -38,13 +38,16 @@ Parse the user's command and return ONLY a JSON object (no markdown, no explanat
     "to": recipient address - use ONE of these:
         - If favorite mentioned: use exact address from favorites list above
         - If ENS name (*.eth): preserve it exactly as given (e.g., "vitalik.eth")
+        - If email address (user@domain.com): preserve it exactly as given
+        - If .waillet alias (name.waillet): preserve it exactly as given
+        - If simple alias without suffix: add .waillet (e.g., "ricardo" -> "ricardo.waillet")
         - If 0x address: use it exactly as given
         - If unknown recipient: set action="unknown" and explain in error
         - For save_favorite: the address to save
         - For list_favorites: null
     "value": amount as string (null for save_favorite/list_favorites),
     "token": token symbol (e.g., "USDC", "ETH"),
-    "chain": blockchain name (e.g., "ethereum", "base", "sepolia"),
+    "chain": blockchain name (e.g., "ethereum", "base", "sepolia", "base-sepolia"),
     "resolved_from": favorite alias if used (or null),
     "alias": ONLY for save_favorite action - the nickname/alias to save (or null for other actions),
     "confidence": 0-100 (how confident you are),
@@ -54,20 +57,29 @@ Parse the user's command and return ONLY a JSON object (no markdown, no explanat
 IMPORTANT:
 - If a favorite is mentioned, use its exact address and chain from the list above
 - If an ENS name is mentioned (like "vitalik.eth"), return it EXACTLY as given (don't make up addresses)
-- Never invent placeholder addresses like "0xVitalikAddress" - if you don't know the address, return the ENS name or set action="unknown"
+- If an email is mentioned (like "john@gmail.com"), return it EXACTLY as given
+- If a .waillet alias is mentioned (like "ricardo.waillet"), return it EXACTLY as given
+- If a simple name is used as recipient (like "ricardo", "john", "binance"), assume it's a .waillet alias and add the suffix
+- Never invent placeholder addresses like "0xVitalikAddress" - if you don't know the address, return the identifier as-is
 - Use common token symbols (USDC, ETH, USDT, etc.)
+- Default chain for email/alias transfers is "base-sepolia" unless otherwise specified
+
+EMAIL/ALIAS TRANSFER EXAMPLES:
+- "send 10 USDC to john@gmail.com" -> {{"action": "transfer", "to": "john@gmail.com", "value": "10", "token": "USDC", "chain": "base-sepolia", "confidence": 95}}
+- "send 0.1 ETH to ricardo.waillet" -> {{"action": "transfer", "to": "ricardo.waillet", "value": "0.1", "token": "ETH", "chain": "base-sepolia", "confidence": 95}}
+- "transfer 5 USDC to maria" -> {{"action": "transfer", "to": "maria.waillet", "value": "5", "token": "USDC", "chain": "base-sepolia", "confidence": 90}}
 
 SAVE FAVORITE EXAMPLES:
-- "save favorite johndoe eth" → {{"action": "save_favorite", "alias": "johndoe", "token": "ETH", "chain": "ethereum", "to": null}}
-- "save 0x123... as binance on ethereum" → {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "chain": "ethereum"}}
-- "add favorite alice.eth USDT" → {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "token": "USDT", "chain": "ethereum"}}
+- "save favorite johndoe eth" -> {{"action": "save_favorite", "alias": "johndoe", "token": "ETH", "chain": "ethereum", "to": null}}
+- "save 0x123... as binance on ethereum" -> {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "chain": "ethereum"}}
+- "add favorite alice.eth USDT" -> {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "token": "USDT", "chain": "ethereum"}}
 
 LIST FAVORITES EXAMPLES:
-- "show my favorites" → {{"action": "list_favorites", "confidence": 100}}
-- "list favorites" → {{"action": "list_favorites", "confidence": 100}}
-- "what are my saved addresses" → {{"action": "list_favorites", "confidence": 95}}
-- "my contacts" → {{"action": "list_favorites", "confidence": 90}}
-- "show saved" → {{"action": "list_favorites", "confidence": 85}}"""
+- "show my favorites" -> {{"action": "list_favorites", "confidence": 100}}
+- "list favorites" -> {{"action": "list_favorites", "confidence": 100}}
+- "what are my saved addresses" -> {{"action": "list_favorites", "confidence": 95}}
+- "my contacts" -> {{"action": "list_favorites", "confidence": 90}}
+- "show saved" -> {{"action": "list_favorites", "confidence": 85}}"""
 
         try:
             response = self.client.chat.completions.create(
@@ -79,7 +91,7 @@ LIST FAVORITES EXAMPLES:
                 temperature=0.3,
                 max_tokens=300
             )
-            
+
             result = response.choices[0].message.content.strip()
 
             if result.startswith("```"):
@@ -172,11 +184,11 @@ Explain this transaction's risks in 2-3 simple sentences."""
             )
 
             explanation = response.choices[0].message.content.strip()
-            logger.info(f"✅ Generated risk explanation ({len(explanation)} chars)")
+            logger.info(f"Generated risk explanation ({len(explanation)} chars)")
             return explanation
 
         except Exception as e:
-            logger.error(f"❌ Risk explanation generation failed: {e}")
+            logger.error(f"Risk explanation generation failed: {e}")
             # Fallback to template-based explanation
             return self._fallback_risk_explanation(risk_analysis, to_address, value_usd)
 
@@ -197,5 +209,3 @@ Explain this transaction's risks in 2-3 simple sentences."""
             return f"This transaction has a MEDIUM risk score ({risk_score}/100). While not necessarily dangerous, it requires your attention. Double-check all details before confirming."
         else:
             return f"This transaction appears relatively safe (risk score: {risk_score}/100). It's a straightforward operation with minimal security concerns."
-
-

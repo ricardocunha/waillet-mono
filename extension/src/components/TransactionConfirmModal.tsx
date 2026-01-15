@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import { WalletService, CHAINS } from '../services/wallet';
+import { RegistryService } from '../services/registry';
 import { useWallet } from '../context/WalletContext';
 import type { IntentResponse } from '../types/api';
 import { isAddress } from 'ethers';
@@ -35,12 +36,43 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
       throw new Error('No recipient address provided');
     }
 
-    // Type narrowing: addressOrENS is now string
-    const address: string = addressOrENS;
+    const address = addressOrENS;
 
-    // Check if it's an ENS name first (ends with .eth)
+    // 1. If it's already a valid address, return it
+    // Wrap in Boolean() to prevent type narrowing from isAddress type predicate
+    if (Boolean(isAddress(address))) {
+      return address;
+    }
+
+    // 2. Check if it's an email or .waillet alias - try registry first
+    const isEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(address);
+    const isWailletAlias = address.toLowerCase().endsWith('.waillet') ||
+      /^[a-z0-9][a-z0-9.]{0,28}[a-z0-9]$/.test(address.toLowerCase());
+
+    if (isEmail || isWailletAlias) {
+      try {
+        console.log(`[TransactionConfirm] Looking up ${address} in registry...`);
+        const resolved = await RegistryService.resolve(address);
+        if (resolved) {
+          console.log(`[TransactionConfirm] Resolved ${address} via registry to ${resolved}`);
+          return resolved;
+        }
+      } catch (err) {
+        console.warn('[TransactionConfirm] Registry lookup failed:', err);
+      }
+
+      // Registry lookup failed or not found - show specific error
+      if (isEmail) {
+        throw new Error(`Email "${address}" is not registered. The recipient needs to register it first.`);
+      }
+      if (isWailletAlias) {
+        throw new Error(`Alias "${address}" is not registered. The recipient needs to register it first.`);
+      }
+    }
+
+    // 3. Check if it's an ENS name (ends with .eth)
     const isENS = address.toLowerCase().endsWith('.eth');
-    
+
     if (isENS) {
       try {
         const provider = await WalletService.getProvider(chain);
@@ -53,11 +85,6 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
         console.error('ENS resolution failed:', err);
         throw new Error(`Failed to resolve ENS name: ${address}`);
       }
-    }
-
-    // If it's already a valid address, return it
-    if (isAddress(address)) {
-      return address;
     }
 
     // Invalid address format
@@ -308,5 +335,4 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
     </div>
   );
 };
-
 
