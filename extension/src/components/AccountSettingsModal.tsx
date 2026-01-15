@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, Eye, EyeOff, Copy, Check, AlertCircle, Key } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Eye, EyeOff, Copy, Check, AlertCircle, Key, AtSign, Loader2, Trash2 } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
+import { RegistryService, GasEstimate } from '../services/registry';
 
 interface AccountSettingsModalProps {
   onClose: () => void;
@@ -11,6 +12,91 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Address Shortcut state
+  const [shortcutInput, setShortcutInput] = useState('');
+  const [registeredShortcuts, setRegisteredShortcuts] = useState<string[]>([]);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
+
+  // Load registered shortcuts on mount
+  useEffect(() => {
+    if (account?.address) {
+      loadRegisteredShortcuts();
+    }
+  }, [account?.address]);
+
+  const loadRegisteredShortcuts = async () => {
+    if (!account) return;
+    const shortcuts = await RegistryService.getLocalShortcuts(account.address);
+    setRegisteredShortcuts(shortcuts);
+  };
+
+  const handleEstimateGas = async () => {
+    if (!shortcutInput.trim() || !account) return;
+
+    setIsEstimating(true);
+    setRegistrationError(null);
+    setGasEstimate(null);
+
+    try {
+      const estimate = await RegistryService.estimateRegistrationGas(
+        account.privateKey,
+        shortcutInput
+      );
+      setGasEstimate(estimate);
+    } catch (err: any) {
+      setRegistrationError(err.message || 'Failed to estimate gas');
+    } finally {
+      setIsEstimating(false);
+    }
+  };
+
+  const handleRegisterShortcut = async () => {
+    if (!shortcutInput.trim() || !account) return;
+
+    setIsRegistering(true);
+    setRegistrationError(null);
+    setRegistrationSuccess(null);
+
+    try {
+      const result = await RegistryService.register(account.privateKey, shortcutInput);
+
+      // Save to chrome.storage for UI display
+      await RegistryService.saveShortcutLocally(account.address, result.identifier);
+
+      setRegisteredShortcuts([...registeredShortcuts, result.identifier]);
+      setShortcutInput('');
+      setGasEstimate(null);
+      setRegistrationSuccess(`Registered! Tx: ${result.hash.slice(0, 10)}...`);
+      setTimeout(() => setRegistrationSuccess(null), 5000);
+    } catch (err: any) {
+      setRegistrationError(err.message || 'Registration failed');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleRemoveShortcut = async (shortcut: string) => {
+    if (!account) return;
+
+    setIsRemoving(shortcut);
+    setRegistrationError(null);
+
+    try {
+      await RegistryService.removeRegistration(account.privateKey, shortcut);
+      await RegistryService.removeShortcutLocally(account.address, shortcut);
+      setRegisteredShortcuts(registeredShortcuts.filter((s) => s !== shortcut));
+    } catch (err: any) {
+      setRegistrationError(err.message || 'Failed to remove shortcut');
+    } finally {
+      setIsRemoving(null);
+    }
+  };
 
   const handleCopyPrivateKey = async () => {
     if (!account?.privateKey) {
@@ -102,6 +188,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
               <div className="text-sm text-red-200">{error}</div>
             </div>
           )}
+
+          {/* TODO: Address Shortcut UI will be added */}
         </div>
 
         {/* Close Button */}
@@ -117,3 +205,4 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
     </div>
   );
 };
+
