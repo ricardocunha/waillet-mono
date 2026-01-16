@@ -34,7 +34,7 @@ Saved favorites (shortcuts):
 
 Parse the user's command and return ONLY a JSON object (no markdown, no explanation) with these fields:
 {{
-    "action": "transfer" | "swap" | "approve" | "save_favorite" | "list_favorites" | "unknown",
+    "action": "transfer" | "swap" | "approve" | "save_favorite" | "delete_favorite" | "list_favorites" | "unknown",
     "to": recipient address - use ONE of these:
         - If favorite mentioned: use exact address from favorites list above
         - If ENS name (*.eth): preserve it exactly as given (e.g., "vitalik.eth")
@@ -49,7 +49,7 @@ Parse the user's command and return ONLY a JSON object (no markdown, no explanat
     "token": token symbol (e.g., "USDC", "ETH"),
     "chain": blockchain name (e.g., "ethereum", "base", "sepolia", "base-sepolia"),
     "resolved_from": favorite alias if used (or null),
-    "alias": ONLY for save_favorite action - the nickname/alias to save (or null for other actions),
+    "alias": For save_favorite or delete_favorite - the nickname/alias to save or delete (or null for other actions),
     "confidence": 0-100 (how confident you are),
     "error": error message if command is unclear (or null)
 }}
@@ -79,7 +79,13 @@ LIST FAVORITES EXAMPLES:
 - "list favorites" -> {{"action": "list_favorites", "confidence": 100}}
 - "what are my saved addresses" -> {{"action": "list_favorites", "confidence": 95}}
 - "my contacts" -> {{"action": "list_favorites", "confidence": 90}}
-- "show saved" -> {{"action": "list_favorites", "confidence": 85}}"""
+- "show saved" -> {{"action": "list_favorites", "confidence": 85}}
+
+DELETE FAVORITE EXAMPLES:
+- "delete ricardo1 from favorites" -> {{"action": "delete_favorite", "alias": "ricardo1", "confidence": 95}}
+- "remove binance from my favorites" -> {{"action": "delete_favorite", "alias": "binance", "confidence": 95}}
+- "delete favorite alice" -> {{"action": "delete_favorite", "alias": "alice", "confidence": 90}}
+- "remove contact john" -> {{"action": "delete_favorite", "alias": "john", "confidence": 85}}"""
 
         try:
             response = self.client.chat.completions.create(

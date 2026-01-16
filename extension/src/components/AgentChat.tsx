@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, AlertCircle, Loader2, Star } from 'lucide-react';
+import { Send, Bot, User, AlertCircle, Loader2, Star, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
@@ -133,6 +133,13 @@ export const AgentChat: React.FC = () => {
       return `Here are your saved favorites:`;
     }
 
+    if (intent.action === IntentAction.DELETE_FAVORITE) {
+      if (!intent.alias) {
+        return `Please specify which favorite to delete. For example: "delete binance from favorites"`;
+      }
+      return `Got it! I'll delete **${intent.alias}** from your favorites.\n\nClick "Delete Favorite" below to confirm.`;
+    }
+
     if (intent.action === IntentAction.UNKNOWN) {
       return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance"\n• "transfer 0.1 ETH to 0x123..."\n• "save favorite johndoe eth"`;
     }
@@ -201,6 +208,44 @@ export const AgentChat: React.FC = () => {
       timestamp: new Date()
     };
     setMessages(prev => [...prev, cancelMessage]);
+  };
+
+  const handleDeleteFavorite = async (alias: string) => {
+    try {
+      // First get the favorites list to find the ID
+      const favorites = await api.getFavorites(account!.address);
+      const favorite = favorites.find(f => f.alias.toLowerCase() === alias.toLowerCase());
+
+      if (!favorite) {
+        const errorMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: MessageType.SYSTEM,
+          content: `❌ Favorite "${alias}" not found.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        return;
+      }
+
+      await api.deleteFavorite(favorite.id);
+
+      const successMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: MessageType.SYSTEM,
+        content: `✅ Favorite "${alias}" deleted successfully!`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, successMessage]);
+    } catch (error) {
+      console.error('Delete favorite error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: MessageType.SYSTEM,
+        content: `❌ Failed to delete favorite: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -313,6 +358,23 @@ export const AgentChat: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {message.intent && message.intent.action === IntentAction.DELETE_FAVORITE && message.intent.alias && !message.intent.error && (
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 bg-red-900/30 rounded border border-red-700/50 text-xs">
+                    <div className="font-semibold mb-1 text-red-300">Delete Favorite:</div>
+                    <div>Alias: {message.intent.alias}</div>
+                    <div className="mt-1 text-slate-400">Confidence: {message.intent.confidence}%</div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteFavorite(message.intent!.alias!)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Delete Favorite
+                  </button>
                 </div>
               )}
             </div>

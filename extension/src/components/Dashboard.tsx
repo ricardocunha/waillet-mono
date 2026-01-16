@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold">wAIllet</h1>
+          <h1 className="text-lg font-bold" style={{ fontFamily: "'Comic Sans MS', 'Comic Sans', cursive" }}>wAIllet</h1>
           <div className="flex items-center gap-1">
             <button
               onClick={() => fetchBalances()}
