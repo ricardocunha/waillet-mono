@@ -191,24 +191,24 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
   const hasInsufficientBalance = balance && intent.value && parseFloat(balance) < parseFloat(intent.value);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 rounded-lg max-w-md w-full max-h-[90vh] p-6">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-2 z-50">
+      <div className="bg-slate-800 rounded-lg max-w-md w-full max-h-[95vh] p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Confirm Transaction</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold">Confirm Transaction</h2>
           <button
             onClick={onCancel}
             disabled={status === TransactionStatus.SENDING}
             className="text-slate-400 hover:text-white disabled:opacity-50"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Transaction Details */}
-        <div className="space-y-4 mb-6 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-          <div className="bg-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400 mb-1">To</div>
+        <div className="space-y-2 mb-4 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(95vh - 180px)' }}>
+          <div className="bg-slate-700 rounded-lg p-3">
+            <div className="text-xs text-slate-400 mb-1">To</div>
             <div className="font-mono text-sm break-all">{intent.to}</div>
             {resolvedAddress && resolvedAddress !== intent.to && (
               <div className="text-xs text-slate-400 mt-1 font-mono break-all">
@@ -220,27 +220,27 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
             )}
           </div>
 
-          <div className="bg-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400 mb-1">Amount</div>
-            <div className="text-2xl font-bold">
+          <div className="bg-slate-700 rounded-lg p-3">
+            <div className="text-xs text-slate-400 mb-1">Amount</div>
+            <div className="text-lg font-bold">
               {intent.value} {intent.token}
             </div>
             {balance && (
-              <div className={`text-sm mt-1 ${hasInsufficientBalance ? 'text-red-400' : 'text-slate-400'}`}>
+              <div className={`text-xs mt-1 ${hasInsufficientBalance ? 'text-red-400' : 'text-slate-400'}`}>
                 Balance: {parseFloat(balance).toFixed(4)} {intent.token}
               </div>
             )}
           </div>
 
-          <div className="bg-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400 mb-1">Network</div>
-            <div className="font-semibold">{chainConfig?.name || intent.chain}</div>
+          <div className="bg-slate-700 rounded-lg p-3">
+            <div className="text-xs text-slate-400 mb-1">Network</div>
+            <div className="font-semibold text-sm">{chainConfig?.name || intent.chain}</div>
           </div>
 
           {gasEstimate && (
-            <div className="bg-slate-700 rounded-lg p-4">
-              <div className="text-sm text-slate-400 mb-1">Estimated Gas</div>
-              <div className="text-sm">
+            <div className="bg-slate-700 rounded-lg p-3">
+              <div className="text-xs text-slate-400 mb-1">Estimated Gas</div>
+              <div className="text-xs">
                 <div>Gas Price: {parseFloat(gasEstimate.gasPrice).toFixed(2)} Gwei</div>
                 <div>Total Cost: ~{parseFloat(gasEstimate.gasCost).toFixed(6)} {chainConfig?.nativeCurrency}</div>
               </div>
@@ -250,25 +250,25 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 mb-4 flex gap-2">
-            <AlertCircle className="flex-shrink-0 text-red-400 mt-0.5" size={20} />
-            <div className="text-sm text-red-200 break-words flex-1">{error}</div>
+          <div className="bg-red-900/50 border border-red-700 rounded p-2 mb-3 flex gap-2">
+            <AlertCircle className="flex-shrink-0 text-red-400" size={16} />
+            <div className="text-xs text-red-200 break-words flex-1">{error}</div>
           </div>
         )}
 
         {/* Insufficient Balance Warning */}
         {hasInsufficientBalance && (
-          <div className="bg-yellow-900/50 border border-yellow-700 rounded-lg p-3 mb-4 flex gap-2">
-            <AlertCircle className="flex-shrink-0 text-yellow-400" size={20} />
-            <div className="text-sm text-yellow-200">Insufficient balance for this transaction</div>
+          <div className="bg-yellow-900/50 border border-yellow-700 rounded p-2 mb-3 flex gap-2">
+            <AlertCircle className="flex-shrink-0 text-yellow-400" size={16} />
+            <div className="text-xs text-yellow-200">Insufficient balance for this transaction</div>
           </div>
         )}
 
         {/* Success Message */}
         {status === TransactionStatus.SUCCESS && explorerUrl && (
-          <div className="bg-green-900/50 border border-green-700 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Check className="text-green-400" size={20} />
+          <div className="bg-green-900/50 border border-green-700 rounded p-2 mb-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Check className="text-green-400" size={16} />
               <div className="text-sm text-green-200 font-semibold">Transaction Sent!</div>
             </div>
             <a
@@ -283,11 +283,11 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={onCancel}
             disabled={status === TransactionStatus.SENDING || status === TransactionStatus.SUCCESS}
-            className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors"
+            className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
           >
             Cancel
           </button>
@@ -301,29 +301,29 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
               !intent.to ||
               !intent.value
             }
-            className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+            className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 text-sm"
           >
             {status === TransactionStatus.ESTIMATING && (
               <>
-                <Loader2 className="animate-spin" size={18} />
+                <Loader2 className="animate-spin" size={16} />
                 Estimating...
               </>
             )}
             {status === TransactionStatus.CONFIRMING && (
               <>
-                <Loader2 className="animate-spin" size={18} />
+                <Loader2 className="animate-spin" size={16} />
                 Preparing...
               </>
             )}
             {status === TransactionStatus.SENDING && (
               <>
-                <Loader2 className="animate-spin" size={18} />
+                <Loader2 className="animate-spin" size={16} />
                 Sending...
               </>
             )}
             {status === TransactionStatus.SUCCESS && (
               <>
-                <Check size={18} />
+                <Check size={16} />
                 Sent!
               </>
             )}
