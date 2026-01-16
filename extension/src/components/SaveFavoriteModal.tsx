@@ -81,14 +81,13 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
       await api.createFavorite(favorite);
       setSuccess(true);
 
-      // Call success handler if provided
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Close modal after 1.5 seconds
+      // Close modal after 1.5 seconds, calling onSuccess which handles the success message
       setTimeout(() => {
-        onClose();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          onClose();
+        }
       }, 1500);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save favorite';
@@ -107,7 +106,7 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors"
-            disabled={isSaving}
+            disabled={isSaving || success}
           >
             <X size={24} />
           </button>
