@@ -18,6 +18,16 @@ Users prove wallet ownership by signing a message, then receive JWT tokens for A
 9. Nonce marked as used (prevents replay)
 10. JWT tokens returned to extension
 
+## Error Codes
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| `400` | Bad Request | Missing or malformed fields |
+| `401` | Unauthorized | Token missing, expired, or invalid |
+| `403` | Forbidden | Valid token but insufficient permissions |
+| `409` | Conflict | Nonce already used (replay attempt) |
+| `500` | Internal Server Error | Unexpected backend failure |
+
 ## Endpoints
 
 | Method | Endpoint | Auth | Description |
