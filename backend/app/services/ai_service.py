@@ -60,13 +60,20 @@ CRITICAL NETWORK RULE:
 - NEVER assume or default to any network - always ask the user to choose if not specified
 - Only set chain to a value if the user EXPLICITLY mentions it in their command
 
+CRITICAL RECIPIENT RESOLUTION (follow this ORDER - favorites have HIGHEST priority):
+1. FIRST: Check if recipient matches a favorite alias (case-insensitive)
+   - If YES: use the EXACT 0x address from the favorites list, set "resolved_from" to the alias name
+   - Example: favorites has "ricardo: 0x1a129CDc5f5E7a2EDaD31BD390aE306C29eC21E7"
+     User says "send to ricardo" -> "to": "0x1a129CDc5f5E7a2EDaD31BD390aE306C29eC21E7", "resolved_from": "ricardo"
+2. If NOT a favorite AND is an ENS name (*.eth): use it exactly as given
+3. If NOT a favorite AND is an email: use it exactly as given
+4. If NOT a favorite AND already has .waillet suffix: use it exactly as given
+5. If NOT a favorite AND is a simple name without suffix: add .waillet suffix
+6. If it's a 0x address: use it exactly as given
+
 IMPORTANT:
-- If a favorite alias is mentioned, use its exact address from the list above
-- If an ENS name is mentioned (like "vitalik.eth"), return it EXACTLY as given (don't make up addresses)
-- If an email is mentioned (like "john@gmail.com"), return it EXACTLY as given
-- If a .waillet alias is mentioned (like "ricardo.waillet"), return it EXACTLY as given
-- If a simple name is used as recipient (like "ricardo", "john", "binance"), assume it's a .waillet alias and add the suffix
-- Never invent placeholder addresses like "0xVitalikAddress" - if you don't know the address, return the identifier as-is
+- ALWAYS check the favorites list FIRST before adding .waillet suffix!
+- Never invent placeholder addresses - if unknown, return the identifier as-is
 - Use common token symbols (USDC, ETH, USDT, etc.)
 
 TRANSFER EXAMPLES (network NOT specified - needs_network=true):
