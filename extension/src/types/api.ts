@@ -6,7 +6,6 @@ export interface Favorite {
   wallet_address: string;
   alias: string;
   address: string;
-  chain: string;
   asset?: string;
   type: FavoriteType;
   value?: string;
@@ -18,7 +17,6 @@ export interface FavoriteCreate {
   wallet_address: string;
   alias: string;
   address: string;
-  chain: string;
   asset?: string;
   type: FavoriteType;
   value?: string;
@@ -32,7 +30,6 @@ export interface IntentRequest {
 export interface FavoriteItem {
   alias: string;
   address: string;
-  chain: string;
   asset?: string;
 }
 

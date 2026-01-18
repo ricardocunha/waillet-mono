@@ -351,10 +351,11 @@ export const AgentChat: React.FC = () => {
                       </div>
                       <div className="space-y-1 text-slate-300">
                         <div className="font-mono text-xs break-all">{fav.address}</div>
-                        <div className="flex gap-2 text-slate-400">
-                          <span>{fav.chain}</span>
-                          {fav.asset && <span>• {fav.asset}</span>}
-                        </div>
+                        {fav.asset && (
+                          <div className="text-slate-400">
+                            <span>{fav.asset}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Check } from 'lucide-react';
-import { CHAINS } from '../services/wallet';
 import { api } from '../services/api';
 import type { IntentResponse, FavoriteCreate } from '../types/api';
 import { isAddress } from 'ethers';
@@ -17,20 +16,16 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
   const { account } = useWallet();
   const [alias, setAlias] = useState('');
   const [address, setAddress] = useState('');
-  const [chain, setChain] = useState('sepolia');
   const [asset, setAsset] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const availableChains = Object.keys(CHAINS);
 
   // Prefill from AI agent intent
   useEffect(() => {
     if (prefilledIntent && prefilledIntent.action === 'save_favorite') {
       if (prefilledIntent.alias) setAlias(prefilledIntent.alias);
       if (prefilledIntent.to) setAddress(prefilledIntent.to);
-      if (prefilledIntent.chain) setChain(prefilledIntent.chain);
       if (prefilledIntent.token) setAsset(prefilledIntent.token);
     }
   }, [prefilledIntent]);
@@ -56,11 +51,6 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
       return;
     }
 
-    if (!chain) {
-      setError('Please select a network');
-      return;
-    }
-
     if (!account?.address) {
       setError('Wallet not connected');
       return;
@@ -73,7 +63,6 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
         wallet_address: account.address,
         alias: alias.trim(),
         address: address.trim(),
-        chain: chain,
         asset: asset.trim() || undefined,
         type: FavoriteType.ADDRESS,
       };
@@ -155,25 +144,6 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
                   className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 font-mono text-sm"
                   disabled={isSaving}
                 />
-              </div>
-
-              {/* Network */}
-              <div>
-                <label className="block text-sm text-slate-300 mb-2">
-                  Network <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={chain}
-                  onChange={(e) => setChain(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
-                  disabled={isSaving}
-                >
-                  {availableChains.map((chainKey) => (
-                    <option key={chainKey} value={chainKey}>
-                      {CHAINS[chainKey].name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Asset (Optional) */}

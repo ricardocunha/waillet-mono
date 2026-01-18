@@ -8,7 +8,7 @@ class FavoriteBase(BaseModel):
     wallet_address: str = Field(..., max_length=42)
     alias: str = Field(..., max_length=100)
     address: str = Field(..., max_length=42)
-    chain: str = Field(..., max_length=50)
+    chain: Optional[str] = Field(None, max_length=50)  # Chain is optional - network is determined by context
     asset: Optional[str] = Field(None, max_length=50)
     type: FavoriteType = FavoriteType.address
     value: Optional[str] = Field(None, max_length=255)

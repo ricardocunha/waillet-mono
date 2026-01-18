@@ -18,7 +18,6 @@ class IntentRequest(BaseModel):
 class FavoriteItem(BaseModel):
     alias: str
     address: str
-    chain: str
     asset: str | None = None
 
 
@@ -48,13 +47,12 @@ def parse_intent(
         {
             "alias": fav.alias,
             "address": fav.address,
-            "chain": fav.chain,
             "asset": fav.asset,
             "type": fav.type.value
         }
         for fav in favorites
     ]
-    
+
     try:
         ai_service = AIService()
         result = ai_service.parse_intent(
@@ -69,7 +67,6 @@ def parse_intent(
                 {
                     "alias": fav["alias"],
                     "address": fav["address"],
-                    "chain": fav["chain"],
                     "asset": fav.get("asset")
                 }
                 for fav in favorites_dict

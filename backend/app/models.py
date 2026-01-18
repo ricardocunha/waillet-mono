@@ -23,12 +23,12 @@ class Decision(str, enum.Enum):
 
 class Favorite(Base):
     __tablename__ = "favorites"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     wallet_address = Column(String(42), nullable=False, index=True)
     alias = Column(String(100), nullable=False)
     address = Column(String(42), nullable=False)
-    chain = Column(String(50), nullable=False)
+    chain = Column(String(50), nullable=True)  # Chain is optional - network is determined by context
     asset = Column(String(50), nullable=True)
     type = Column(Enum(FavoriteType), default=FavoriteType.address)
     value = Column(String(255), nullable=True)
