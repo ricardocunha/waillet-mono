@@ -171,19 +171,20 @@ DELETE FAVORITE EXAMPLES:
             factors_text = "\n".join(factor_descriptions) if factor_descriptions else "No specific risk factors detected"
 
             # Prepare prompt
-            system_prompt = """You are a security expert explaining transaction risks to non-technical users.
-Convert technical risk analysis into clear, simple language (2-3 sentences max).
+            system_prompt = """You are a security expert. Explain transaction risks in 1-2 SHORT sentences.
 
-Guidelines:
-- Use analogies when helpful (e.g., "like giving someone a blank check")
-- Focus on what could go wrong, not technical details
-- Be direct but not alarmist
-- End with actionable advice when appropriate
+Rules:
+- Be concise and direct
+- No technical jargon
+- State the risk clearly
+- Give one actionable tip if helpful
 
 Examples:
-- "This transaction requests unlimited access to your USDC tokens. It's like giving someone a blank check to your bank account - they could withdraw everything at any time. Consider using a limited approval instead."
-- "This is a simple wallet-to-wallet transfer with no smart contract interaction. It's as safe as handing someone cash in person."
-- "This contract hasn't been verified on Etherscan, so we can't confirm what it does. It's like entering a building with no signs - you can't be sure what's inside."
+- "Simple wallet transfer. Safe to proceed."
+- "Unlimited token approval requested. Consider setting a specific limit."
+- "Unverified contract - source code not public. Verify on block explorer first."
+- "Large transfer amount. Double-check the recipient address."
+- "Known scam address. Do not proceed."
 """
 
             user_prompt = f"""Transaction Details:
@@ -227,9 +228,12 @@ Explain this transaction's risks in 2-3 simple sentences."""
         risk_level = risk_analysis.get("risk_level", "MEDIUM")
         factors = risk_analysis.get("factors", [])
 
+        # Get the main risk factor description if available
+        main_factor = factors[0].get("description", "") if factors else ""
+
         if risk_score >= 70:
-            return f"This transaction has a HIGH risk score ({risk_score}/100). It involves patterns commonly seen in scams or dangerous operations. Proceed only if you fully trust the recipient."
+            return f"High risk ({risk_score}/100). {main_factor or 'Potential security issue detected.'} Only proceed if you trust this recipient."
         elif risk_score >= 30:
-            return f"This transaction has a MEDIUM risk score ({risk_score}/100). While not necessarily dangerous, it requires your attention. Double-check all details before confirming."
+            return f"Medium risk ({risk_score}/100). {main_factor or 'Could not fully verify this transaction.'} Review details before confirming."
         else:
-            return f"This transaction appears relatively safe (risk score: {risk_score}/100). It's a straightforward operation with minimal security concerns."
+            return f"Low risk ({risk_score}/100). {main_factor or 'Standard transaction.'} Safe to proceed."

@@ -84,13 +84,13 @@ class RiskService:
                 factors.append({
                     "type": "SCAM_ADDRESS",
                     "severity": "CRITICAL",
-                    "title": "⛔ Known Scam Address",
-                    "description": f"This address has been reported for: {scam_info.get('reason', 'fraudulent activity')}",
+                    "title": "Scam Detected",
+                    "description": f"Reported for {scam_info.get('reason', 'fraud')}. Do not send.",
                     "points": 50
                 })
                 recommendations.append({
                     "icon": "🚫",
-                    "text": "DO NOT PROCEED - Block this transaction immediately",
+                    "text": "Block this transaction",
                     "action": "block"
                 })
 
@@ -101,13 +101,13 @@ class RiskService:
                 factors.append({
                     "type": "UNLIMITED_APPROVAL",
                     "severity": "HIGH",
-                    "title": "⚠️ Unlimited Token Approval",
-                    "description": f"Grants unlimited access to all your {token_info.get('symbol', 'tokens')}. Like giving a blank check.",
+                    "title": "Unlimited Approval",
+                    "description": "Grants full access to your tokens. Consider limiting the amount.",
                     "points": 40
                 })
                 recommendations.append({
                     "icon": "⚙️",
-                    "text": "Use 'Set Limited Approval' instead of unlimited access",
+                    "text": "Set a specific limit instead",
                     "action": "limit_approval"
                 })
 
@@ -117,13 +117,13 @@ class RiskService:
                 factors.append({
                     "type": "DELEGATECALL",
                     "severity": "HIGH",
-                    "title": "⚠️ DelegateCall Detected",
-                    "description": "Transaction uses delegatecall which can execute arbitrary code in your wallet's context.",
+                    "title": "Advanced Call",
+                    "description": "Uses delegatecall - can execute code in your wallet context.",
                     "points": 40
                 })
                 recommendations.append({
                     "icon": "🛡️",
-                    "text": "Only approve if you fully trust this contract",
+                    "text": "Only proceed if you trust this contract",
                     "action": "verify_source"
                 })
 
@@ -134,45 +134,46 @@ class RiskService:
                 factors.append({
                     "type": "LARGE_VALUE",
                     "severity": "MEDIUM",
-                    "title": "💰 Large Value Transfer",
+                    "title": "Large Amount",
                     "description": value_desc,
                     "points": value_points
                 })
                 recommendations.append({
                     "icon": "🔍",
-                    "text": "Double-check recipient address before confirming",
+                    "text": "Double-check the recipient",
                     "action": "verify_recipient"
                 })
 
-            # Unverified contract
+            # Unverified contract - always MEDIUM
             if contract_info.get("is_contract") and not contract_info.get("verified"):
-                risk_score += 15
+                risk_score += 35  # Ensure at least MEDIUM (31+)
+                verification_reason = contract_info.get("verification_error", "Source code not published")
                 factors.append({
                     "type": "UNVERIFIED_CONTRACT",
                     "severity": "MEDIUM",
-                    "title": "❓ Unverified Contract",
-                    "description": "Source code not verified on block explorer. Behavior is unknown.",
-                    "points": 15
+                    "title": "Unverified Contract",
+                    "description": f"Could not verify this contract. {verification_reason}.",
+                    "points": 35
                 })
                 recommendations.append({
                     "icon": "📄",
-                    "text": "Check contract on Etherscan before interacting",
+                    "text": "Check contract on block explorer first",
                     "action": "verify_contract"
                 })
 
             # First time interacting with this contract
             if first_interaction and contract_info.get("is_contract"):
-                risk_score += 20
+                risk_score += 10
                 factors.append({
                     "type": "FIRST_INTERACTION",
-                    "severity": "MEDIUM",
-                    "title": "🆕 First-Time Contract",
-                    "description": "You haven't interacted with this contract before.",
-                    "points": 20
+                    "severity": "LOW",
+                    "title": "New Contract",
+                    "description": "First time interacting with this address.",
+                    "points": 10
                 })
                 recommendations.append({
                     "icon": "🕵️",
-                    "text": "Research this protocol before first use",
+                    "text": "Research before first use",
                     "action": "research"
                 })
 
@@ -182,8 +183,8 @@ class RiskService:
                 factors.append({
                     "type": "EOA_TRANSFER",
                     "severity": "LOW",
-                    "title": "✅ Simple Transfer",
-                    "description": "Standard wallet-to-wallet transfer.",
+                    "title": "Simple Transfer",
+                    "description": "Direct wallet-to-wallet transfer.",
                     "points": 5
                 })
 
@@ -279,6 +280,7 @@ class RiskService:
                 "is_contract": is_contract,
                 "verified": False,
                 "name": None,
+                "verification_error": None,
                 "timestamp": datetime.now()
             }
 
@@ -289,6 +291,7 @@ class RiskService:
                     result.update(verification)
                 except Exception as e:
                     logger.debug(f"Verification check failed: {e}")
+                    result["verification_error"] = "Verification service unavailable"
 
             # Save to cache
             _contract_cache[cache_key] = result
@@ -296,7 +299,12 @@ class RiskService:
 
         except Exception as e:
             logger.warning(f"Contract check failed: {e}")
-            return {"is_contract": False, "verified": False, "name": None}
+            return {
+                "is_contract": False,
+                "verified": False,
+                "name": None,
+                "verification_error": f"Could not check contract: {str(e)[:50]}"
+            }
 
     async def _check_contract_verification(self, address: str) -> Dict[str, Any]:
         """Check if contract is verified on Etherscan"""
