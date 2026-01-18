@@ -39,6 +39,7 @@ export interface IntentResponse {
   value?: string;
   token?: string;
   chain?: string;
+  needs_network?: boolean;  // True when user needs to select a network
   resolved_from?: string;
   alias?: string;
   confidence: number;

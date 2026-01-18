@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, AlertCircle, Loader2, Star, Trash2 } from 'lucide-react';
+import { Send, Bot, User, AlertCircle, Loader2, Star, Trash2, Globe } from 'lucide-react';
 import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
 import { SaveFavoriteModal } from './SaveFavoriteModal';
+import { CHAINS } from '../services/wallet';
 import type { IntentResponse } from '../types/api';
 import { MessageType, IntentAction } from '../constants/enums';
 
@@ -110,9 +111,16 @@ export const AgentChat: React.FC = () => {
       return `❌ ${intent.error}`;
     }
 
-    if (intent.action === IntentAction.TRANSFER && intent.to && intent.value && intent.token) {
+    // Handle transfer that needs network selection
+    if (intent.action === IntentAction.TRANSFER && intent.needs_network && intent.to && intent.value && intent.token) {
       const fromInfo = intent.resolved_from ? ` (${intent.resolved_from})` : '';
-      return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on ${intent.chain}.\n\nClick "Send Transaction" below to proceed.`;
+      return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo}.\n\nPlease select a network:`;
+    }
+
+    // Handle transfer with network already specified
+    if (intent.action === IntentAction.TRANSFER && intent.to && intent.value && intent.token && intent.chain) {
+      const fromInfo = intent.resolved_from ? ` (${intent.resolved_from})` : '';
+      return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on **${CHAINS[intent.chain]?.name || intent.chain}**.\n\nClick "Send Transaction" below to proceed.`;
     }
 
     if (intent.action === IntentAction.SAVE_FAVORITE) {
@@ -120,7 +128,6 @@ export const AgentChat: React.FC = () => {
       if (intent.alias) parts.push(`Alias: **${intent.alias}**`);
       if (intent.to) parts.push(`Address: ${intent.to}`);
       if (intent.token) parts.push(`Token: ${intent.token}`);
-      if (intent.chain) parts.push(`Network: ${intent.chain}`);
 
       const details = parts.length > 0 ? '\n' + parts.join('\n') : '';
       return `Got it! I'll help you save this favorite.${details}\n\nClick "Save Favorite" below to confirm.`;
@@ -141,10 +148,25 @@ export const AgentChat: React.FC = () => {
     }
 
     if (intent.action === IntentAction.UNKNOWN) {
-      return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance"\n• "transfer 0.1 ETH to 0x123..."\n• "save favorite johndoe eth"`;
+      return `I'm not sure what you mean. Could you rephrase? For example:\n• "send 50 USDC to binance on base-sepolia"\n• "transfer 0.1 ETH to 0x123... on sepolia"\n• "save favorite johndoe 0x123..."`;
     }
 
     return `Parsed action: ${intent.action}\nConfidence: ${intent.confidence}%`;
+  };
+
+  // Handle network selection - updates the message with the selected chain
+  const handleNetworkSelect = (messageId: string, chain: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && msg.intent) {
+        const updatedIntent = { ...msg.intent, chain, needs_network: false };
+        return {
+          ...msg,
+          content: formatIntentResponse(updatedIntent),
+          intent: updatedIntent
+        };
+      }
+      return msg;
+    }));
   };
 
   const handleTransactionConfirm = (txHash: string) => {
@@ -301,13 +323,41 @@ export const AgentChat: React.FC = () => {
             >
               <div className="whitespace-pre-wrap">{message.content}</div>
 
-              {message.intent && message.intent.action === IntentAction.TRANSFER && !message.intent.error && (
+              {/* Network Selection - when transfer needs network */}
+              {message.intent && message.intent.action === IntentAction.TRANSFER && message.intent.needs_network && !message.intent.error && (
                 <div className="mt-3 space-y-2">
                   <div className="p-2 bg-slate-700/50 rounded border border-slate-600 text-xs">
                     <div className="font-semibold mb-1">Transaction Preview:</div>
                     <div>To: {message.intent.to}</div>
                     <div>Amount: {message.intent.value} {message.intent.token}</div>
-                    <div>Chain: {message.intent.chain}</div>
+                    {message.intent.resolved_from && (
+                      <div>From Favorite: {message.intent.resolved_from}</div>
+                    )}
+                    <div className="mt-1 text-slate-400">Confidence: {message.intent.confidence}%</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(CHAINS).map(([chainKey, chainConfig]) => (
+                      <button
+                        key={chainKey}
+                        onClick={() => handleNetworkSelect(message.id, chainKey)}
+                        className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded text-sm font-medium transition-colors border border-slate-600 hover:border-purple-500"
+                      >
+                        <Globe size={14} />
+                        {chainConfig.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Transfer with chain selected - ready to send */}
+              {message.intent && message.intent.action === IntentAction.TRANSFER && !message.intent.needs_network && message.intent.chain && !message.intent.error && (
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 bg-slate-700/50 rounded border border-slate-600 text-xs">
+                    <div className="font-semibold mb-1">Transaction Preview:</div>
+                    <div>To: {message.intent.to}</div>
+                    <div>Amount: {message.intent.value} {message.intent.token}</div>
+                    <div>Network: {CHAINS[message.intent.chain]?.name || message.intent.chain}</div>
                     {message.intent.resolved_from && (
                       <div>From Favorite: {message.intent.resolved_from}</div>
                     )}

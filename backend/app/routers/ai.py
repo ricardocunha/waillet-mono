@@ -27,6 +27,7 @@ class IntentResponse(BaseModel):
     value: str | None = None
     token: str | None = None
     chain: str | None = None
+    needs_network: bool = False  # True when user needs to select a network
     resolved_from: str | None = None
     alias: str | None = None
     confidence: int = 0

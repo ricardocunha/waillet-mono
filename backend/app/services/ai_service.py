@@ -47,12 +47,18 @@ Parse the user's command and return ONLY a JSON object (no markdown, no explanat
         - For list_favorites: null
     "value": amount as string (null for save_favorite/list_favorites),
     "token": token symbol (e.g., "USDC", "ETH"),
-    "chain": blockchain name (e.g., "ethereum", "base", "sepolia", "base-sepolia"),
+    "chain": blockchain name if EXPLICITLY specified by user (e.g., "ethereum", "base", "sepolia", "base-sepolia"), or null if not specified,
+    "needs_network": true if the user did NOT specify a network and this is a transfer action, false otherwise,
     "resolved_from": favorite alias if used (or null),
     "alias": For save_favorite or delete_favorite - the nickname/alias to save or delete (or null for other actions),
     "confidence": 0-100 (how confident you are),
     "error": error message if command is unclear (or null)
 }}
+
+CRITICAL NETWORK RULE:
+- For transfer/swap/approve actions: If the user does NOT explicitly mention a network (like "on ethereum", "on sepolia", "on base"), set chain=null and needs_network=true
+- NEVER assume or default to any network - always ask the user to choose if not specified
+- Only set chain to a value if the user EXPLICITLY mentions it in their command
 
 IMPORTANT:
 - If a favorite alias is mentioned, use its exact address from the list above
@@ -62,23 +68,22 @@ IMPORTANT:
 - If a simple name is used as recipient (like "ricardo", "john", "binance"), assume it's a .waillet alias and add the suffix
 - Never invent placeholder addresses like "0xVitalikAddress" - if you don't know the address, return the identifier as-is
 - Use common token symbols (USDC, ETH, USDT, etc.)
-- Default chain is "base-sepolia" unless the user explicitly specifies a different network in their command
-- CHAIN DETECTION: Only use a chain other than "base-sepolia" if the user explicitly mentions it (e.g., "on ethereum", "on sepolia", "on bsc")
 
-EMAIL/ALIAS TRANSFER EXAMPLES:
-- "send 10 USDC to john@gmail.com" -> {{"action": "transfer", "to": "john@gmail.com", "value": "10", "token": "USDC", "chain": "base-sepolia", "confidence": 95}}
-- "send 0.1 ETH to ricardo.waillet" -> {{"action": "transfer", "to": "ricardo.waillet", "value": "0.1", "token": "ETH", "chain": "base-sepolia", "confidence": 95}}
-- "transfer 5 USDC to maria" -> {{"action": "transfer", "to": "maria.waillet", "value": "5", "token": "USDC", "chain": "base-sepolia", "confidence": 90}}
-- "send 1 ETH to binance on ethereum" -> {{"action": "transfer", "to": "binance.waillet", "value": "1", "token": "ETH", "chain": "ethereum", "confidence": 95}}
+TRANSFER EXAMPLES (network NOT specified - needs_network=true):
+- "send 10 USDC to john@gmail.com" -> {{"action": "transfer", "to": "john@gmail.com", "value": "10", "token": "USDC", "chain": null, "needs_network": true, "confidence": 95}}
+- "send 0.1 ETH to ricardo.waillet" -> {{"action": "transfer", "to": "ricardo.waillet", "value": "0.1", "token": "ETH", "chain": null, "needs_network": true, "confidence": 95}}
+- "transfer 5 USDC to maria" -> {{"action": "transfer", "to": "maria.waillet", "value": "5", "token": "USDC", "chain": null, "needs_network": true, "confidence": 90}}
+- "send 1 ETH to binance" -> {{"action": "transfer", "to": "0x...", "value": "1", "token": "ETH", "chain": null, "needs_network": true, "resolved_from": "binance", "confidence": 95}}
 
-FAVORITE TRANSFER EXAMPLES (favorites don't have a chain - use default or user-specified):
-- "send 1 ETH to binance" (where binance is a saved favorite) -> {{"action": "transfer", "to": "0x...", "value": "1", "token": "ETH", "chain": "base-sepolia", "resolved_from": "binance", "confidence": 95}}
-- "send 1 ETH to binance on sepolia" -> {{"action": "transfer", "to": "0x...", "value": "1", "token": "ETH", "chain": "sepolia", "resolved_from": "binance", "confidence": 95}}
+TRANSFER EXAMPLES (network EXPLICITLY specified - needs_network=false):
+- "send 1 ETH to binance on ethereum" -> {{"action": "transfer", "to": "0x...", "value": "1", "token": "ETH", "chain": "ethereum", "needs_network": false, "resolved_from": "binance", "confidence": 95}}
+- "send 10 USDC to john@gmail.com on base-sepolia" -> {{"action": "transfer", "to": "john@gmail.com", "value": "10", "token": "USDC", "chain": "base-sepolia", "needs_network": false, "confidence": 95}}
+- "transfer 5 ETH on sepolia to 0x123..." -> {{"action": "transfer", "to": "0x123...", "value": "5", "token": "ETH", "chain": "sepolia", "needs_network": false, "confidence": 95}}
 
-SAVE FAVORITE EXAMPLES:
-- "save favorite johndoe 0x123..." -> {{"action": "save_favorite", "alias": "johndoe", "to": "0x123...", "confidence": 95}}
-- "save 0x123... as binance" -> {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "confidence": 95}}
-- "add favorite alice.eth" -> {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "confidence": 95}}
+SAVE FAVORITE EXAMPLES (no network needed):
+- "save favorite johndoe 0x123..." -> {{"action": "save_favorite", "alias": "johndoe", "to": "0x123...", "needs_network": false, "confidence": 95}}
+- "save 0x123... as binance" -> {{"action": "save_favorite", "alias": "binance", "to": "0x123...", "needs_network": false, "confidence": 95}}
+- "add favorite alice.eth" -> {{"action": "save_favorite", "alias": "alice", "to": "alice.eth", "needs_network": false, "confidence": 95}}
 
 LIST FAVORITES EXAMPLES:
 - "show my favorites" -> {{"action": "list_favorites", "confidence": 100}}
