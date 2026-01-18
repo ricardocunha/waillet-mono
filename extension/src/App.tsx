@@ -8,6 +8,7 @@ import { ConnectionApprovalModal } from './components/ConnectionApprovalModal';
 import { DAppTransactionModal } from './components/DAppTransactionModal';
 import { SignatureApprovalModal } from './components/SignatureApprovalModal';
 import { NetworkSwitchModal } from './components/NetworkSwitchModal';
+import { ConnectionStatus } from './components/ConnectionStatus';
 import { Bot, Wallet } from 'lucide-react';
 import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
@@ -344,6 +345,9 @@ function AppContent() {
 
   return (
     <>
+      {/* Connection Status Banner - shows when backend is offline */}
+      <ConnectionStatus checkInterval={5000} />
+
       {/* Hide main content when modal is showing */}
       {!pendingRequest && (
         <div className="h-full flex flex-col">
