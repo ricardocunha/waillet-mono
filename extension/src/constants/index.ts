@@ -5,6 +5,8 @@ import { Chain } from '../types/messaging';
  */
 export enum StorageKey {
   ACCOUNT = 'account',
+  ACCOUNTS = 'accounts',  // Array of all accounts
+  ACTIVE_ACCOUNT_INDEX = 'activeAccountIndex',  // Index of active account
   ENCRYPTED_WALLET = 'encryptedWallet',
   CONNECTED_SITES = 'connectedSites',
   PENDING_REQUEST = 'pendingRequest'

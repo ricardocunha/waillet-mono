@@ -75,7 +75,9 @@ export interface WalletAccount {
   address: string;
   privateKey: string;
   index: number;
+  name?: string; // Account label (e.g., "Account 1", "Trading")
   chain?: string; // Current chain (ethereum, sepolia, base, base-sepolia)
+  imported?: boolean; // True if imported via private key (not derived from mnemonic)
 }
 
 export interface ChainConfig {
@@ -176,7 +178,8 @@ export class WalletService {
     return {
       address: hdNode.address,
       privateKey: hdNode.privateKey,
-      index
+      index,
+      name: `Account ${index + 1}`
     };
   }
 
