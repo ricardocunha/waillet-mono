@@ -1,6 +1,9 @@
-# Waillet - AI-Powered Wallet & Firewall
+<p align="center">
+  <img src="images/freepik_smart_wallet.png" alt="wAIllet Logo" width="200"/>
+</p>
+<h1 align="center" style="font-family: 'Comic Sans MS', 'Comic Sans', cursive;">wAIllet</h1>
 
-An AI-powered crypto wallet extension with security features.
+<p align="center"><b>The AI-Powered Wallet That Actually Protects You</b></p>
 
 ## What You Need
 
