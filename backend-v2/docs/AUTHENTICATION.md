@@ -84,6 +84,13 @@ The extension auto-authenticates when the wallet is unlocked:
 3. Tokens stored in `chrome.storage.local`
 4. `api.ts` auto-includes JWT in protected requests
 
+## Security Notes
+
+- Nonces are single-use and expire in 10 minutes — prevents replay attacks
+- Access tokens have a short TTL (15 min); refresh tokens live 7 days
+- JWT secret must be at least 32 characters — use a strong random value in production
+- All token storage is local to the extension; nothing is sent to third parties
+
 ---
 
 *Diagram generated with [diagrams](https://diagrams.mingrammer.com/) - see `auth_diagram.py`*
