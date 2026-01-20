@@ -1,38 +1,44 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { WalletAccount, WalletService } from '../services/wallet';
 import { decrypt, encrypt } from '../utils/crypto';
+import { StorageKey } from '../constants';
 
 interface WalletContextType {
   account: WalletAccount | null;
+  accounts: WalletAccount[];
+  activeAccountIndex: number;
   isUnlocked: boolean;
   hasWallet: boolean;
+  isLoading: boolean;
+  switchAccount: (index: number) => Promise<void>;
+  addAccount: () => Promise<WalletAccount>;
+  importAccount: (mnemonic: string, name?: string) => Promise<WalletAccount>;
+  renameAccount: (index: number, name: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   createWallet: (password: string) => Promise<string>;
   confirmMnemonic: (mnemonic: string) => Promise<void>;
   importWallet: (mnemonic: string, password: string) => Promise<void>;
   getPrivateKey: () => Promise<string>;
-  isLoading: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
-const SESSION_TIMEOUT = 300 * 1000; // 300 seconds (5 minutes) in milliseconds
+const SESSION_TIMEOUT = 300 * 1000; // 5 minutes
 
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [account, setAccount] = useState<WalletAccount | null>(null);
+  const [accounts, setAccounts] = useState<WalletAccount[]>([]);
+  const [activeAccountIndex, setActiveAccountIndex] = useState(0);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const account = accounts.length > 0 ? accounts[activeAccountIndex] || accounts[0] : null;
+
   const saveSession = (mnemonic: string) => {
-    const sessionData = {
-      mnemonic,
-      timestamp: Date.now()
-    };
+    const sessionData = { mnemonic, timestamp: Date.now() };
     try {
       sessionStorage.setItem('walletSession', JSON.stringify(sessionData));
       localStorage.setItem('walletSession', JSON.stringify(sessionData));
-      console.log('✅ Session saved, expires in 300 seconds (5 minutes)');
     } catch (err) {
       console.error('Failed to save session:', err);
     }
@@ -40,31 +46,19 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const checkSession = (): string | null => {
     try {
-      const sessionStr = sessionStorage.getItem('walletSession') ||
-                        localStorage.getItem('walletSession');
-      
-      if (!sessionStr) {
-        console.log('❌ No session found');
-        return null;
-      }
+      const sessionStr = sessionStorage.getItem('walletSession') || localStorage.getItem('walletSession');
+      if (!sessionStr) return null;
 
       const session = JSON.parse(sessionStr);
-      const now = Date.now();
-      const elapsed = now - session.timestamp;
-      const remaining = SESSION_TIMEOUT - elapsed;
-
-      console.log(`⏱️  Session age: ${Math.round(elapsed/1000)}s / 300s (${Math.round(remaining/1000)}s remaining)`);
+      const elapsed = Date.now() - session.timestamp;
 
       if (elapsed < SESSION_TIMEOUT) {
-        console.log('✅ Session valid, auto-unlocking');
         return session.mnemonic;
       }
 
-      console.log('❌ Session expired, clearing');
       clearSession();
       return null;
     } catch (err) {
-      console.error('Session check error:', err);
       clearSession();
       return null;
     }
@@ -73,6 +67,38 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const clearSession = () => {
     sessionStorage.removeItem('walletSession');
     localStorage.removeItem('walletSession');
+  };
+
+  const saveAccountsToStorage = async (accountsList: WalletAccount[], activeIndex: number) => {
+    await chrome.storage.local.set({
+      [StorageKey.ACCOUNTS]: accountsList,
+      [StorageKey.ACTIVE_ACCOUNT_INDEX]: activeIndex,
+      [StorageKey.ACCOUNT]: accountsList[activeIndex] || null
+    });
+  };
+
+  const loadAccountsFromStorage = async (): Promise<{ accounts: WalletAccount[], activeIndex: number }> => {
+    const result = await chrome.storage.local.get([
+      StorageKey.ACCOUNTS,
+      StorageKey.ACTIVE_ACCOUNT_INDEX,
+      StorageKey.ACCOUNT
+    ]);
+
+    if (result[StorageKey.ACCOUNTS]?.length > 0) {
+      return {
+        accounts: result[StorageKey.ACCOUNTS],
+        activeIndex: result[StorageKey.ACTIVE_ACCOUNT_INDEX] || 0
+      };
+    }
+
+    // Migrate old single-account storage
+    if (result[StorageKey.ACCOUNT]) {
+      const singleAccount = result[StorageKey.ACCOUNT];
+      singleAccount.name = singleAccount.name || 'Account 1';
+      return { accounts: [singleAccount], activeIndex: 0 };
+    }
+
+    return { accounts: [], activeIndex: 0 };
   };
 
   useEffect(() => {
@@ -84,27 +110,32 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (encrypted) {
           const sessionMnemonic = checkSession();
           if (sessionMnemonic) {
-            console.log('Session found, restoring wallet...');
             try {
-              const wallet = WalletService.fromMnemonic(sessionMnemonic);
+              const { accounts: savedAccounts, activeIndex } = await loadAccountsFromStorage();
 
-              // Load chain from storage or use default
-              const result = await chrome.storage.local.get('account');
-              const chain = result.account?.chain || 'ethereum';
-              const walletWithChain = { ...wallet, chain };
+              if (savedAccounts.length > 0) {
+                const restoredAccounts = savedAccounts.map((acc) => {
+                  if (acc.imported) return acc;
+                  const derived = WalletService.fromMnemonic(sessionMnemonic, acc.index);
+                  return { ...acc, privateKey: derived.privateKey };
+                });
 
-              // Save to chrome.storage
-              await chrome.storage.local.set({ account: walletWithChain });
+                setAccounts(restoredAccounts);
+                setActiveAccountIndex(activeIndex);
+                await saveAccountsToStorage(restoredAccounts, activeIndex);
+              } else {
+                const wallet = WalletService.fromMnemonic(sessionMnemonic);
+                const walletWithChain = { ...wallet, chain: 'ethereum' };
+                setAccounts([walletWithChain]);
+                setActiveAccountIndex(0);
+                await saveAccountsToStorage([walletWithChain], 0);
+              }
 
-              setAccount(walletWithChain);
               setIsUnlocked(true);
-              console.log('Session restored successfully');
             } catch (err) {
               console.error('Failed to restore session:', err);
               clearSession();
             }
-          } else {
-            console.log('No valid session found');
           }
         }
       } catch (err) {
@@ -116,20 +147,18 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     checkWallet();
   }, []);
 
-  // Listen for storage changes to keep account in sync
   useEffect(() => {
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
-      if (changes.account && changes.account.newValue) {
-        console.log('🔄 WalletContext: Storage changed, updating account:', changes.account.newValue);
-        setAccount(changes.account.newValue);
+      if (changes[StorageKey.ACCOUNTS]?.newValue) {
+        setAccounts(changes[StorageKey.ACCOUNTS].newValue);
+      }
+      if (changes[StorageKey.ACTIVE_ACCOUNT_INDEX] !== undefined) {
+        setActiveAccountIndex(changes[StorageKey.ACTIVE_ACCOUNT_INDEX].newValue || 0);
       }
     };
 
     chrome.storage.local.onChanged.addListener(handleStorageChange);
-
-    return () => {
-      chrome.storage.local.onChanged.removeListener(handleStorageChange);
-    };
+    return () => chrome.storage.local.onChanged.removeListener(handleStorageChange);
   }, []);
 
   const unlock = async (password: string) => {
@@ -137,19 +166,27 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (!encrypted) throw new Error('No wallet found');
 
     const mnemonic = await decrypt(encrypted, password);
-    const wallet = WalletService.fromMnemonic(mnemonic);
+    const { accounts: savedAccounts, activeIndex } = await loadAccountsFromStorage();
 
-    // Load chain from storage or use default
-    const result = await chrome.storage.local.get('account');
-    const chain = result.account?.chain || 'ethereum';
-    const walletWithChain = { ...wallet, chain };
+    if (savedAccounts.length > 0) {
+      const restoredAccounts = savedAccounts.map((acc) => {
+        if (acc.imported) return acc;
+        const derived = WalletService.fromMnemonic(mnemonic, acc.index);
+        return { ...acc, privateKey: derived.privateKey };
+      });
 
-    // Save to chrome.storage
-    await chrome.storage.local.set({ account: walletWithChain });
+      setAccounts(restoredAccounts);
+      setActiveAccountIndex(activeIndex);
+      await saveAccountsToStorage(restoredAccounts, activeIndex);
+    } else {
+      const wallet = WalletService.fromMnemonic(mnemonic);
+      const walletWithChain = { ...wallet, chain: 'ethereum' };
+      setAccounts([walletWithChain]);
+      setActiveAccountIndex(0);
+      await saveAccountsToStorage([walletWithChain], 0);
+    }
 
-    setAccount(walletWithChain);
     setIsUnlocked(true);
-
     saveSession(mnemonic);
   };
 
@@ -163,12 +200,12 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const confirmMnemonic = async (mnemonic: string) => {
     const wallet = WalletService.fromMnemonic(mnemonic);
-
-    // Set default chain and save to chrome.storage
     const walletWithChain = { ...wallet, chain: 'ethereum' };
-    await chrome.storage.local.set({ account: walletWithChain });
 
-    setAccount(walletWithChain);
+    setAccounts([walletWithChain]);
+    setActiveAccountIndex(0);
+    await saveAccountsToStorage([walletWithChain], 0);
+
     setIsUnlocked(true);
     setHasWallet(true);
 
@@ -180,16 +217,96 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     localStorage.setItem('wallet', encrypted);
 
     const wallet = WalletService.fromMnemonic(mnemonic);
-
-    // Set default chain and save to chrome.storage
     const walletWithChain = { ...wallet, chain: 'ethereum' };
-    await chrome.storage.local.set({ account: walletWithChain });
 
-    setAccount(walletWithChain);
+    setAccounts([walletWithChain]);
+    setActiveAccountIndex(0);
+    await saveAccountsToStorage([walletWithChain], 0);
+
     setIsUnlocked(true);
     setHasWallet(true);
 
     saveSession(mnemonic);
+  };
+
+  const switchAccount = async (index: number) => {
+    if (index < 0 || index >= accounts.length) {
+      throw new Error('Invalid account index');
+    }
+    setActiveAccountIndex(index);
+    await saveAccountsToStorage(accounts, index);
+  };
+
+  const addAccount = async (): Promise<WalletAccount> => {
+    const sessionStr = sessionStorage.getItem('walletSession') || localStorage.getItem('walletSession');
+    if (!sessionStr) {
+      throw new Error('Session expired. Please unlock your wallet again.');
+    }
+
+    const session = JSON.parse(sessionStr);
+    const mnemonic = session.mnemonic;
+
+    const maxIndex = accounts
+      .filter(acc => !acc.imported)
+      .reduce((max, acc) => Math.max(max, acc.index), -1);
+    const newIndex = maxIndex + 1;
+
+    const newAccount = WalletService.fromMnemonic(mnemonic, newIndex);
+    const accountWithChain = {
+      ...newAccount,
+      chain: account?.chain || 'ethereum',
+      name: `Account ${accounts.length + 1}`
+    };
+
+    const newAccounts = [...accounts, accountWithChain];
+    setAccounts(newAccounts);
+    setActiveAccountIndex(newAccounts.length - 1);
+    await saveAccountsToStorage(newAccounts, newAccounts.length - 1);
+    return accountWithChain;
+  };
+
+  const importAccount = async (mnemonic: string, name?: string): Promise<WalletAccount> => {
+    try {
+      const importedAccount = WalletService.fromMnemonic(mnemonic, 0);
+
+      const existing = accounts.find(acc =>
+        acc.address.toLowerCase() === importedAccount.address.toLowerCase()
+      );
+      if (existing) {
+        throw new Error('This account is already in your wallet');
+      }
+
+      const accountWithChain: WalletAccount = {
+        ...importedAccount,
+        chain: account?.chain || 'ethereum',
+        name: name || `Imported ${accounts.filter(a => a.imported).length + 1}`,
+        imported: true
+      };
+
+      const newAccounts = [...accounts, accountWithChain];
+      setAccounts(newAccounts);
+      setActiveAccountIndex(newAccounts.length - 1);
+      await saveAccountsToStorage(newAccounts, newAccounts.length - 1);
+      return accountWithChain;
+    } catch (err: any) {
+      if (err.message.includes('already in your wallet')) {
+        throw err;
+      }
+      throw new Error('Invalid recovery phrase');
+    }
+  };
+
+  const renameAccount = async (index: number, name: string) => {
+    if (index < 0 || index >= accounts.length) {
+      throw new Error('Invalid account index');
+    }
+
+    const newAccounts = accounts.map((acc, i) =>
+      i === index ? { ...acc, name } : acc
+    );
+
+    setAccounts(newAccounts);
+    await saveAccountsToStorage(newAccounts, activeAccountIndex);
   };
 
   const getPrivateKey = async (): Promise<string> => {
@@ -200,14 +317,20 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   return (
     <WalletContext.Provider value={{
       account,
+      accounts,
+      activeAccountIndex,
       isUnlocked,
       hasWallet,
+      isLoading,
+      switchAccount,
+      addAccount,
+      importAccount,
+      renameAccount,
       unlock,
       createWallet,
       confirmMnemonic,
       importWallet,
       getPrivateKey,
-      isLoading
     }}>
       {children}
     </WalletContext.Provider>
@@ -219,4 +342,3 @@ export const useWallet = () => {
   if (!context) throw new Error('useWallet must be used within WalletProvider');
   return context;
 };
-

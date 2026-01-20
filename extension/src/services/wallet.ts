@@ -136,7 +136,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   },
   bsc: {
     name: 'BNB Smart Chain',
-    rpcUrl: 'https://bsc-dataseed.binance.org',
+    rpcUrl: 'https://bsc-dataseed1.binance.org',
     chainId: 56,
     nativeCurrency: 'BNB',
     explorer: 'https://bscscan.com',

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Send, RefreshCw, ChevronDown, Star, MoreVertical, Settings } from 'lucide-react';
+import { Send, RefreshCw, ChevronDown, Star, MoreVertical, Settings, Check } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { WalletService, TOKENS } from '../services/wallet';
 import { SendTransactionModal } from './SendTransactionModal';
 import { SaveFavoriteModal } from './SaveFavoriteModal';
 import { AccountSettingsModal } from './AccountSettingsModal';
+import { AccountSelector } from './AccountSelector';
+import { AddAccountModal } from './AddAccountModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
 import { CHAIN_DISPLAY, SUPPORTED_CHAINS, StorageKey } from '../constants';
 
@@ -15,8 +17,7 @@ interface TokenBalance {
   isLoading: boolean;
 }
 
-// Token prices in USD
-//TODO connect with coin market kap or coingecko to get tokens real price
+// TODO: fetch real prices from CoinGecko/CoinMarketCap
 const TOKEN_PRICES: Partial<Record<Token, number>> = {
   [Token.ETH]: 2500,
   [Token.BNB]: 600,
@@ -26,8 +27,6 @@ const TOKEN_PRICES: Partial<Record<Token, number>> = {
 
 export const Dashboard: React.FC = () => {
   const { account } = useWallet();
-  const [copied, setCopied] = useState(false);
-  // Initialize with account.chain if available, otherwise default to ethereum
   const [currentChain, setCurrentChain] = useState<Chain>(
     (account?.chain as Chain) || Chain.ETHEREUM
   );
@@ -39,47 +38,21 @@ export const Dashboard: React.FC = () => {
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
 
-  console.log('📊 Dashboard render:', {
-    accountChain: account?.chain,
-    currentChain,
-    showNetworkDropdown
-  });
-
-  // Sync currentChain state with account.chain from context
   useEffect(() => {
     if (account?.chain) {
-      console.log('🔄 Syncing currentChain with account.chain:', account.chain);
       setCurrentChain(account.chain as Chain);
     }
   }, [account?.chain]);
 
-  const handleCopy = () => {
-    if (account) {
-      navigator.clipboard.writeText(account.address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   const handleNetworkSwitch = async (newChain: Chain) => {
-    console.log('🔄 Network switch clicked!', newChain);
-
-    if (!account) {
-      console.error('❌ No account available');
-      return;
-    }
+    if (!account) return;
 
     try {
-      // Update state immediately for UI
       setCurrentChain(newChain);
       setShowNetworkDropdown(false);
 
-      // Clear token balances and show loading state immediately
       const availableTokens = CHAIN_TOKENS[newChain] || [];
       const loadingBalances = availableTokens.map(symbol => ({
         symbol,
@@ -90,100 +63,66 @@ export const Dashboard: React.FC = () => {
       setTokenBalances(loadingBalances);
       setTotalUsd(0);
 
-      // Update the chain in storage using the account we already have
       const updatedAccount = { ...account, chain: newChain };
       await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
-      console.log('✅ Storage updated with new chain:', newChain);
 
-      // Fetch new balances - PASS the chain explicitly to avoid using stale state
-      console.log('⏳ Fetching balances for', newChain);
       setIsRefreshing(true);
-      await fetchBalances(newChain);
-      console.log('✅ Network switch complete!');
+      await fetchBalances(newChain, account.address);
     } catch (error) {
-      console.error('❌ Error switching network:', error);
+      console.error('Error switching network:', error);
     }
   };
 
-  const fetchBalances = async (chainToFetch?: Chain) => {
-    if (!account) return;
+  const fetchBalances = async (chainToFetch?: Chain, addressToFetch?: string) => {
+    const targetAddress = addressToFetch || account?.address;
+    if (!targetAddress) return;
 
-    // Use the passed chain or fall back to current state
     const targetChain = chainToFetch || currentChain;
-
     setIsRefreshing(true);
 
-    // Determine which tokens are available on target chain
     const availableTokens = CHAIN_TOKENS[targetChain] || [];
-
     const initialBalances: TokenBalance[] = availableTokens.map(symbol => ({
       symbol,
       balance: '0',
       usdValue: 0,
       isLoading: true,
     }));
-
     setTokenBalances(initialBalances);
 
-    // Fetch balances for each token
     const balancePromises = availableTokens.map(async (symbol): Promise<TokenBalance> => {
       try {
         let balance: string;
 
         if (symbol === Token.ETH || symbol === Token.BNB) {
-          // Native token balance (ETH for Ethereum/Sepolia, BNB for BSC)
-          balance = await WalletService.getBalance(account.address, targetChain);
+          balance = await WalletService.getBalance(targetAddress, targetChain);
         } else {
-          // ERC-20 token balance
           const tokenAddress = TOKENS[symbol]?.[targetChain];
           if (!tokenAddress) {
-            return {
-              symbol,
-              balance: '0',
-              usdValue: 0,
-              isLoading: false,
-            };
+            return { symbol, balance: '0', usdValue: 0, isLoading: false };
           }
-          balance = await WalletService.getBalance(account.address, targetChain, symbol);
+          balance = await WalletService.getBalance(targetAddress, targetChain, symbol);
         }
 
         const balanceNum = parseFloat(balance);
         const usdValue = balanceNum * (TOKEN_PRICES[symbol as Token] || 0);
-
-        return {
-          symbol,
-          balance: balanceNum.toFixed(6),
-          usdValue,
-          isLoading: false,
-        };
+        return { symbol, balance: balanceNum.toFixed(6), usdValue, isLoading: false };
       } catch (err) {
         console.error(`Failed to fetch ${symbol} balance:`, err);
-        return {
-          symbol,
-          balance: 'Error',
-          usdValue: 0,
-          isLoading: false,
-        };
+        return { symbol, balance: 'Error', usdValue: 0, isLoading: false };
       }
     });
 
     const fetchedBalances = await Promise.all(balancePromises);
     setTokenBalances(fetchedBalances);
-
-    // Calculate total USD value
-    const total = fetchedBalances.reduce((sum, token) => sum + token.usdValue, 0);
-    setTotalUsd(total);
-
+    setTotalUsd(fetchedBalances.reduce((sum, token) => sum + token.usdValue, 0));
     setIsRefreshing(false);
   };
 
-  // Fetch balances when currentChain changes (currentChain is already synced with account.chain)
   useEffect(() => {
-    if (account) {
-      console.log('🔄 Fetching balances for chain:', currentChain);
-      fetchBalances();
+    if (account?.address) {
+      fetchBalances(currentChain, account.address);
     }
-  }, [currentChain]); // Only depend on currentChain, not account
+  }, [currentChain, account?.address]);
 
   if (!account) return null;
 
@@ -241,14 +180,10 @@ export const Dashboard: React.FC = () => {
           <div className="text-xs text-purple-200">Total Balance</div>
         </div>
 
-        {/* Address */}
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-2 mx-auto px-3 py-1 bg-purple-700/50 hover:bg-purple-700 rounded-full text-xs transition-colors mb-3"
-        >
-          <span className="font-mono">{formatAddress(account.address)}</span>
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-        </button>
+        {/* Account Selector */}
+        <div className="mb-3">
+          <AccountSelector onAddAccount={() => setShowAddAccountModal(true)} />
+        </div>
 
         {/* Network Selector */}
         <div className="relative">
@@ -390,6 +325,9 @@ export const Dashboard: React.FC = () => {
       )}
       {showAccountSettingsModal && (
         <AccountSettingsModal onClose={() => setShowAccountSettingsModal(false)} />
+      )}
+      {showAddAccountModal && (
+        <AddAccountModal onClose={() => setShowAddAccountModal(false)} />
       )}
     </div>
   );
