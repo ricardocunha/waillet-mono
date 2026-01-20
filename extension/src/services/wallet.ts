@@ -113,20 +113,6 @@ const ERC20_ABI = [
 
 
 export const CHAINS: Record<string, ChainConfig> = {
-  sepolia: {
-    name: 'Sepolia Testnet',
-    rpcUrl: 'sepolia',
-    chainId: 11155111,
-    nativeCurrency: 'ETH',
-    explorer: 'https://sepolia.etherscan.io',
-  },
-  'base-sepolia': {
-    name: 'Base Sepolia',
-    rpcUrl: 'https://sepolia.base.org',
-    chainId: 84532,
-    nativeCurrency: 'ETH',
-    explorer: 'https://sepolia.basescan.org',
-  },
   ethereum: {
     name: 'Ethereum',
     rpcUrl: 'https://eth.llamarpc.com',
@@ -141,27 +127,42 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'BNB',
     explorer: 'https://bscscan.com',
   },
-  'bsc-testnet': {
-    name: 'BSC Testnet',
-    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
-    chainId: 97,
-    nativeCurrency: 'BNB',
-    explorer: 'https://testnet.bscscan.com',
+  base: {
+    name: 'Base',
+    rpcUrl: 'https://mainnet.base.org',
+    chainId: 8453,
+    nativeCurrency: 'ETH',
+    explorer: 'https://basescan.org',
+  },
+  sepolia: {
+    name: 'Sepolia Testnet',
+    rpcUrl: 'sepolia',
+    chainId: 11155111,
+    nativeCurrency: 'ETH',
+    explorer: 'https://sepolia.etherscan.io',
+  },
+  'base-sepolia': {
+    name: 'Base Sepolia',
+    rpcUrl: 'https://sepolia.base.org',
+    chainId: 84532,
+    nativeCurrency: 'ETH',
+    explorer: 'https://sepolia.basescan.org',
   },
 };
 
 export const TOKENS: Record<string, Record<string, string>> = {
   USDT: {
     ethereum: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    bsc: '0x55d398326f99059fF775485246999027B3197955',
     sepolia: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
     'base-sepolia': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
-    bsc: '0x55d398326f99059fF775485246999027B3197955',
   },
   USDC: {
     ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    bsc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+    base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     sepolia: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-    bsc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
   },
 };
 

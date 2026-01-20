@@ -12,22 +12,23 @@ export enum StorageKey {
   PENDING_REQUEST = 'pendingRequest'
 }
 
-/**
- * Chain display configuration (only supported chains)
- */
 export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string }>> = {
   [Chain.ETHEREUM]: { name: 'Ethereum', color: '#627EEA' },
+  [Chain.BSC]: { name: 'BNB Chain', color: '#F0B90B' },
+  [Chain.BASE]: { name: 'Base', color: '#0052FF' },
   [Chain.SEPOLIA]: { name: 'Sepolia', color: '#A855F7' },
   [Chain.BASE_SEPOLIA]: { name: 'Base Sepolia', color: '#0052FF' },
-  [Chain.BSC]: { name: 'BNB Chain', color: '#F0B90B' }
 };
 
-/**
- * Supported chains for network switching
- */
-export const SUPPORTED_CHAINS: Chain[] = [
-  Chain.SEPOLIA,
+export const MAINNET_CHAINS: Chain[] = [
   Chain.ETHEREUM,
-  Chain.BASE_SEPOLIA,
-  Chain.BSC
+  Chain.BSC,
+  Chain.BASE,
 ];
+
+export const TESTNET_CHAINS: Chain[] = [
+  Chain.SEPOLIA,
+  Chain.BASE_SEPOLIA,
+];
+
+export const SUPPORTED_CHAINS: Chain[] = [...MAINNET_CHAINS, ...TESTNET_CHAINS];

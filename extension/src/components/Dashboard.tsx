@@ -8,7 +8,7 @@ import { AccountSettingsModal } from './AccountSettingsModal';
 import { AccountSelector } from './AccountSelector';
 import { AddAccountModal } from './AddAccountModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
-import { CHAIN_DISPLAY, SUPPORTED_CHAINS, StorageKey } from '../constants';
+import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS, StorageKey } from '../constants';
 
 interface TokenBalance {
   symbol: string;
@@ -133,7 +133,10 @@ export const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold" style={{ fontFamily: "'Comic Sans MS', 'Comic Sans', cursive" }}>wAIllet</h1>
+          <div className="flex items-center gap-2">
+            <img src="/icons/icon-48.png" alt="wAIllet" className="w-8 h-8" />
+            <h1 className="text-lg font-bold" style={{ fontFamily: "'Comic Sans MS', 'Comic Sans', cursive" }}>wAIllet</h1>
+          </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => fetchBalances()}
@@ -192,7 +195,6 @@ export const Dashboard: React.FC = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🖱️ SELECTOR CLICKED! Current:', showNetworkDropdown);
               setShowNetworkDropdown(prev => !prev);
             }}
             className="w-full flex items-center justify-between px-4 py-2 bg-purple-700/50 hover:bg-purple-700 rounded-lg transition-colors"
@@ -208,34 +210,51 @@ export const Dashboard: React.FC = () => {
           </button>
 
           {showNetworkDropdown && (
-            <div className="absolute top-full mt-2 w-full bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50">
-              {SUPPORTED_CHAINS.map((chain, index) => {
+            <div className="absolute top-full mt-2 w-full bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50 overflow-hidden">
+              {MAINNET_CHAINS.map((chain, index) => {
                 const info = CHAIN_DISPLAY[chain]!;
-                console.log('🔧 Rendering chain button:', chain, info);
                 return (
                   <button
                     key={chain}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('🎯 BUTTON CLICKED:', chain);
                       handleNetworkSwitch(chain);
                     }}
                     type="button"
-                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-colors ${
                       chain === currentChain ? 'bg-slate-700' : ''
-                    } ${index === 0 ? 'rounded-t-lg' : ''} ${
-                      index === SUPPORTED_CHAINS.length - 1 ? 'rounded-b-lg' : ''
-                    }`}
+                    } ${index === 0 ? 'rounded-t-lg' : ''}`}
                   >
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: info.color }}
-                    />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: info.color }} />
                     <span className="font-medium">{info.name}</span>
-                    {chain === currentChain && (
-                      <Check size={14} className="ml-auto text-purple-400" />
-                    )}
+                    {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
+                  </button>
+                );
+              })}
+
+              <div className="border-t border-slate-700 px-4 py-1.5">
+                <span className="text-xs text-slate-500">Testnets</span>
+              </div>
+
+              {TESTNET_CHAINS.map((chain, index) => {
+                const info = CHAIN_DISPLAY[chain]!;
+                return (
+                  <button
+                    key={chain}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNetworkSwitch(chain);
+                    }}
+                    type="button"
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-colors ${
+                      chain === currentChain ? 'bg-slate-700' : ''
+                    } ${index === TESTNET_CHAINS.length - 1 ? 'rounded-b-lg' : ''}`}
+                  >
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: info.color }} />
+                    <span className="font-medium">{info.name}</span>
+                    {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
                   </button>
                 );
               })}
