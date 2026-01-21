@@ -7,7 +7,7 @@
 
 ## What You Need
 
-### Extension
+### Chrome Extension
 - Node.js (version 18 or higher)
 - Chrome browser
 
