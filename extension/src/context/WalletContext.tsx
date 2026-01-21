@@ -14,6 +14,7 @@ interface WalletContextType {
   addAccount: () => Promise<WalletAccount>;
   importAccount: (mnemonic: string, name?: string) => Promise<WalletAccount>;
   renameAccount: (index: number, name: string) => Promise<void>;
+  updateChain: (chain: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   createWallet: (password: string) => Promise<string>;
   confirmMnemonic: (mnemonic: string) => Promise<void>;
@@ -309,6 +310,17 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     await saveAccountsToStorage(newAccounts, activeAccountIndex);
   };
 
+  const updateChain = async (chain: string) => {
+    if (accounts.length === 0) return;
+
+    const newAccounts = accounts.map((acc, i) =>
+      i === activeAccountIndex ? { ...acc, chain } : acc
+    );
+
+    setAccounts(newAccounts);
+    await saveAccountsToStorage(newAccounts, activeAccountIndex);
+  };
+
   const getPrivateKey = async (): Promise<string> => {
     if (!account) throw new Error('Wallet not unlocked');
     return account.privateKey;
@@ -326,6 +338,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       addAccount,
       importAccount,
       renameAccount,
+      updateChain,
       unlock,
       createWallet,
       confirmMnemonic,

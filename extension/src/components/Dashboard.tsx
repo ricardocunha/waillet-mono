@@ -8,7 +8,7 @@ import { AccountSettingsModal } from './AccountSettingsModal';
 import { AccountSelector } from './AccountSelector';
 import { AddAccountModal } from './AddAccountModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
-import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS, StorageKey } from '../constants';
+import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS } from '../constants';
 
 interface TokenBalance {
   symbol: string;
@@ -26,7 +26,7 @@ const TOKEN_PRICES: Partial<Record<Token, number>> = {
 };
 
 export const Dashboard: React.FC = () => {
-  const { account } = useWallet();
+  const { account, updateChain } = useWallet();
   const [currentChain, setCurrentChain] = useState<Chain>(
     (account?.chain as Chain) || Chain.ETHEREUM
   );
@@ -63,8 +63,8 @@ export const Dashboard: React.FC = () => {
       setTokenBalances(loadingBalances);
       setTotalUsd(0);
 
-      const updatedAccount = { ...account, chain: newChain };
-      await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
+      // Update chain in wallet context (persists to storage)
+      await updateChain(newChain);
 
       setIsRefreshing(true);
       await fetchBalances(newChain, account.address);
