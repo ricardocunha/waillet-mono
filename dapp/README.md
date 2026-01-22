@@ -2,6 +2,13 @@
 
 A decentralized application for the wAIllet ecosystem.
 
+## Features
+
+- Connect wallet (MetaMask, wAIllet, WalletConnect)
+- Bridge tokens between supported networks
+- View token balances across chains
+- Transaction history per network
+
 ## Status
 
 **Under Construction**
