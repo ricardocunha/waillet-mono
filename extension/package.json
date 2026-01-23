@@ -9,10 +9,13 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:e2e": "npx playwright test",
+    "test:e2e": "npx playwright test --project=extension",
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "npx playwright test --headed",
     "test:e2e:debug": "npx playwright test --debug",
+    "test:e2e:uniswap": "npx playwright test --project=uniswap",
+    "test:e2e:uniswap:debug": "npx playwright test --project=uniswap --debug",
+    "test:e2e:all": "npx playwright test",
     "setup-icons": "node copy-icons.js"
   },
   "dependencies": {

@@ -17,9 +17,19 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chromium',
+      name: 'extension',
+      testMatch: /^(?!.*uniswap).*\.spec\.ts$/,
       use: {
         channel: 'chromium',
+      },
+    },
+    {
+      name: 'uniswap',
+      testMatch: /uniswap\.spec\.ts$/,
+      timeout: 120000, // 2 minutes for blockchain operations
+      use: {
+        channel: 'chromium',
+        viewport: { width: 1280, height: 800 }, // Larger viewport for Uniswap
       },
     },
   ],
