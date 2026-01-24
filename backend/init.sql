@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS favorites (
     wallet_address VARCHAR(42) NOT NULL,
     alias VARCHAR(100) NOT NULL,
     address VARCHAR(42) NOT NULL,
-    chain VARCHAR(50) NOT NULL,
+    chain VARCHAR(50) DEFAULT NULL,
     asset VARCHAR(50) DEFAULT NULL,
     type ENUM('address', 'contract', 'token') DEFAULT 'address',
     value VARCHAR(255) DEFAULT NULL,
