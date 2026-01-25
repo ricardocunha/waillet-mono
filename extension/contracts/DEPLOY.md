@@ -69,6 +69,19 @@ After upgrades, no frontend changes are needed — the proxy address remains the
 
 Base Sepolia faucet: https://www.alchemy.com/faucets/base-sepolia
 
+## Mainnet Deployment
+
+> ⚠️ **Use a hardware wallet or multi-sig for mainnet deploys — never a hot key.**
+
+The same commands work for mainnet. Replace `--network baseSepolia` with `--network base` and ensure your `.env` has:
+
+```
+MAINNET_RPC_URL=https://mainnet.base.org
+PRIVATE_KEY=<deployer key — use hardware wallet signer if possible>
+```
+
+Run a full audit and test suite before deploying to mainnet.
+
 ## Troubleshooting
 
 **"Nonce too high" error on deploy:**
