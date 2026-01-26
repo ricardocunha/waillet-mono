@@ -28,7 +28,7 @@ func NewFavoriteRepository(db *sqlx.DB) FavoriteRepository {
 
 func (r *favoriteRepository) GetByWalletAddress(ctx context.Context, walletAddress string) ([]models.Favorite, error) {
 	var favorites []models.Favorite
-	query := `SELECT id, wallet_address, alias, address, chain, asset, type, value, created_at, updated_at
+	query := `SELECT id, wallet_address, alias, address, asset, type, value, created_at, updated_at
 		FROM favorites WHERE wallet_address = ? ORDER BY created_at DESC`
 
 	err := r.db.SelectContext(ctx, &favorites, query, walletAddress)
@@ -41,7 +41,7 @@ func (r *favoriteRepository) GetByWalletAddress(ctx context.Context, walletAddre
 
 func (r *favoriteRepository) GetByID(ctx context.Context, id int64) (*models.Favorite, error) {
 	var favorite models.Favorite
-	query := `SELECT id, wallet_address, alias, address, chain, asset, type, value, created_at, updated_at
+	query := `SELECT id, wallet_address, alias, address, asset, type, value, created_at, updated_at
 		FROM favorites WHERE id = ?`
 
 	err := r.db.GetContext(ctx, &favorite, query, id)
@@ -57,7 +57,7 @@ func (r *favoriteRepository) GetByID(ctx context.Context, id int64) (*models.Fav
 
 func (r *favoriteRepository) GetByAlias(ctx context.Context, walletAddress, alias string) (*models.Favorite, error) {
 	var favorite models.Favorite
-	query := `SELECT id, wallet_address, alias, address, chain, asset, type, value, created_at, updated_at
+	query := `SELECT id, wallet_address, alias, address, asset, type, value, created_at, updated_at
 		FROM favorites WHERE wallet_address = ? AND LOWER(alias) = LOWER(?)`
 
 	err := r.db.GetContext(ctx, &favorite, query, walletAddress, alias)
@@ -72,14 +72,13 @@ func (r *favoriteRepository) GetByAlias(ctx context.Context, walletAddress, alia
 }
 
 func (r *favoriteRepository) Create(ctx context.Context, favorite *models.Favorite) error {
-	query := `INSERT INTO favorites (wallet_address, alias, address, chain, asset, type, value)
+	query := `INSERT INTO favorites (wallet_address, alias, address, asset, type, value)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := r.db.ExecContext(ctx, query,
 		favorite.WalletAddress,
 		favorite.Alias,
 		favorite.Address,
-		favorite.Chain,
 		favorite.Asset,
 		favorite.Type,
 		favorite.Value,
@@ -98,13 +97,12 @@ func (r *favoriteRepository) Create(ctx context.Context, favorite *models.Favori
 }
 
 func (r *favoriteRepository) Update(ctx context.Context, favorite *models.Favorite) error {
-	query := `UPDATE favorites SET alias = ?, address = ?, chain = ?, asset = ?, type = ?, value = ?
+	query := `UPDATE favorites SET alias = ?, address = ?, asset = ?, type = ?, value = ?
 		WHERE id = ?`
 
 	_, err := r.db.ExecContext(ctx, query,
 		favorite.Alias,
 		favorite.Address,
-		favorite.Chain,
 		favorite.Asset,
 		favorite.Type,
 		favorite.Value,
