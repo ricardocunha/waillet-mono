@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/waillet/backend-v2/internal/models"
+	"github.com/waillet-app/backend-v2/internal/models"
 )
 
 type PolicyRepository interface {

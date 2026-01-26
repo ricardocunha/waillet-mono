@@ -6,7 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
-	"github.com/waillet/backend-v2/internal/config"
+	"github.com/waillet-app/backend-v2/internal/config"
 )
 
 func NewConnection(cfg *config.DatabaseConfig) (*sqlx.DB, error) {
