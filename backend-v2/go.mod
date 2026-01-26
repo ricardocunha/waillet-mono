@@ -1,4 +1,4 @@
-module github.com/waillet/backend-v2
+module github.com/waillet-app/backend-v2
 
 go 1.23
 
