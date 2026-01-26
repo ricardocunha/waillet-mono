@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=true
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=waillet
+      - DB_PASSWORD=waillet_secret
+      - DB_NAME=waillet
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
+      - CORS_ORIGINS=*
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - waillet-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_secret
+      - MYSQL_DATABASE=waillet
+      - MYSQL_USER=waillet
+      - MYSQL_PASSWORD=waillet_secret
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../internal/database/migrations/001_init.up.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - waillet-network
+
+volumes:
+  mysql_data:
+
+networks:
+  waillet-network:
+    driver: bridge

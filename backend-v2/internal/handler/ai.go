@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/waillet-app/backend-go/internal/dto"
-	"github.com/waillet-app/backend-go/internal/service"
-	"github.com/waillet-app/backend-go/pkg/validator"
+	"github.com/waillet-app/backend-v2/internal/dto"
+	"github.com/waillet-app/backend-v2/internal/service"
+	"github.com/waillet-app/backend-v2/pkg/validator"
 )
 
 type AIHandler struct {

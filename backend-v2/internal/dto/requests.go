@@ -4,7 +4,6 @@ type CreateFavoriteRequest struct {
 	WalletAddress string  `json:"wallet_address"`
 	Alias         string  `json:"alias"`
 	Address       string  `json:"address"`
-	Chain         string  `json:"chain"`
 	Asset         *string `json:"asset,omitempty"`
 	Type          string  `json:"type,omitempty"`
 	Value         *string `json:"value,omitempty"`
@@ -13,7 +12,6 @@ type CreateFavoriteRequest struct {
 type UpdateFavoriteRequest struct {
 	Alias   *string `json:"alias,omitempty"`
 	Address *string `json:"address,omitempty"`
-	Chain   *string `json:"chain,omitempty"`
 	Asset   *string `json:"asset,omitempty"`
 	Type    *string `json:"type,omitempty"`
 	Value   *string `json:"value,omitempty"`

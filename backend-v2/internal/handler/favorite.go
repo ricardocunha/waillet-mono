@@ -64,11 +64,6 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Chain == "" {
-		writeError(w, http.StatusBadRequest, "chain is required")
-		return
-	}
-
 	favoriteType := models.FavoriteTypeAddress
 	if req.Type != "" {
 		favoriteType = models.FavoriteType(req.Type)
@@ -78,7 +73,6 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 		WalletAddress: req.WalletAddress,
 		Alias:         req.Alias,
 		Address:       req.Address,
-		Chain:         req.Chain,
 		Type:          favoriteType,
 	}
 
@@ -136,9 +130,6 @@ func (h *FavoriteHandler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		favorite.Address = *req.Address
-	}
-	if req.Chain != nil {
-		favorite.Chain = *req.Chain
 	}
 	if req.Asset != nil {
 		favorite.Asset = sql.NullString{String: *req.Asset, Valid: true}
@@ -198,7 +189,6 @@ func toFavoriteResponse(f *models.Favorite) dto.FavoriteResponse {
 		WalletAddress: f.WalletAddress,
 		Alias:         f.Alias,
 		Address:       f.Address,
-		Chain:         f.Chain,
 		Type:          string(f.Type),
 		CreatedAt:     f.CreatedAt,
 		UpdatedAt:     f.UpdatedAt,
