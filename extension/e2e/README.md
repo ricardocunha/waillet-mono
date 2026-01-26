@@ -4,6 +4,17 @@
 
 End-to-end tests using Playwright for the wAIllet Chrome extension.
 
+## Test Coverage
+
+| Suite | File | Automated | Notes |
+|-------|------|-----------|-------|
+| Onboarding | `onboarding.spec.ts` | ✅ | Create & import wallet |
+| Dashboard | `dashboard.spec.ts` | ✅ | UI + network switching |
+| Accounts | `accounts.spec.ts` | ✅ | Account management |
+| Balances | `balances.spec.ts` | ✅ | Token balance display |
+| Unlock | `unlock.spec.ts` | ✅ | Lock/unlock flow |
+| Uniswap | `uniswap.spec.ts` | ⚠️ | Real mainnet funds — run manually |
+
 ## Test Suites
 
 ### Extension Tests (Safe)
