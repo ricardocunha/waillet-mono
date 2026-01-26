@@ -46,6 +46,7 @@ type ParseIntentResponse struct {
 	Chain        *string `json:"chain,omitempty"`
 	NeedsNetwork bool    `json:"needs_network"`
 	ResolvedFrom *string `json:"resolved_from,omitempty"`
+	Alias        *string `json:"alias,omitempty"`
 	Confidence   int     `json:"confidence"`
 	Error        *string `json:"error,omitempty"`
 }

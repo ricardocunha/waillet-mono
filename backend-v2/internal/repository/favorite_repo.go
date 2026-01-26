@@ -73,7 +73,7 @@ func (r *favoriteRepository) GetByAlias(ctx context.Context, walletAddress, alia
 
 func (r *favoriteRepository) Create(ctx context.Context, favorite *models.Favorite) error {
 	query := `INSERT INTO favorites (wallet_address, alias, address, asset, type, value)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?)`
 
 	result, err := r.db.ExecContext(ctx, query,
 		favorite.WalletAddress,

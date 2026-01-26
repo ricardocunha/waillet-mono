@@ -206,6 +206,9 @@ DELETE FAVORITE EXAMPLES:
 	if resolvedFrom, ok := parsed["resolved_from"].(string); ok && resolvedFrom != "" {
 		response.ResolvedFrom = &resolvedFrom
 	}
+	if alias, ok := parsed["alias"].(string); ok && alias != "" {
+		response.Alias = &alias
+	}
 	if errMsg, ok := parsed["error"].(string); ok && errMsg != "" {
 		response.Error = &errMsg
 	}

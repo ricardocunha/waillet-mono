@@ -10,7 +10,7 @@ import (
 )
 
 func NewConnection(cfg *config.DatabaseConfig) (*sqlx.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_unicode_ci",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&multiStatements=true",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
 
 	db, err := sqlx.Connect("mysql", dsn)
