@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS risk_logs;
+DROP TABLE IF EXISTS policies;
+DROP TABLE IF EXISTS favorites;
