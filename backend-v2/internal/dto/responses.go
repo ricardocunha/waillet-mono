@@ -38,17 +38,24 @@ type PolicyResponse struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+type FavoriteItem struct {
+	Alias   string  `json:"alias"`
+	Address string  `json:"address"`
+	Asset   *string `json:"asset,omitempty"`
+}
+
 type ParseIntentResponse struct {
-	Action       string  `json:"action"`
-	To           *string `json:"to,omitempty"`
-	Value        *string `json:"value,omitempty"`
-	Token        *string `json:"token,omitempty"`
-	Chain        *string `json:"chain,omitempty"`
-	NeedsNetwork bool    `json:"needs_network"`
-	ResolvedFrom *string `json:"resolved_from,omitempty"`
-	Alias        *string `json:"alias,omitempty"`
-	Confidence   int     `json:"confidence"`
-	Error        *string `json:"error,omitempty"`
+	Action       string         `json:"action"`
+	To           *string        `json:"to,omitempty"`
+	Value        *string        `json:"value,omitempty"`
+	Token        *string        `json:"token,omitempty"`
+	Chain        *string        `json:"chain,omitempty"`
+	NeedsNetwork bool           `json:"needs_network"`
+	ResolvedFrom *string        `json:"resolved_from,omitempty"`
+	Alias        *string        `json:"alias,omitempty"`
+	Confidence   int            `json:"confidence"`
+	Error        *string        `json:"error,omitempty"`
+	Favorites    []FavoriteItem `json:"favorites,omitempty"`
 }
 
 type SimulationResponse struct {
@@ -73,21 +80,38 @@ type EventLog struct {
 }
 
 type RiskFactor struct {
-	Name        string `json:"name"`
-	Score       int    `json:"score"`
+	Type        string `json:"type"`
+	Severity    string `json:"severity"`
+	Title       string `json:"title"`
 	Description string `json:"description"`
+	Points      int    `json:"points"`
+}
+
+type Recommendation struct {
+	Icon   string `json:"icon"`
+	Text   string `json:"text"`
+	Action string `json:"action"`
+}
+
+type ContractInfo struct {
+	IsContract        bool    `json:"is_contract"`
+	Verified          bool    `json:"verified"`
+	Name              *string `json:"name,omitempty"`
+	VerificationError *string `json:"verification_error,omitempty"`
 }
 
 type RiskAnalysisResponse struct {
-	LogID           int64        `json:"log_id"`
-	RiskScore       int          `json:"risk_score"`
-	RiskLevel       string       `json:"risk_level"`
-	Factors         []RiskFactor `json:"factors"`
-	AISummary       string       `json:"ai_summary"`
-	Recommendations []string     `json:"recommendations"`
-	IsScam          bool         `json:"is_scam"`
-	ScamInfo        *ScamInfo    `json:"scam_info,omitempty"`
-	ValueUSD        float64      `json:"value_usd"`
+	LogID           int64            `json:"log_id"`
+	RiskScore       int              `json:"risk_score"`
+	RiskLevel       string           `json:"risk_level"`
+	Factors         []RiskFactor     `json:"factors"`
+	AISummary       string           `json:"ai_summary"`
+	Recommendations []Recommendation `json:"recommendations"`
+	IsScam          bool             `json:"is_scam"`
+	ScamInfo        *ScamInfo        `json:"scam_info,omitempty"`
+	ValueUSD        float64          `json:"value_usd"`
+	IsContract      bool             `json:"is_contract"`
+	ContractInfo    *ContractInfo    `json:"contract_info,omitempty"`
 }
 
 type ScamInfo struct {

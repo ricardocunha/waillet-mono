@@ -63,7 +63,7 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 
 	riskScore := 0
 	var factors []dto.RiskFactor
-	var recommendations []string
+	var recommendations []dto.Recommendation
 
 	type asyncResult struct {
 		name   string
@@ -124,11 +124,17 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 		riskScore += 50
 		scamInfoTyped := scamInfo.(*ScamInfo)
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Scam Detected",
-			Score:       50,
+			Type:        "SCAM_ADDRESS",
+			Severity:    "CRITICAL",
+			Title:       "Scam Detected",
 			Description: fmt.Sprintf("Reported for %s. Do not send.", scamInfoTyped.Reason),
+			Points:      50,
 		})
-		recommendations = append(recommendations, "Block this transaction")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "🚫",
+			Text:   "Block this transaction",
+			Action: "block",
+		})
 		scamInfoResponse = &dto.ScamInfo{
 			Reported: true,
 			Category: scamInfoTyped.Reason,
@@ -139,31 +145,49 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 	if isUnlimited {
 		riskScore += 40
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Unlimited Approval",
-			Score:       40,
+			Type:        "UNLIMITED_APPROVAL",
+			Severity:    "HIGH",
+			Title:       "Unlimited Approval",
 			Description: "Grants full access to your tokens. Consider limiting the amount.",
+			Points:      40,
 		})
-		recommendations = append(recommendations, "Set a specific limit instead")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "⚙️",
+			Text:   "Set a specific limit instead",
+			Action: "limit_approval",
+		})
 	}
 
 	if hasDelegatecall {
 		riskScore += 40
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Advanced Call",
-			Score:       40,
+			Type:        "DELEGATECALL",
+			Severity:    "HIGH",
+			Title:       "Advanced Call",
 			Description: "Uses delegatecall - can execute code in your wallet context.",
+			Points:      40,
 		})
-		recommendations = append(recommendations, "Only proceed if you trust this contract")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "🛡️",
+			Text:   "Only proceed if you trust this contract",
+			Action: "verify_source",
+		})
 	}
 
 	if valuePoints > 0 && valueDesc != nil {
 		riskScore += valuePoints
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Large Amount",
-			Score:       valuePoints,
+			Type:        "LARGE_VALUE",
+			Severity:    "MEDIUM",
+			Title:       "Large Amount",
 			Description: valueDesc.(string),
+			Points:      valuePoints,
 		})
-		recommendations = append(recommendations, "Double-check the recipient")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "🔍",
+			Text:   "Double-check the recipient",
+			Action: "verify_recipient",
+		})
 	}
 
 	if contractInfo.IsContract && !contractInfo.Verified {
@@ -173,29 +197,43 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 			verificationReason = "Source code not published"
 		}
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Unverified Contract",
-			Score:       35,
+			Type:        "UNVERIFIED_CONTRACT",
+			Severity:    "MEDIUM",
+			Title:       "Unverified Contract",
 			Description: fmt.Sprintf("Could not verify this contract. %s.", verificationReason),
+			Points:      35,
 		})
-		recommendations = append(recommendations, "Check contract on block explorer first")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "📄",
+			Text:   "Check contract on block explorer first",
+			Action: "verify_contract",
+		})
 	}
 
 	if firstInteraction && contractInfo.IsContract {
 		riskScore += 10
 		factors = append(factors, dto.RiskFactor{
-			Name:        "New Contract",
-			Score:       10,
+			Type:        "FIRST_INTERACTION",
+			Severity:    "LOW",
+			Title:       "New Contract",
 			Description: "First time interacting with this address.",
+			Points:      10,
 		})
-		recommendations = append(recommendations, "Research before first use")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "🕵️",
+			Text:   "Research before first use",
+			Action: "research",
+		})
 	}
 
 	if !contractInfo.IsContract && data == "0x" {
 		riskScore += 5
 		factors = append(factors, dto.RiskFactor{
-			Name:        "Simple Transfer",
-			Score:       5,
+			Type:        "EOA_TRANSFER",
+			Severity:    "LOW",
+			Title:       "Simple Transfer",
 			Description: "Direct wallet-to-wallet transfer.",
+			Points:      5,
 		})
 	}
 
@@ -206,7 +244,11 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 	riskLevel := string(models.GetRiskLevel(riskScore))
 
 	if len(recommendations) == 0 {
-		recommendations = append(recommendations, "Transaction appears safe to proceed")
+		recommendations = append(recommendations, dto.Recommendation{
+			Icon:   "✓",
+			Text:   "Transaction appears safe to proceed",
+			Action: "proceed",
+		})
 	}
 
 	aiSummary := s.generateFallbackSummary(riskScore, riskLevel, factors)
@@ -241,6 +283,24 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 		Str("risk_level", riskLevel).
 		Msg("Risk analysis complete")
 
+	var contractInfoResponse *dto.ContractInfo
+	if contractInfo != nil {
+		var verificationError *string
+		if contractInfo.VerificationError != "" {
+			verificationError = &contractInfo.VerificationError
+		}
+		var name *string
+		if contractInfo.Name != "" {
+			name = &contractInfo.Name
+		}
+		contractInfoResponse = &dto.ContractInfo{
+			IsContract:        contractInfo.IsContract,
+			Verified:          contractInfo.Verified,
+			Name:              name,
+			VerificationError: verificationError,
+		}
+	}
+
 	return &dto.RiskAnalysisResponse{
 		LogID:           riskLog.ID,
 		RiskScore:       riskScore,
@@ -251,6 +311,8 @@ func (s *RiskService) AnalyzeTransaction(ctx context.Context, chain, fromAddress
 		IsScam:          isScam,
 		ScamInfo:        scamInfoResponse,
 		ValueUSD:        valueUSD,
+		IsContract:      contractInfo.IsContract,
+		ContractInfo:    contractInfoResponse,
 	}, nil
 }
 

@@ -3,10 +3,12 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/waillet-app/backend-v2/internal/dto"
 	"github.com/waillet-app/backend-v2/internal/models"
 	"github.com/waillet-app/backend-v2/internal/repository"
@@ -23,6 +25,8 @@ func NewFavoriteHandler(repo repository.FavoriteRepository) *FavoriteHandler {
 
 func (h *FavoriteHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
 	walletAddress := chi.URLParam(r, "wallet_address")
+	log.Info().Str("wallet_address", walletAddress).Msg("Getting favorites for wallet")
+
 	if !validator.IsValidEthereumAddress(walletAddress) {
 		writeError(w, http.StatusBadRequest, "invalid wallet address")
 		return
@@ -30,9 +34,12 @@ func (h *FavoriteHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
 
 	favorites, err := h.repo.GetByWalletAddress(r.Context(), walletAddress)
 	if err != nil {
+		log.Error().Err(err).Str("wallet_address", walletAddress).Msg("Failed to get favorites")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	log.Info().Str("wallet_address", walletAddress).Int("count", len(favorites)).Msg("Found favorites")
 
 	response := make([]dto.FavoriteResponse, len(favorites))
 	for i, f := range favorites {
@@ -48,6 +55,12 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
+	log.Info().
+		Str("wallet_address", req.WalletAddress).
+		Str("alias", req.Alias).
+		Str("address", req.Address).
+		Msg("Creating favorite")
 
 	if !validator.IsValidEthereumAddress(req.WalletAddress) {
 		writeError(w, http.StatusBadRequest, "invalid wallet address")
@@ -85,13 +98,20 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Create(r.Context(), favorite); err != nil {
+		log.Error().Err(err).Str("wallet_address", req.WalletAddress).Str("alias", req.Alias).Msg("Failed to create favorite")
 		if isDuplicateKeyError(err) {
-			writeError(w, http.StatusConflict, "favorite with this alias already exists")
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("Alias '%s' already exists for this wallet", req.Alias))
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	log.Info().
+		Int64("id", favorite.ID).
+		Str("wallet_address", req.WalletAddress).
+		Str("alias", req.Alias).
+		Msg("Favorite created successfully")
 
 	writeJSON(w, http.StatusCreated, toFavoriteResponse(favorite))
 }
@@ -143,7 +163,7 @@ func (h *FavoriteHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.repo.Update(r.Context(), favorite); err != nil {
 		if isDuplicateKeyError(err) {
-			writeError(w, http.StatusConflict, "favorite with this alias already exists")
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("Alias '%s' already exists for this wallet", favorite.Alias))
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err.Error())

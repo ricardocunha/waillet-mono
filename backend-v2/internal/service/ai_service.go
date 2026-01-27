@@ -213,6 +213,22 @@ DELETE FAVORITE EXAMPLES:
 		response.Error = &errMsg
 	}
 
+	// Include favorites list when action is list_favorites
+	if response.Action == "list_favorites" {
+		favoriteItems := make([]dto.FavoriteItem, len(favorites))
+		for i, fav := range favorites {
+			item := dto.FavoriteItem{
+				Alias:   fav.Alias,
+				Address: fav.Address,
+			}
+			if fav.Asset.Valid {
+				item.Asset = &fav.Asset.String
+			}
+			favoriteItems[i] = item
+		}
+		response.Favorites = favoriteItems
+	}
+
 	return response, nil
 }
 
@@ -223,7 +239,7 @@ func (s *AIService) GenerateRiskExplanation(ctx context.Context, riskAnalysis *d
 
 	var factorDescriptions []string
 	for _, factor := range riskAnalysis.Factors {
-		factorDescriptions = append(factorDescriptions, fmt.Sprintf("- %s: %s", factor.Name, factor.Description))
+		factorDescriptions = append(factorDescriptions, fmt.Sprintf("- %s: %s", factor.Title, factor.Description))
 	}
 
 	factorsText := "No specific risk factors detected"
@@ -231,13 +247,7 @@ func (s *AIService) GenerateRiskExplanation(ctx context.Context, riskAnalysis *d
 		factorsText = strings.Join(factorDescriptions, "\n")
 	}
 
-	isContract := false
-	for _, factor := range riskAnalysis.Factors {
-		if strings.Contains(strings.ToLower(factor.Name), "contract") {
-			isContract = true
-			break
-		}
-	}
+	isContract := riskAnalysis.IsContract
 
 	systemPrompt := `You are a security expert. Explain transaction risks in 1-2 SHORT sentences.
 

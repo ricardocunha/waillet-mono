@@ -29,7 +29,7 @@ func NewFavoriteRepository(db *sqlx.DB) FavoriteRepository {
 func (r *favoriteRepository) GetByWalletAddress(ctx context.Context, walletAddress string) ([]models.Favorite, error) {
 	var favorites []models.Favorite
 	query := `SELECT id, wallet_address, alias, address, asset, type, value, created_at, updated_at
-		FROM favorites WHERE wallet_address = ? ORDER BY created_at DESC`
+		FROM favorites WHERE LOWER(wallet_address) = LOWER(?) ORDER BY created_at DESC`
 
 	err := r.db.SelectContext(ctx, &favorites, query, walletAddress)
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *favoriteRepository) GetByID(ctx context.Context, id int64) (*models.Fav
 func (r *favoriteRepository) GetByAlias(ctx context.Context, walletAddress, alias string) (*models.Favorite, error) {
 	var favorite models.Favorite
 	query := `SELECT id, wallet_address, alias, address, asset, type, value, created_at, updated_at
-		FROM favorites WHERE wallet_address = ? AND LOWER(alias) = LOWER(?)`
+		FROM favorites WHERE LOWER(wallet_address) = LOWER(?) AND LOWER(alias) = LOWER(?)`
 
 	err := r.db.GetContext(ctx, &favorite, query, walletAddress, alias)
 	if err != nil {
