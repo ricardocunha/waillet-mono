@@ -102,6 +102,79 @@ class WailletAPI {
       }),
     });
   }
+
+  // ==================== NETWORKS ====================
+
+  async getNetworks(): Promise<Network[]> {
+    return this.request<Network[]>('/networks');
+  }
+
+  async getNetwork(slug: string): Promise<Network> {
+    return this.request<Network>(`/networks/${slug}`);
+  }
+
+  // ==================== TOKENS ====================
+
+  async getTokens(limit?: number): Promise<Token[]> {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<Token[]>(`/tokens${query}`);
+  }
+
+  async getToken(symbol: string): Promise<TokenWithAddresses> {
+    return this.request<TokenWithAddresses>(`/tokens/${symbol}`);
+  }
+
+  async getTokensForNetwork(networkSlug: string): Promise<TokenWithAddresses[]> {
+    return this.request<TokenWithAddresses[]>(`/tokens/network/${networkSlug}`);
+  }
+
+  async getTokenPrices(symbols: string[]): Promise<Record<string, number>> {
+    return this.request<Record<string, number>>(`/tokens/prices?symbols=${symbols.join(',')}`);
+  }
+}
+
+// ==================== NETWORK & TOKEN TYPES ====================
+
+export interface Network {
+  id: number;
+  slug: string;
+  name: string;
+  chain_id: number;
+  rpc_url: string;
+  rpc_url_fallback?: string;
+  explorer_url: string;
+  native_currency_symbol: string;
+  native_currency_name: string;
+  native_currency_decimals: number;
+  is_testnet: boolean;
+  display_color: string;
+  icon_url?: string;
+}
+
+export interface Token {
+  id: number;
+  cmc_id: number;
+  symbol: string;
+  name: string;
+  slug: string;
+  cmc_rank?: number;
+  price_usd?: number;
+  market_cap_usd?: number;
+  volume_24h_usd?: number;
+  percent_change_24h?: number;
+  percent_change_7d?: number;
+  logo_url?: string;
+}
+
+export interface TokenAddressDTO {
+  contract_address: string;
+  decimals: number;
+  is_native: boolean;
+}
+
+export interface TokenWithAddresses {
+  token: Token;
+  addresses: Record<string, TokenAddressDTO>; // key: network slug
 }
 
 export const api = new WailletAPI();
