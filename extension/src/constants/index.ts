@@ -9,7 +9,8 @@ export enum StorageKey {
   ACTIVE_ACCOUNT_INDEX = 'activeAccountIndex',  // Index of active account
   ENCRYPTED_WALLET = 'encryptedWallet',
   CONNECTED_SITES = 'connectedSites',
-  PENDING_REQUEST = 'pendingRequest'
+  PENDING_REQUEST = 'pendingRequest',
+  CHAT_HISTORY = 'chatHistory'  // AI chat messages (last 24 hours)
 }
 
 export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string }>> = {

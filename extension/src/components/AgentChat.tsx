@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Bot, User, AlertCircle, Loader2, Star, Trash2, Globe } from 'lucide-react';
 import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
@@ -7,6 +7,7 @@ import { SaveFavoriteModal } from './SaveFavoriteModal';
 import { CHAINS } from '../services/wallet';
 import type { IntentResponse } from '../types/api';
 import { MessageType, IntentAction } from '../constants/enums';
+import { loadChatHistory, saveChatHistory, toStoredMessage, fromStoredMessage } from '../utils/chatStorage';
 
 interface Message {
   id: string;
@@ -16,27 +17,61 @@ interface Message {
   timestamp: Date;
 }
 
+const WELCOME_MESSAGE: Message = {
+  id: 'welcome',
+  type: MessageType.SYSTEM,
+  content: 'Hi! I\'m your AI wallet assistant. You can ask me to send crypto, check balances, or manage favorites. Try: "send 10 USDC to ricardo" or "show my favorites"',
+  timestamp: new Date()
+};
+
 export const AgentChat: React.FC = () => {
   const { account } = useWallet();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: MessageType.SYSTEM,
-      content: 'Hi! I\'m your AI wallet assistant. You can ask me to send crypto, check balances, or manage favorites. Try: "send 10 USDC to ricardo" or "show my favorites"',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSaveFavoriteModal, setShowSaveFavoriteModal] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<IntentResponse | null>(null);
   const [saveFavoriteIntent, setSaveFavoriteIntent] = useState<IntentResponse | null>(null);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Load chat history from storage on mount
+  useEffect(() => {
+    if (!account?.address) return;
+
+    const loadHistory = async () => {
+      const storedMessages = await loadChatHistory(account.address);
+      if (storedMessages.length > 0) {
+        // Convert stored messages back to Message format with Date objects
+        const loadedMessages = storedMessages.map(fromStoredMessage);
+        setMessages([WELCOME_MESSAGE, ...loadedMessages]);
+      }
+      setIsHistoryLoaded(true);
+    };
+
+    loadHistory();
+  }, [account?.address]);
+
+  // Save chat history when messages change (skip welcome message)
+  const saveHistory = useCallback(async (msgs: Message[]) => {
+    if (!account?.address || !isHistoryLoaded) return;
+
+    // Filter out the welcome message and convert to storage format
+    const messagesToSave = msgs
+      .filter(msg => msg.id !== 'welcome')
+      .map(toStoredMessage);
+
+    await saveChatHistory(account.address, messagesToSave);
+  }, [account?.address, isHistoryLoaded]);
+
+  useEffect(() => {
+    saveHistory(messages);
+  }, [messages, saveHistory]);
 
   useEffect(() => {
     scrollToBottom();
