@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	OpenAI   OpenAIConfig
-	RPC      RPCConfig
-	CORS     CORSConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	OpenAI        OpenAIConfig
+	RPC           RPCConfig
+	CORS          CORSConfig
+	CoinMarketCap CoinMarketCapConfig
 }
 
 type ServerConfig struct {
@@ -51,6 +52,11 @@ type CORSConfig struct {
 	AllowedHeaders []string
 }
 
+type CoinMarketCapConfig struct {
+	APIKey       string
+	SyncInterval time.Duration
+}
+
 func Load() (*Config, error) {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
@@ -84,6 +90,8 @@ func Load() (*Config, error) {
 	viper.SetDefault("CORS_METHODS", "GET,POST,PUT,DELETE,OPTIONS")
 	viper.SetDefault("CORS_HEADERS", "Accept,Authorization,Content-Type,X-CSRF-Token")
 
+	viper.SetDefault("CMC_SYNC_INTERVAL", "10m")
+
 	// Try to read config file (optional)
 	_ = viper.ReadInConfig()
 
@@ -102,6 +110,10 @@ func Load() (*Config, error) {
 	rpcTimeout, err := time.ParseDuration(viper.GetString("RPC_TIMEOUT"))
 	if err != nil {
 		rpcTimeout = 30 * time.Second
+	}
+	cmcSyncInterval, err := time.ParseDuration(viper.GetString("CMC_SYNC_INTERVAL"))
+	if err != nil {
+		cmcSyncInterval = 10 * time.Minute
 	}
 
 	cfg := &Config{
@@ -135,6 +147,10 @@ func Load() (*Config, error) {
 			AllowedOrigins: strings.Split(viper.GetString("CORS_ORIGINS"), ","),
 			AllowedMethods: strings.Split(viper.GetString("CORS_METHODS"), ","),
 			AllowedHeaders: strings.Split(viper.GetString("CORS_HEADERS"), ","),
+		},
+		CoinMarketCap: CoinMarketCapConfig{
+			APIKey:       viper.GetString("CMC_API_KEY"),
+			SyncInterval: cmcSyncInterval,
 		},
 	}
 
