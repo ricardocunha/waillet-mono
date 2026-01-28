@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sashabaranov/go-openai"
@@ -15,6 +16,7 @@ import (
 )
 
 type AIService struct {
+	mu           sync.RWMutex
 	client       *openai.Client
 	model        string
 	favoriteRepo repository.FavoriteRepository
@@ -37,8 +39,31 @@ func NewAIService(cfg *config.OpenAIConfig, favoriteRepo repository.FavoriteRepo
 	}
 }
 
+func (s *AIService) UpdateAPIKey(apiKey string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if apiKey == "" {
+		s.client = nil
+		log.Info().Msg("OpenAI API key removed")
+		return
+	}
+	s.client = openai.NewClient(apiKey)
+	log.Info().Msg("OpenAI API key updated")
+}
+
+func (s *AIService) IsConfigured() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.client != nil
+}
+
 func (s *AIService) ParseIntent(ctx context.Context, prompt, walletAddress string) (*dto.ParseIntentResponse, error) {
-	if s.client == nil {
+	s.mu.RLock()
+	client := s.client
+	model := s.model
+	s.mu.RUnlock()
+
+	if client == nil {
 		return &dto.ParseIntentResponse{
 			Action:     string(models.AIActionUnknown),
 			Confidence: 0,
@@ -145,8 +170,8 @@ DELETE FAVORITE EXAMPLES:
 - "delete favorite alice" -> {"action": "delete_favorite", "alias": "alice", "confidence": 90}
 - "remove contact john" -> {"action": "delete_favorite", "alias": "john", "confidence": 85}`, walletAddress, favoritesContext)
 
-	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: s.model,
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: systemPrompt},
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
@@ -233,7 +258,12 @@ DELETE FAVORITE EXAMPLES:
 }
 
 func (s *AIService) GenerateRiskExplanation(ctx context.Context, riskAnalysis *dto.RiskAnalysisResponse, toAddress string, valueUSD float64) string {
-	if s.client == nil {
+	s.mu.RLock()
+	client := s.client
+	model := s.model
+	s.mu.RUnlock()
+
+	if client == nil {
 		return s.fallbackRiskExplanation(riskAnalysis, toAddress, valueUSD)
 	}
 
@@ -281,8 +311,8 @@ Risk Factors:
 Explain this transaction's risks in 2-3 simple sentences.`,
 		truncateAddress(toAddress), valueUSD, riskAnalysis.RiskScore, riskAnalysis.RiskLevel, contractStr, factorsText)
 
-	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: s.model,
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: systemPrompt},
 			{Role: openai.ChatMessageRoleUser, Content: userPrompt},

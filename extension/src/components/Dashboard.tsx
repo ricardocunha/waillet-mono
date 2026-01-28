@@ -18,7 +18,11 @@ interface TokenBalance {
   isLoading: boolean;
 }
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onAIKeyChanged?: () => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
   const { account, updateChain } = useWallet();
   const [currentChain, setCurrentChain] = useState<Chain>(
     (account?.chain as Chain) || Chain.ETHEREUM
@@ -300,21 +304,39 @@ export const Dashboard: React.FC = () => {
       <div className="flex-1 px-4 pb-4 overflow-y-auto scrollbar-hide">
         <h2 className="text-sm font-bold mb-3">Tokens</h2>
 
-        {tokenBalances.length === 0 ? (
-          <div className="bg-slate-800 rounded-lg p-3 text-center text-slate-400 text-sm">
-            <p>No tokens available on this network</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {tokenBalances.map((token) => {
-              const hasBalance = token.balance !== 'Error' && parseFloat(token.balance) > 0;
+        {(() => {
+          // Filter tokens with balance > 0
+          const tokensWithBalance = tokenBalances.filter(
+            token => token.balance !== 'Error' && parseFloat(token.balance) > 0
+          );
 
-              return (
+          // Show loading state
+          if (isRefreshing && tokensWithBalance.length === 0) {
+            return (
+              <div className="bg-slate-800 rounded-lg p-4 text-center text-slate-400 text-sm">
+                <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
+                <p>Loading balances...</p>
+              </div>
+            );
+          }
+
+          // Show empty state when no tokens with balance
+          if (tokensWithBalance.length === 0) {
+            return (
+              <div className="bg-slate-800 rounded-lg p-4 text-center text-slate-400 text-sm">
+                <p className="mb-1">No tokens found</p>
+                <p className="text-xs">Your wallet doesn't have any tokens on this network yet</p>
+              </div>
+            );
+          }
+
+          // Show tokens with balance
+          return (
+            <div className="space-y-2">
+              {tokensWithBalance.map((token) => (
                 <div
                   key={token.symbol}
-                  className={`bg-slate-800 rounded-lg p-3 ${
-                    hasBalance ? 'border-l-4 border-purple-500' : ''
-                  }`}
+                  className="bg-slate-800 rounded-lg p-3 border-l-4 border-purple-500"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -329,22 +351,16 @@ export const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      {token.isLoading || isRefreshing ? (
-                        <div className="text-slate-400 text-xs">Loading...</div>
-                      ) : token.balance === 'Error' ? (
-                        <div className="text-slate-400 text-xs">—</div>
-                      ) : (
-                        <div className="font-bold text-sm">
-                          {token.balance}
-                        </div>
-                      )}
+                      <div className="font-bold text-sm">
+                        {token.balance}
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Modals */}
@@ -353,7 +369,7 @@ export const Dashboard: React.FC = () => {
         <SaveFavoriteModal onClose={() => setShowSaveFavoriteModal(false)} />
       )}
       {showAccountSettingsModal && (
-        <AccountSettingsModal onClose={() => setShowAccountSettingsModal(false)} />
+        <AccountSettingsModal onClose={() => setShowAccountSettingsModal(false)} onAIKeyChanged={onAIKeyChanged} />
       )}
       {showAddAccountModal && (
         <AddAccountModal onClose={() => setShowAddAccountModal(false)} />

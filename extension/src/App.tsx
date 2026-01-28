@@ -13,6 +13,7 @@ import { Bot, Wallet } from 'lucide-react';
 import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
 import { Chain } from './types/messaging';
+import { api } from './services/api';
 
 type Mode = 'wallet' | 'agent';
 
@@ -37,6 +38,16 @@ function AppContent() {
   const [mode, setMode] = useState<Mode>('wallet');
   const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
   const [currentChain, setCurrentChain] = useState<string>('sepolia');
+  const [aiConfigured, setAiConfigured] = useState(false);
+
+  const refreshAIStatus = async () => {
+    try {
+      const status = await api.getOpenAIStatus();
+      setAiConfigured(status.configured);
+    } catch {
+      setAiConfigured(false);
+    }
+  };
 
   // Check for pending dApp requests on mount and when unlocked
   useEffect(() => {
@@ -44,6 +55,7 @@ function AppContent() {
     if (isUnlocked && hasWallet) {
       checkForPendingRequest();
       loadCurrentChain();
+      refreshAIStatus();
     }
   }, [isUnlocked, hasWallet]);
 
@@ -364,11 +376,19 @@ function AppContent() {
               Wallet
             </button>
             <button
-              onClick={() => setMode('agent')}
+              onClick={() => {
+                if (!aiConfigured) {
+                  alert('Please configure your OpenAI API key in Account Settings');
+                  return;
+                }
+                setMode('agent');
+              }}
               className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
                 mode === 'agent'
                   ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
-                  : 'text-slate-400 hover:text-slate-300'
+                  : aiConfigured
+                    ? 'text-slate-400 hover:text-slate-300'
+                    : 'text-slate-600 cursor-not-allowed'
               }`}
             >
               <Bot size={18} />
@@ -377,7 +397,7 @@ function AppContent() {
           </div>
 
           <div className="flex-1 overflow-hidden">
-            {mode === 'wallet' ? <Dashboard /> : <AgentChat />}
+            {mode === 'wallet' ? <Dashboard onAIKeyChanged={refreshAIStatus} /> : <AgentChat />}
           </div>
         </div>
       )}

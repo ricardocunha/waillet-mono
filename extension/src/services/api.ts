@@ -67,6 +67,19 @@ class WailletAPI {
     return response.json();
   }
 
+  // ==================== SETTINGS ====================
+
+  async getOpenAIStatus(): Promise<{ configured: boolean }> {
+    return this.request<{ configured: boolean }>('/settings/openai');
+  }
+
+  async setOpenAIKey(apiKey: string): Promise<void> {
+    return this.request<void>('/settings/openai', {
+      method: 'PUT',
+      body: JSON.stringify({ api_key: apiKey }),
+    });
+  }
+
   // ==================== RISK ANALYSIS ====================
 
   async analyzeRisk(params: {

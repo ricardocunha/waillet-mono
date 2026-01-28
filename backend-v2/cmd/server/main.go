@@ -73,6 +73,7 @@ func main() {
 	simulationHandler := handler.NewSimulationHandler(simulationService, riskService)
 	networkHandler := handler.NewNetworkHandler(networkRepo)
 	tokenHandler := handler.NewTokenHandler(tokenRepo, cmcService)
+	settingsHandler := handler.NewSettingsHandler(aiService)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -135,6 +136,12 @@ func main() {
 			r.Get("/network/{network_slug}", tokenHandler.GetByNetwork)
 			r.Get("/{symbol}", tokenHandler.GetBySymbol)
 			r.Post("/sync", tokenHandler.TriggerSync)
+		})
+
+		// Settings
+		r.Route("/settings", func(r chi.Router) {
+			r.Get("/openai", settingsHandler.GetOpenAIStatus)
+			r.Put("/openai", settingsHandler.UpdateOpenAIKey)
 		})
 	})
 

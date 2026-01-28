@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, EyeOff, Copy, Check, AlertCircle, Key, AtSign, Loader2, Trash2 } from 'lucide-react';
+import { X, Eye, EyeOff, Copy, Check, AlertCircle, Key, AtSign, Loader2, Trash2, Brain } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { RegistryService, GasEstimate } from '../services/registry';
+import { api } from '../services/api';
 
 interface AccountSettingsModalProps {
   onClose: () => void;
+  onAIKeyChanged?: () => void;
 }
 
-export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onClose }) => {
+export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onClose, onAIKeyChanged }) => {
   const { account } = useWallet();
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -23,17 +25,55 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
   const [isEstimating, setIsEstimating] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
 
-  // Load registered shortcuts on mount
+  // OpenAI API Key state
+  const [openaiKeyInput, setOpenaiKeyInput] = useState('');
+  const [openaiConfigured, setOpenaiConfigured] = useState(false);
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [openaiError, setOpenaiError] = useState<string | null>(null);
+  const [openaiSuccess, setOpenaiSuccess] = useState<string | null>(null);
+
+  // Load registered shortcuts and OpenAI status on mount
   useEffect(() => {
     if (account?.address) {
       loadRegisteredShortcuts();
     }
+    loadOpenAIStatus();
   }, [account?.address]);
 
   const loadRegisteredShortcuts = async () => {
     if (!account) return;
     const shortcuts = await RegistryService.getLocalShortcuts(account.address);
     setRegisteredShortcuts(shortcuts);
+  };
+
+  const loadOpenAIStatus = async () => {
+    try {
+      const status = await api.getOpenAIStatus();
+      setOpenaiConfigured(status.configured);
+    } catch {
+      // Backend may be offline, ignore
+    }
+  };
+
+  const handleSaveOpenAIKey = async () => {
+    if (!openaiKeyInput.trim()) return;
+
+    setIsSavingKey(true);
+    setOpenaiError(null);
+    setOpenaiSuccess(null);
+
+    try {
+      await api.setOpenAIKey(openaiKeyInput.trim());
+      setOpenaiConfigured(true);
+      setOpenaiKeyInput('');
+      setOpenaiSuccess('API key saved successfully');
+      onAIKeyChanged?.();
+      setTimeout(() => setOpenaiSuccess(null), 3000);
+    } catch (err: any) {
+      setOpenaiError(err.message || 'Failed to save API key');
+    } finally {
+      setIsSavingKey(false);
+    }
   };
 
   const handleEstimateGas = async () => {
@@ -288,6 +328,60 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* OpenAI API Key Section */}
+        <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className="flex items-center gap-2 mb-1">
+            <Brain size={16} className="text-purple-400" />
+            <label className="text-sm font-semibold text-slate-300">
+              OpenAI API Key
+            </label>
+            <span className={`text-xs ml-auto ${openaiConfigured ? 'text-green-400' : 'text-yellow-400'}`}>
+              {openaiConfigured ? 'Configured' : 'Not configured'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mb-3">Required for the AI Agent chat feature.</p>
+
+          <div className="space-y-2">
+            <input
+              type="password"
+              value={openaiKeyInput}
+              onChange={(e) => {
+                setOpenaiKeyInput(e.target.value);
+                setOpenaiError(null);
+              }}
+              placeholder="sk-..."
+              className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
+            />
+
+            {openaiError && (
+              <div className="bg-red-900/50 border border-red-700 rounded p-1.5 text-xs text-red-200">
+                {openaiError}
+              </div>
+            )}
+
+            {openaiSuccess && (
+              <div className="bg-green-900/50 border border-green-700 rounded p-1.5 text-xs text-green-200">
+                {openaiSuccess}
+              </div>
+            )}
+
+            <button
+              onClick={handleSaveOpenAIKey}
+              disabled={!openaiKeyInput.trim() || isSavingKey}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+            >
+              {isSavingKey ? (
+                <>
+                  <Loader2 className="animate-spin" size={12} />
+                  Saving...
+                </>
+              ) : (
+                'Save Key'
+              )}
+            </button>
           </div>
         </div>
 
