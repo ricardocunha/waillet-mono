@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Send, RefreshCw, ChevronDown, Star, MoreVertical, Settings, Check } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import { WalletService, TOKENS } from '../services/wallet';
@@ -9,6 +9,7 @@ import { AccountSelector } from './AccountSelector';
 import { AddAccountModal } from './AddAccountModal';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
 import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS } from '../constants';
+import { NetworkService } from '../services/networkService';
 
 interface TokenBalance {
   symbol: string;
@@ -16,14 +17,6 @@ interface TokenBalance {
   usdValue: number;
   isLoading: boolean;
 }
-
-// TODO: fetch real prices from CoinGecko/CoinMarketCap
-const TOKEN_PRICES: Partial<Record<Token, number>> = {
-  [Token.ETH]: 2500,
-  [Token.BNB]: 600,
-  [Token.USDT]: 1,
-  [Token.USDC]: 1,
-};
 
 export const Dashboard: React.FC = () => {
   const { account, updateChain } = useWallet();
@@ -39,6 +32,19 @@ export const Dashboard: React.FC = () => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [tokenPrices, setTokenPrices] = useState<Map<string, number>>(new Map());
+
+  // Fetch token prices from backend
+  const fetchPrices = useCallback(async (symbols: string[]) => {
+    try {
+      const prices = await NetworkService.getTokenPrices(symbols);
+      setTokenPrices(prices);
+      return prices;
+    } catch (error) {
+      console.error('Failed to fetch token prices:', error);
+      return new Map<string, number>();
+    }
+  }, []);
 
   useEffect(() => {
     if (account?.chain) {
@@ -89,6 +95,9 @@ export const Dashboard: React.FC = () => {
     }));
     setTokenBalances(initialBalances);
 
+    // Fetch prices from backend (or use fallback)
+    const prices = await fetchPrices(availableTokens);
+
     const balancePromises = availableTokens.map(async (symbol): Promise<TokenBalance> => {
       try {
         let balance: string;
@@ -104,7 +113,8 @@ export const Dashboard: React.FC = () => {
         }
 
         const balanceNum = parseFloat(balance);
-        const usdValue = balanceNum * (TOKEN_PRICES[symbol as Token] || 0);
+        const price = prices.get(symbol) ?? tokenPrices.get(symbol) ?? 0;
+        const usdValue = balanceNum * price;
         return { symbol, balance: balanceNum.toFixed(6), usdValue, isLoading: false };
       } catch (err) {
         console.error(`Failed to fetch ${symbol} balance:`, err);

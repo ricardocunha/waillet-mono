@@ -53,6 +53,8 @@ func main() {
 	favoriteRepo := repository.NewFavoriteRepository(db)
 	policyRepo := repository.NewPolicyRepository(db)
 	riskLogRepo := repository.NewRiskLogRepository(db)
+	networkRepo := repository.NewNetworkRepository(db)
+	tokenRepo := repository.NewTokenRepository(db)
 
 	// Initialize services
 	rpcService := service.NewRPCService(&cfg.RPC)
@@ -60,6 +62,7 @@ func main() {
 	aiService := service.NewAIService(&cfg.OpenAI, favoriteRepo)
 	simulationService := service.NewSimulationService(rpcService)
 	riskService := service.NewRiskService(rpcService, scamService, riskLogRepo, &cfg.OpenAI)
+	cmcService := service.NewCoinMarketCapService(&cfg.CoinMarketCap, tokenRepo)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -68,6 +71,8 @@ func main() {
 	rpcHandler := handler.NewRPCHandler(rpcService)
 	aiHandler := handler.NewAIHandler(aiService)
 	simulationHandler := handler.NewSimulationHandler(simulationService, riskService)
+	networkHandler := handler.NewNetworkHandler(networkRepo)
+	tokenHandler := handler.NewTokenHandler(tokenRepo, cmcService)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -116,7 +121,27 @@ func main() {
 			r.Post("/risk-analysis", simulationHandler.RiskAnalysis)
 			r.Post("/risk-decision", simulationHandler.RiskDecision)
 		})
+
+		// Networks
+		r.Route("/networks", func(r chi.Router) {
+			r.Get("/", networkHandler.GetAll)
+			r.Get("/{slug}", networkHandler.GetBySlug)
+		})
+
+		// Tokens
+		r.Route("/tokens", func(r chi.Router) {
+			r.Get("/", tokenHandler.GetAll)
+			r.Get("/prices", tokenHandler.GetPrices)
+			r.Get("/network/{network_slug}", tokenHandler.GetByNetwork)
+			r.Get("/{symbol}", tokenHandler.GetBySymbol)
+			r.Post("/sync", tokenHandler.TriggerSync)
+		})
 	})
+
+	// Start CoinMarketCap periodic sync
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+	defer syncCancel()
+	cmcService.StartPeriodicSync(syncCtx)
 
 	// Create server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
@@ -141,6 +166,9 @@ func main() {
 	<-quit
 
 	log.Info().Msg("Shutting down server...")
+
+	// Stop CoinMarketCap sync
+	syncCancel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
