@@ -18,9 +18,16 @@ export default defineConfig({
   projects: [
     {
       name: 'extension',
-      testMatch: /^(?!.*uniswap).*\.spec\.ts$/,
+      testMatch: /^(?!.*(uniswap|firefox)).*\.spec\.ts$/,
       use: {
         channel: 'chromium',
+      },
+    },
+    {
+      name: 'firefox',
+      testMatch: /firefox-.*\.spec\.ts$/,
+      use: {
+        browserName: 'firefox',
       },
     },
     {
