@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { WalletAccount, WalletService } from '../services/wallet';
 import { decrypt, encrypt } from '../utils/crypto';
 import { StorageKey } from '../constants';
+import { browserAPI } from '../utils/browser-api';
 
 interface WalletContextType {
   account: WalletAccount | null;
@@ -71,7 +72,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const saveAccountsToStorage = async (accountsList: WalletAccount[], activeIndex: number) => {
-    await chrome.storage.local.set({
+    await browserAPI.storage.local.set({
       [StorageKey.ACCOUNTS]: accountsList,
       [StorageKey.ACTIVE_ACCOUNT_INDEX]: activeIndex,
       [StorageKey.ACCOUNT]: accountsList[activeIndex] || null
@@ -79,7 +80,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const loadAccountsFromStorage = async (): Promise<{ accounts: WalletAccount[], activeIndex: number }> => {
-    const result = await chrome.storage.local.get([
+    const result = await browserAPI.storage.local.get([
       StorageKey.ACCOUNTS,
       StorageKey.ACTIVE_ACCOUNT_INDEX,
       StorageKey.ACCOUNT
@@ -158,8 +159,8 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     };
 
-    chrome.storage.local.onChanged.addListener(handleStorageChange);
-    return () => chrome.storage.local.onChanged.removeListener(handleStorageChange);
+    browserAPI.storage.local.onChanged.addListener(handleStorageChange);
+    return () => browserAPI.storage.local.onChanged.removeListener(handleStorageChange);
   }, []);
 
   const unlock = async (password: string) => {

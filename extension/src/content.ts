@@ -4,6 +4,7 @@
  */
 
 import { BackgroundMessageType, WindowMessageType } from './types/messaging';
+import { browserAPI } from './utils/browser-api';
 
 // Prevent duplicate content script injection
 if ((window as any).__WAILLET_CONTENT_SCRIPT_LOADED__) {
@@ -15,7 +16,7 @@ if ((window as any).__WAILLET_CONTENT_SCRIPT_LOADED__) {
 function injectInpageScript() {
   try {
     const script = document.createElement('script');
-    script.src = chrome.runtime.getURL('src/inpage.js');
+    script.src = browserAPI.runtime.getURL('src/inpage.js');
 
     script.onload = function() {
       script.remove();
@@ -54,7 +55,7 @@ window.addEventListener('message', async (event) => {
   }
 
   try {
-    chrome.runtime.sendMessage({
+    browserAPI.runtime.sendMessage({
       type: BackgroundMessageType.DAPP_REQUEST,
       method: message.method,
       params: message.params,
@@ -67,7 +68,7 @@ window.addEventListener('message', async (event) => {
       sendErrorToInpage(message.id, error.message || 'Failed to communicate with extension', 4900);
     });
 
-    // Response will be sent back via chrome.runtime.onMessage listener
+    // Response will be sent back via browserAPI.runtime.onMessage listener
     // (handled by the listener below that forwards WAILLET_RESPONSE messages)
 
   } catch (error: any) {
@@ -121,7 +122,7 @@ window.addEventListener('message', async (event) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   console.log('[Waillet Content] 📬 Received from background:', request);
 
   if (request.type === WindowMessageType.WAILLET_RESPONSE) {
@@ -164,7 +165,7 @@ function sendErrorToInpage(id: number, message: string, code: number = 4001) {
   }, '*');
 }
 
-chrome.runtime.sendMessage({
+browserAPI.runtime.sendMessage({
   type: BackgroundMessageType.CONTENT_SCRIPT_READY,
   origin: window.location.origin,
   url: window.location.href

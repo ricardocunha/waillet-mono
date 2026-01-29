@@ -14,6 +14,7 @@ import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
 import { Chain } from './types/messaging';
 import { api } from './services/api';
+import { browserAPI } from './utils/browser-api';
 
 type Mode = 'wallet' | 'agent';
 
@@ -73,10 +74,10 @@ function AppContent() {
       }
     };
 
-    chrome.storage.local.onChanged.addListener(handleStorageChange);
+    browserAPI.storage.local.onChanged.addListener(handleStorageChange);
 
     return () => {
-      chrome.storage.local.onChanged.removeListener(handleStorageChange);
+      browserAPI.storage.local.onChanged.removeListener(handleStorageChange);
     };
   }, []);
 
@@ -84,13 +85,13 @@ function AppContent() {
     return () => {
       if (pendingRequest) {
         console.log('[App] Component unmounting with pending request, cleaning up');
-        chrome.storage.local.remove(StorageKey.PENDING_REQUEST).catch(console.error);
+        browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST).catch(console.error);
       }
     };
   }, [pendingRequest]);
 
   const checkForPendingRequest = async () => {
-    const result = await chrome.storage.local.get(StorageKey.PENDING_REQUEST);
+    const result = await browserAPI.storage.local.get(StorageKey.PENDING_REQUEST);
     if (result.pendingRequest) {
       console.log('[App] 📋 Pending request detected on mount/unlock:', result.pendingRequest);
       setPendingRequest(result.pendingRequest);
@@ -100,7 +101,7 @@ function AppContent() {
   };
 
   const loadCurrentChain = async () => {
-    const result = await chrome.storage.local.get(StorageKey.ACCOUNT);
+    const result = await browserAPI.storage.local.get(StorageKey.ACCOUNT);
     if (result.account?.chain) {
       setCurrentChain(result.account.chain);
     }
@@ -112,16 +113,16 @@ function AppContent() {
     try {
       if (approved && account) {
         // Save connected site
-        const result = await chrome.storage.local.get(StorageKey.CONNECTED_SITES);
+        const result = await browserAPI.storage.local.get(StorageKey.CONNECTED_SITES);
         const connectedSites = result.connectedSites || {};
         connectedSites[pendingRequest.origin] = {
           connected: true,
           timestamp: Date.now()
         };
-        await chrome.storage.local.set({ [StorageKey.CONNECTED_SITES]: connectedSites });
+        await browserAPI.storage.local.set({ [StorageKey.CONNECTED_SITES]: connectedSites });
 
         // Send approval to background
-        await chrome.runtime.sendMessage({
+        await browserAPI.runtime.sendMessage({
           type: 'USER_DECISION',
           requestId: pendingRequest.id,
           approved: true,
@@ -129,7 +130,7 @@ function AppContent() {
         });
       } else {
         // Send rejection to background
-        await chrome.runtime.sendMessage({
+        await browserAPI.runtime.sendMessage({
           type: 'USER_DECISION',
           requestId: pendingRequest.id,
           approved: false,
@@ -142,14 +143,14 @@ function AppContent() {
 
     // Always clean up local state and storage
     setPendingRequest(null);
-    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+    await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleTransactionApproval = async (txHash: string) => {
     if (!pendingRequest) return;
 
     try {
-      await chrome.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'USER_DECISION',
         requestId: pendingRequest.id,
         approved: true,
@@ -161,14 +162,14 @@ function AppContent() {
 
     // Always clean up local state and storage
     setPendingRequest(null);
-    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+    await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleTransactionRejection = async (error?: string) => {
     if (!pendingRequest) return;
 
     try {
-      await chrome.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'USER_DECISION',
         requestId: pendingRequest.id,
         approved: false,
@@ -180,7 +181,7 @@ function AppContent() {
 
     // Always clean up local state and storage
     setPendingRequest(null);
-    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+    await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleSignatureApproval = async () => {
@@ -228,7 +229,7 @@ function AppContent() {
       // Send signature to background
       try {
         console.log('[App] Sending signature to background, requestId:', pendingRequest.id);
-        await chrome.runtime.sendMessage({
+        await browserAPI.runtime.sendMessage({
           type: 'USER_DECISION',
           requestId: pendingRequest.id,
           approved: true,
@@ -241,7 +242,7 @@ function AppContent() {
 
       // Always clean up local state and storage
       setPendingRequest(null);
-      await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+      await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
       console.log('[App] ✅ Cleanup complete');
     } catch (error: any) {
       console.error('[App] ❌ Signature error:', error);
@@ -253,7 +254,7 @@ function AppContent() {
     if (!pendingRequest) return;
 
     try {
-      await chrome.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'USER_DECISION',
         requestId: pendingRequest.id,
         approved: false,
@@ -265,7 +266,7 @@ function AppContent() {
 
     // Always clean up local state and storage
     setPendingRequest(null);
-    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+    await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   const handleNetworkSwitch = async () => {
@@ -284,11 +285,11 @@ function AppContent() {
         chain: pendingRequest.chainName
       };
 
-      await chrome.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
+      await browserAPI.storage.local.set({ [StorageKey.ACCOUNT]: updatedAccount });
 
       // Send approval to background
       try {
-        await chrome.runtime.sendMessage({
+        await browserAPI.runtime.sendMessage({
           type: 'USER_DECISION',
           requestId: pendingRequest.id,
           approved: true,
@@ -300,7 +301,7 @@ function AppContent() {
 
       // Always clean up local state and storage
       setPendingRequest(null);
-      await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+      await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
 
       // No need to reload - WalletContext storage listener will auto-update
       // and Dashboard will sync with the new chain
@@ -314,7 +315,7 @@ function AppContent() {
     if (!pendingRequest) return;
 
     try {
-      await chrome.runtime.sendMessage({
+      await browserAPI.runtime.sendMessage({
         type: 'USER_DECISION',
         requestId: pendingRequest.id,
         approved: false,
@@ -326,7 +327,7 @@ function AppContent() {
 
     // Always clean up local state and storage
     setPendingRequest(null);
-    await chrome.storage.local.remove(StorageKey.PENDING_REQUEST);
+    await browserAPI.storage.local.remove(StorageKey.PENDING_REQUEST);
   };
 
   if (isLoading) {

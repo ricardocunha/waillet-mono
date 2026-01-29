@@ -1,4 +1,5 @@
 import { BackgroundMessageType, EthMethod, PendingRequestType, WindowMessageType } from './types/messaging';
+import { browserAPI } from './utils/browser-api';
 
 console.log('Waillet background loaded');
 
@@ -38,18 +39,18 @@ const READ_ONLY_METHODS = [
   EthMethod.WEB3_CLIENT_VERSION
 ];
 
-chrome.runtime.onInstalled.addListener(() => {
+browserAPI.runtime.onInstalled.addListener(() => {
   console.log('Waillet installed');
 });
 
 // Track when popup windows are closed
-chrome.windows.onRemoved.addListener(async (windowId) => {
+browserAPI.windows.onRemoved.addListener(async (windowId) => {
   if (windowId === popupWindowId) {
     console.log('[Waillet] Popup window closed without user decision');
     popupWindowId = null;
 
     // Clean up any pending requests when popup closes without a decision
-    const result = await chrome.storage.local.get('pendingRequest');
+    const result = await browserAPI.storage.local.get('pendingRequest');
     if (result.pendingRequest) {
       const pendingReq = result.pendingRequest;
       console.log(`[Waillet] Cleaning up abandoned request ID: ${pendingReq.id}, type: ${pendingReq.type}`);
@@ -68,13 +69,13 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
       }
 
       // Remove from storage
-      await chrome.storage.local.remove('pendingRequest');
+      await browserAPI.storage.local.remove('pendingRequest');
       console.log('[Waillet] ✅ Cleaned up abandoned pending request');
     }
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Existing RPC_REQUEST handler
   if (request.type === BackgroundMessageType.RPC_REQUEST) {
     console.log('🔄 Background RPC Request to:', request.url);
@@ -126,7 +127,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // dApp request handler
   if (request.type === BackgroundMessageType.DAPP_REQUEST) {
     handleDAppRequest(request, sender);
-    // Return false since we'll respond via chrome.tabs.sendMessage later
+    // Return false since we'll respond via browserAPI.tabs.sendMessage later
     return false;
   }
 
@@ -213,7 +214,7 @@ async function handleDAppRequest(request: any, sender: any) {
   // EIP-2255: wallet_requestPermissions
   if (method === 'wallet_requestPermissions') {
     // Check if already connected
-    const result = await chrome.storage.local.get('connectedSites');
+    const result = await browserAPI.storage.local.get('connectedSites');
     const connectedSites = result.connectedSites || {};
 
     if (connectedSites[origin]) {
@@ -252,7 +253,7 @@ async function handleDAppRequest(request: any, sender: any) {
 async function executeRPCCall(method: string, params: any[], tabId: number, messageId: number) {
   try {
     // Get current chain from storage (default to sepolia for testing)
-    const storage = await chrome.storage.local.get('account');
+    const storage = await browserAPI.storage.local.get('account');
     const chain = storage.account?.chain || 'sepolia';
 
     console.log(`[Waillet] Executing RPC call: ${method} on chain: ${chain}`, { params });
@@ -320,11 +321,11 @@ async function openOrFocusPopup(): Promise<void> {
     // Check if popup window is still open
     if (popupWindowId !== null) {
       try {
-        const existingWindow = await chrome.windows.get(popupWindowId);
+        const existingWindow = await browserAPI.windows.get(popupWindowId);
         if (existingWindow && existingWindow.id) {
           // Window exists, just focus it and wait a bit to ensure it's ready
           console.log(`[Waillet] ✅ Found existing popup window (ID: ${popupWindowId}), focusing it`);
-          await chrome.windows.update(popupWindowId, { focused: true });
+          await browserAPI.windows.update(popupWindowId, { focused: true });
 
           // Wait a bit to ensure window is focused before returning
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -350,8 +351,8 @@ async function openOrFocusPopup(): Promise<void> {
     const tempId = -1;
     popupWindowId = tempId;
 
-    const window = await chrome.windows.create({
-      url: chrome.runtime.getURL('index.html'),
+    const window = await browserAPI.windows.create({
+      url: browserAPI.runtime.getURL('index.html'),
       type: 'popup',
       width: 506,
       height: 600,
@@ -367,7 +368,7 @@ async function openOrFocusPopup(): Promise<void> {
 }
 
 /**
- * Send response back to content script via chrome.tabs.sendMessage
+ * Send response back to content script via browserAPI.tabs.sendMessage
  */
 const sentResponses = new Set<string>();
 async function sendResponseToTab(tabId: number, messageId: number, result: any, error: any) {
@@ -403,7 +404,7 @@ async function sendResponseToTab(tabId: number, messageId: number, result: any, 
     console.log(`[Waillet]    Sending to frameId: 0`);
 
     // Send only to the main frame (frameId: 0) to avoid duplicates
-    await chrome.tabs.sendMessage(tabId, message, { frameId: 0 });
+    await browserAPI.tabs.sendMessage(tabId, message, { frameId: 0 });
     console.log(`[Waillet] ✅ sendResponseToTab completed successfully`);
   } catch (err) {
     console.error('[Waillet] ❌ Failed to send response to tab:', err);
@@ -415,12 +416,12 @@ async function sendResponseToTab(tabId: number, messageId: number, result: any, 
  */
 async function handleAccountsRequest(origin: string, tabId: number, messageId: number) {
   // Check if already connected
-  const result = await chrome.storage.local.get('connectedSites');
+  const result = await browserAPI.storage.local.get('connectedSites');
   const connectedSites = result.connectedSites || {};
 
   if (connectedSites[origin]) {
     // Already connected, return account
-    const accountResult = await chrome.storage.local.get('account');
+    const accountResult = await browserAPI.storage.local.get('account');
     if (accountResult.account?.address) {
       console.log(`[Waillet] Already connected to ${origin}`);
       await sendResponseToTab(tabId, messageId, [accountResult.account.address], null);
@@ -441,7 +442,7 @@ async function handleAccountsRequest(origin: string, tabId: number, messageId: n
   });
 
   // Store pending request for popup to retrieve
-  await chrome.storage.local.set({
+  await browserAPI.storage.local.set({
     pendingRequest: {
       id: internalId,
       type: PendingRequestType.CONNECT,
@@ -482,7 +483,7 @@ async function handleSendTransaction(txParams: any, origin: string, tabId: numbe
   console.log(`[Waillet] 🚀 Opening popup for transaction approval (ID: ${internalId})`);
 
   // Store the pending request first
-  await chrome.storage.local.set({
+  await browserAPI.storage.local.set({
     pendingRequest: {
       id: internalId,
       type: PendingRequestType.TRANSACTION,
@@ -517,7 +518,7 @@ async function handlePersonalSign(params: any[], origin: string, tabId: number, 
   }
 
   // Check if there's already a pending request in storage
-  const existingRequest = await chrome.storage.local.get('pendingRequest');
+  const existingRequest = await browserAPI.storage.local.get('pendingRequest');
   if (existingRequest.pendingRequest) {
     console.log(`[Waillet] ⚠️ Already have a pending request, focusing existing popup`);
     await openOrFocusPopup();
@@ -544,7 +545,7 @@ async function handlePersonalSign(params: any[], origin: string, tabId: number, 
 
     console.log(`[Waillet] 💾 Storing pending request (ID: ${internalId})`);
 
-    await chrome.storage.local.set({
+    await browserAPI.storage.local.set({
       pendingRequest: {
         id: internalId,
         type: PendingRequestType.SIGN_MESSAGE,
@@ -586,7 +587,7 @@ async function handleSignTypedDataV4(params: any[], origin: string, tabId: numbe
   }
 
   // Check if there's already a pending request in storage
-  const existingRequest = await chrome.storage.local.get('pendingRequest');
+  const existingRequest = await browserAPI.storage.local.get('pendingRequest');
   if (existingRequest.pendingRequest) {
     console.log(`[Waillet] ⚠️ Already have a pending request, focusing existing popup`);
     await openOrFocusPopup();
@@ -622,7 +623,7 @@ async function handleSignTypedDataV4(params: any[], origin: string, tabId: numbe
       messageId
     });
 
-    await chrome.storage.local.set({
+    await browserAPI.storage.local.set({
       pendingRequest: {
         id: internalId,
         type: PendingRequestType.SIGN_TYPED_DATA,
@@ -664,7 +665,7 @@ async function handleEthSign(params: any[], origin: string, tabId: number, messa
   }
 
   // Check if there's already a pending request in storage
-  const existingRequest = await chrome.storage.local.get('pendingRequest');
+  const existingRequest = await browserAPI.storage.local.get('pendingRequest');
   if (existingRequest.pendingRequest) {
     console.log(`[Waillet] ⚠️ Already have a pending request, focusing existing popup`);
     await openOrFocusPopup();
@@ -689,7 +690,7 @@ async function handleEthSign(params: any[], origin: string, tabId: number, messa
       messageId
     });
 
-    await chrome.storage.local.set({
+    await browserAPI.storage.local.set({
       pendingRequest: {
         id: internalId,
         type: PendingRequestType.SIGN_MESSAGE,
@@ -754,7 +755,7 @@ async function handleSwitchChain(params: any, origin: string, tabId: number, mes
   }
 
   // Check if already on this chain
-  const storage = await chrome.storage.local.get('account');
+  const storage = await browserAPI.storage.local.get('account');
   const currentChain = storage.account?.chain;
 
   console.log(`[Waillet] 🔄 Switch chain request: ${currentChain} → ${chainName} (${chainId}) from ${origin}`);
@@ -780,7 +781,7 @@ async function handleSwitchChain(params: any, origin: string, tabId: number, mes
   console.log(`[Waillet] 🚀 Opening popup for chain switch approval (ID: ${internalId})`);
 
   // Store the pending request first
-  await chrome.storage.local.set({
+  await browserAPI.storage.local.set({
     pendingRequest: {
       id: internalId,
       type: PendingRequestType.SWITCH_NETWORK,
@@ -840,7 +841,7 @@ async function handleUserDecision(request: any, sendResponse: Function) {
   console.log(`[Waillet]    MessageId: ${pending.messageId}`);
   console.log(`[Waillet]    Origin: ${pending.origin}`);
 
-  // Send response back to the tab via chrome.tabs.sendMessage
+  // Send response back to the tab via browserAPI.tabs.sendMessage
   if (approved) {
     console.log(`[Waillet] 📤 Calling sendResponseToTab for APPROVAL...`);
     await sendResponseToTab(pending.tabId, pending.messageId, result, null);
@@ -853,13 +854,13 @@ async function handleUserDecision(request: any, sendResponse: Function) {
 
   // If this was a network switch approval, emit chainChanged event
   if (approved && pending.method === EthMethod.WALLET_SWITCH_ETHEREUM_CHAIN) {
-    const storage = await chrome.storage.local.get('account');
+    const storage = await browserAPI.storage.local.get('account');
     if (storage.account?.chain) {
       const chainId = getChainIdHex(storage.account.chain);
 
       // Notify the tab about chain change (only main frame)
       try {
-        await chrome.tabs.sendMessage(pending.tabId, {
+        await browserAPI.tabs.sendMessage(pending.tabId, {
           type: WindowMessageType.WAILLET_PROVIDER_UPDATE,
           chainId
         }, { frameId: 0 });
@@ -872,12 +873,12 @@ async function handleUserDecision(request: any, sendResponse: Function) {
 
   // Cleanup
   pendingRequests.delete(requestId);
-  await chrome.storage.local.remove('pendingRequest');
+  await browserAPI.storage.local.remove('pendingRequest');
 
   // Close the popup window after decision is made
   if (popupWindowId !== null) {
     try {
-      await chrome.windows.remove(popupWindowId);
+      await browserAPI.windows.remove(popupWindowId);
       popupWindowId = null;
     } catch (err) {
       // Window might already be closed by user

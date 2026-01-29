@@ -6,6 +6,7 @@ import {
   IdentifierType,
   REGISTRY_STORAGE_KEY,
 } from '../constants/registry';
+import { browserAPI } from '../utils/browser-api';
 
 export interface RegistrationResult {
   hash: string;
@@ -223,14 +224,14 @@ export class RegistryService {
     walletAddress: string,
     identifier: string
   ): Promise<void> {
-    const result = await chrome.storage.local.get(REGISTRY_STORAGE_KEY);
+    const result = await browserAPI.storage.local.get(REGISTRY_STORAGE_KEY);
     const shortcuts = result[REGISTRY_STORAGE_KEY] || {};
     const userShortcuts = shortcuts[walletAddress] || [];
 
     if (!userShortcuts.includes(identifier)) {
       userShortcuts.push(identifier);
       shortcuts[walletAddress] = userShortcuts;
-      await chrome.storage.local.set({ [REGISTRY_STORAGE_KEY]: shortcuts });
+      await browserAPI.storage.local.set({ [REGISTRY_STORAGE_KEY]: shortcuts });
     }
   }
 
@@ -241,19 +242,19 @@ export class RegistryService {
     walletAddress: string,
     identifier: string
   ): Promise<void> {
-    const result = await chrome.storage.local.get(REGISTRY_STORAGE_KEY);
+    const result = await browserAPI.storage.local.get(REGISTRY_STORAGE_KEY);
     const shortcuts = result[REGISTRY_STORAGE_KEY] || {};
     const userShortcuts = shortcuts[walletAddress] || [];
 
     shortcuts[walletAddress] = userShortcuts.filter((s: string) => s !== identifier);
-    await chrome.storage.local.set({ [REGISTRY_STORAGE_KEY]: shortcuts });
+    await browserAPI.storage.local.set({ [REGISTRY_STORAGE_KEY]: shortcuts });
   }
 
   /**
    * Get locally stored shortcuts for an address
    */
   static async getLocalShortcuts(walletAddress: string): Promise<string[]> {
-    const result = await chrome.storage.local.get(REGISTRY_STORAGE_KEY);
+    const result = await browserAPI.storage.local.get(REGISTRY_STORAGE_KEY);
     const shortcuts = result[REGISTRY_STORAGE_KEY] || {};
     return shortcuts[walletAddress] || [];
   }

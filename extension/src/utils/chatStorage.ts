@@ -1,6 +1,7 @@
 import { StorageKey } from '../constants';
 import type { IntentResponse } from '../types/api';
 import { MessageType } from '../constants/enums';
+import { browserAPI } from './browser-api';
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
@@ -31,7 +32,7 @@ function filterRecentMessages(messages: StoredMessage[]): StoredMessage[] {
  */
 export async function loadChatHistory(walletAddress: string): Promise<StoredMessage[]> {
   try {
-    const result = await chrome.storage.local.get(StorageKey.CHAT_HISTORY);
+    const result = await browserAPI.storage.local.get(StorageKey.CHAT_HISTORY);
     const data = result[StorageKey.CHAT_HISTORY] as ChatHistoryData | undefined;
 
     if (!data || data.walletAddress !== walletAddress) {
@@ -60,7 +61,7 @@ export async function saveChatHistory(walletAddress: string, messages: StoredMes
       lastUpdated: new Date().toISOString()
     };
 
-    await chrome.storage.local.set({ [StorageKey.CHAT_HISTORY]: data });
+    await browserAPI.storage.local.set({ [StorageKey.CHAT_HISTORY]: data });
   } catch (error) {
     console.error('Failed to save chat history:', error);
   }
@@ -71,7 +72,7 @@ export async function saveChatHistory(walletAddress: string, messages: StoredMes
  */
 export async function clearChatHistory(): Promise<void> {
   try {
-    await chrome.storage.local.remove(StorageKey.CHAT_HISTORY);
+    await browserAPI.storage.local.remove(StorageKey.CHAT_HISTORY);
   } catch (error) {
     console.error('Failed to clear chat history:', error);
   }
