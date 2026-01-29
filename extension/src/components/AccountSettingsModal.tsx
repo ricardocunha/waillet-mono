@@ -162,10 +162,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-2 z-40">
-      <div className="bg-slate-800 rounded-lg max-w-md w-full p-4 max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-1 z-40">
+      <div className="bg-slate-800 rounded-lg max-w-md w-full p-3 max-h-[95vh] overflow-y-auto scrollbar-hide">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-bold">Account Settings</h2>
           <button
             onClick={onClose}
@@ -176,33 +176,31 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
         </div>
 
         {/* Private Key Section */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
               <Key size={16} className="text-purple-400" />
-              <label className="text-sm font-semibold text-slate-300">
-                Private Key
-              </label>
+              <label className="text-sm font-semibold text-slate-300">Private Key</label>
             </div>
-            <p className="text-xs text-yellow-400 mb-2">Never share your private key - anyone with it can access your funds.</p>
+            <p className="text-xs text-yellow-400 mb-1">Never share your private key - anyone with it can access your funds.</p>
 
             {/* Private Key Display */}
-            <div className="bg-slate-700 border border-slate-600 rounded-lg p-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 font-mono text-xs break-all text-slate-400 overflow-hidden" style={{ maxHeight: '2.5rem' }}>
+            <div className="bg-slate-700 border border-slate-600 rounded p-1.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex-1 font-mono text-xs break-all text-slate-400 overflow-hidden" style={{ maxHeight: '2rem' }}>
                   {showPrivateKey ? account.privateKey : maskPrivateKey()}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button
                     onClick={() => setShowPrivateKey(!showPrivateKey)}
-                    className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded transition-colors"
+                    className="p-1 bg-slate-600 hover:bg-slate-500 rounded transition-colors"
                     title={showPrivateKey ? 'Hide' : 'Show'}
                   >
                     {showPrivateKey ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                   <button
                     onClick={handleCopyPrivateKey}
-                    className="p-1.5 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+                    className="p-1 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
                     title="Copy"
                   >
                     {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -214,32 +212,30 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/50 border border-red-700 rounded p-2 flex gap-2">
+            <div className="bg-red-900/50 border border-red-700 rounded p-1.5 flex gap-1.5">
               <AlertCircle className="flex-shrink-0 text-red-400" size={14} />
               <div className="text-xs text-red-200">{error}</div>
             </div>
           )}
 
           {/* Address Shortcut Section */}
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="pt-2 border-t border-slate-700">
+            <div className="flex items-center gap-1.5 mb-0.5">
               <AtSign size={16} className="text-purple-400" />
-              <label className="text-sm font-semibold text-slate-300">
-                Address Shortcut
-              </label>
+              <label className="text-sm font-semibold text-slate-300">Address Shortcut</label>
               <span className="text-xs text-slate-500 ml-auto">Base Sepolia</span>
             </div>
-            <p className="text-xs text-slate-400 mb-3">Register an email or alias so others can send you crypto easily.</p>
+            <p className="text-xs text-slate-400 mb-1.5">Register an email or alias so others can send you crypto easily.</p>
 
             {/* Registered Shortcuts Display */}
             {registeredShortcuts.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs text-slate-400 mb-1">Registered:</div>
-                <div className="space-y-1">
+              <div className="mb-1.5">
+                <div className="text-xs text-slate-400 mb-0.5">Registered:</div>
+                <div className="space-y-0.5">
                   {registeredShortcuts.map((shortcut, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-slate-700 rounded px-2 py-1.5"
+                      className="flex items-center justify-between bg-slate-700 rounded px-2 py-1"
                     >
                       <span className="text-xs font-mono truncate">{shortcut}</span>
                       <button
@@ -261,7 +257,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
             )}
 
             {/* Input for new shortcut */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <input
                 type="text"
                 value={shortcutInput}
@@ -271,12 +267,12 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                   setGasEstimate(null);
                 }}
                 placeholder="email@example.com or myname.waillet"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-purple-500"
               />
 
               {/* Gas Estimate Display */}
               {gasEstimate && (
-                <div className="bg-slate-700/50 rounded p-2 text-xs flex items-center justify-between">
+                <div className="bg-slate-700/50 rounded p-1.5 text-xs flex items-center justify-between">
                   <span className="text-slate-400">Gas:</span>
                   <span className="text-white font-semibold">~{parseFloat(gasEstimate.gasCost).toFixed(6)} ETH</span>
                 </div>
@@ -284,24 +280,24 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
 
               {/* Registration Error */}
               {registrationError && (
-                <div className="bg-red-900/50 border border-red-700 rounded p-1.5 text-xs text-red-200">
+                <div className="bg-red-900/50 border border-red-700 rounded p-1 text-xs text-red-200">
                   {registrationError}
                 </div>
               )}
 
               {/* Registration Success */}
               {registrationSuccess && (
-                <div className="bg-green-900/50 border border-green-700 rounded p-1.5 text-xs text-green-200">
+                <div className="bg-green-900/50 border border-green-700 rounded p-1 text-xs text-green-200">
                   {registrationSuccess}
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={handleEstimateGas}
                   disabled={!shortcutInput.trim() || isEstimating || isRegistering}
-                  className="flex-1 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:opacity-50 text-white py-1 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   {isEstimating ? (
                     <>
@@ -315,7 +311,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                 <button
                   onClick={handleRegisterShortcut}
                   disabled={!shortcutInput.trim() || !gasEstimate || isRegistering}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   {isRegistering ? (
                     <>
@@ -332,19 +328,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
         </div>
 
         {/* OpenAI API Key Section */}
-        <div className="mt-4 pt-4 border-t border-slate-700">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="mt-2 pt-2 border-t border-slate-700">
+          <div className="flex items-center gap-1.5 mb-0.5">
             <Brain size={16} className="text-purple-400" />
-            <label className="text-sm font-semibold text-slate-300">
-              OpenAI API Key
-            </label>
+            <label className="text-sm font-semibold text-slate-300">OpenAI API Key</label>
             <span className={`text-xs ml-auto ${openaiConfigured ? 'text-green-400' : 'text-yellow-400'}`}>
               {openaiConfigured ? 'Configured' : 'Not configured'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mb-3">Required for the AI Agent chat feature.</p>
+          <p className="text-xs text-slate-400 mb-1.5">Required for the AI Agent chat feature.</p>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <input
               type="password"
               value={openaiKeyInput}
@@ -353,17 +347,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
                 setOpenaiError(null);
               }}
               placeholder="sk-..."
-              className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
+              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-purple-500"
             />
 
             {openaiError && (
-              <div className="bg-red-900/50 border border-red-700 rounded p-1.5 text-xs text-red-200">
+              <div className="bg-red-900/50 border border-red-700 rounded p-1 text-xs text-red-200">
                 {openaiError}
               </div>
             )}
 
             {openaiSuccess && (
-              <div className="bg-green-900/50 border border-green-700 rounded p-1.5 text-xs text-green-200">
+              <div className="bg-green-900/50 border border-green-700 rounded p-1 text-xs text-green-200">
                 {openaiSuccess}
               </div>
             )}
@@ -371,7 +365,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
             <button
               onClick={handleSaveOpenAIKey}
               disabled={!openaiKeyInput.trim() || isSavingKey}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:opacity-50 text-white py-1 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1"
             >
               {isSavingKey ? (
                 <>
@@ -386,10 +380,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
         </div>
 
         {/* Close Button */}
-        <div className="mt-4">
+        <div className="mt-2">
           <button
             onClick={onClose}
-            className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded font-semibold transition-colors text-sm"
+            className="w-full bg-slate-700 hover:bg-slate-600 text-white py-1.5 rounded font-semibold transition-colors text-sm"
           >
             Close
           </button>

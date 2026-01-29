@@ -143,9 +143,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
   const chainInfo = CHAIN_DISPLAY[currentChain] || { name: currentChain, color: '#6B7280' };
 
   return (
-    <div className="h-full bg-slate-900 flex flex-col">
+    <div className="h-full bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <img src="/icons/icon-48.png" alt="wAIllet" className="w-8 h-8" />
@@ -278,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="p-4 flex gap-2">
+      <div className="p-4 flex gap-2 flex-shrink-0">
         <button
           onClick={() => setShowSendModal(true)}
           className="flex-1 flex items-center justify-center gap-2 p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
@@ -301,8 +301,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
       </div>
 
       {/* Token Balances */}
-      <div className="flex-1 px-4 pb-4 overflow-y-auto scrollbar-hide">
-        <h2 className="text-sm font-bold mb-3">Tokens</h2>
+      <div className="flex-1 min-h-0 px-4 pb-4">
+        <h2 className="text-sm font-bold mb-2">Tokens</h2>
 
         {(() => {
           // Filter tokens with balance > 0
@@ -313,8 +313,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
           // Show loading state
           if (isRefreshing && tokensWithBalance.length === 0) {
             return (
-              <div className="bg-slate-800 rounded-lg p-4 text-center text-slate-400 text-sm">
-                <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
+              <div className="bg-slate-800 rounded-lg p-3 text-center text-slate-400 text-xs">
+                <RefreshCw size={16} className="animate-spin mx-auto mb-1" />
                 <p>Loading balances...</p>
               </div>
             );
@@ -323,35 +323,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
           // Show empty state when no tokens with balance
           if (tokensWithBalance.length === 0) {
             return (
-              <div className="bg-slate-800 rounded-lg p-4 text-center text-slate-400 text-sm">
+              <div className="bg-slate-800 rounded-lg p-3 text-center text-slate-400 text-xs">
                 <p className="mb-1">No tokens found</p>
-                <p className="text-xs">Your wallet doesn't have any tokens on this network yet</p>
+                <p className="text-[10px]">Your wallet doesn't have any tokens on this network yet</p>
               </div>
             );
           }
 
           // Show tokens with balance
           return (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {tokensWithBalance.map((token) => (
                 <div
                   key={token.symbol}
-                  className="bg-slate-800 rounded-lg p-3 border-l-4 border-purple-500"
+                  className="bg-slate-800 rounded-lg px-3 py-2 border-l-4 border-purple-500"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center font-bold text-xs">
+                      <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center font-bold text-[10px]">
                         {token.symbol.slice(0, 2)}
                       </div>
                       <div>
-                        <div className="font-semibold text-sm">{token.symbol}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="font-semibold text-xs">{token.symbol}</div>
+                        <div className="text-[10px] text-slate-400">
                           ${token.usdValue.toFixed(2)}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-sm">
+                      <div className="font-medium text-xs text-slate-300">
                         {token.balance}
                       </div>
                     </div>
