@@ -41,7 +41,7 @@ var alchemyChainURLs = map[string]string{
 }
 
 var fallbackURLs = map[string]string{
-	"ethereum":     "https://eth.llamarpc.com",
+	"ethereum":     "https://ethereum-rpc.publicnode.com",
 	"sepolia":      "https://rpc2.sepolia.org",
 	"base-sepolia": "https://sepolia.base.org",
 	"base":         "https://mainnet.base.org",

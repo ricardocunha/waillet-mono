@@ -115,7 +115,7 @@ const ERC20_ABI = [
 export const CHAINS: Record<string, ChainConfig> = {
   ethereum: {
     name: 'Ethereum',
-    rpcUrl: 'https://eth.llamarpc.com',
+    rpcUrl: 'https://ethereum-rpc.publicnode.com',
     chainId: 1,
     nativeCurrency: 'ETH',
     explorer: 'https://etherscan.io',
