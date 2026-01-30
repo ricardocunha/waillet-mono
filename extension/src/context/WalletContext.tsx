@@ -159,8 +159,8 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     };
 
-    browserAPI.storage.local.onChanged.addListener(handleStorageChange);
-    return () => browserAPI.storage.local.onChanged.removeListener(handleStorageChange);
+    browserAPI.storage.onChanged.addListener(handleStorageChange);
+    return () => browserAPI.storage.onChanged.removeListener(handleStorageChange);
   }, []);
 
   const unlock = async (password: string) => {

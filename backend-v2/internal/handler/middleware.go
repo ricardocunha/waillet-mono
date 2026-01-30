@@ -17,8 +17,12 @@ func CORSMiddleware(cfg *config.CORSConfig) func(http.Handler) http.Handler {
 		AllowedMethods:   cfg.AllowedMethods,
 		AllowedHeaders:   cfg.AllowedHeaders,
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
+		AllowCredentials: false, // Must be false when using AllowedOrigins: ["*"]
 		MaxAge:           300,
+		// Allow all origins including moz-extension:// and chrome-extension://
+		AllowOriginFunc: func(r *http.Request, origin string) bool {
+			return true
+		},
 	})
 }
 

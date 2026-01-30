@@ -10,7 +10,7 @@
 - **Go** 1.23+
 - **Node.js** 18+
 - **Docker & Docker Compose** (for MySQL)
-- **Chrome** browser
+- **Chrome** or **Firefox** browser
 
 ## Project Structure
 
@@ -66,17 +66,25 @@ waillet-mono/
 │   ├── .env.example            # Environment variable template
 │   └── go.mod
 │
-├── extension/                  # Chrome extension (React + TypeScript)
+├── extension/                  # Browser extension (React + TypeScript)
 │   ├── src/
 │   │   ├── components/         # React UI components
 │   │   ├── constants/          # App constants & storage keys
 │   │   ├── context/            # React context (wallet state)
 │   │   ├── services/           # API client, wallet, network service
 │   │   ├── types/              # TypeScript type definitions
+│   │   ├── utils/
+│   │   │   └── browser-api.ts  # Chrome/Firefox API compatibility layer
 │   │   ├── background.ts       # Extension background script
 │   │   ├── content.ts          # Content script (page injection)
 │   │   └── inpage.ts           # window.ethereum provider
-│   ├── public/                 # Static assets & manifest.json
+│   ├── public/
+│   │   ├── manifest.json       # Chrome manifest
+│   │   └── manifest.firefox.json # Firefox manifest
+│   ├── dist/                   # Chrome build output
+│   ├── dist-firefox/           # Firefox build output
+│   ├── build-firefox.js        # Firefox build script
+│   ├── FIREFOX_SETUP.html      # Visual Firefox setup guide
 │   └── package.json
 │
 └── images/                     # Repo images
@@ -175,16 +183,48 @@ npm run build
 3. Click **Load unpacked**
 4. Select the `extension/dist` folder
 
+### Running on Firefox
+
+**1. Build for Firefox:**
+
+```bash
+cd extension
+npm install
+npm run build:firefox
+```
+
+This creates a Firefox-compatible build in `extension/dist-firefox`.
+
+**2. Load in Firefox (Temporary - for development):**
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on...**
+3. Navigate to `extension/dist-firefox`
+4. Select the `manifest.json` file
+
+**Alternative: Using web-ext CLI:**
+
+```bash
+cd extension
+npm run dev:firefox
+```
+
+This auto-reloads the extension when files change.
+
+**Note:** Temporary add-ons are removed when Firefox closes. For persistent installation, the extension needs to be signed by Mozilla or installed in Firefox Developer Edition/Nightly with `xpinstall.signatures.required` set to `false` in `about:config`.
+
+For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser.
+
 ## Architecture
 
 ```
-Chrome Extension  ──────>  Go Backend  ──────>  MySQL
-  (React UI)        HTTP     (Chi)       sqlx    (Data)
-  (background.ts)                │
-  (inpage.ts)                    ├──> OpenAI     (AI intent parsing)
-                                 ├──> Alchemy    (Blockchain RPC)
-                                 ├──> CoinMarketCap (Token prices)
-                                 └──> ChainAbuse (Scam detection)
+Browser Extension  ──────>  Go Backend  ──────>  MySQL
+(Chrome/Firefox)     HTTP     (Chi)       sqlx    (Data)
+  (React UI)                       │
+  (background.ts)                  ├──> OpenAI     (AI intent parsing)
+  (inpage.ts)                      ├──> Alchemy    (Blockchain RPC)
+                                   ├──> CoinMarketCap (Token prices)
+                                   └──> ChainAbuse (Scam detection)
 ```
 
 The backend follows a layered architecture: **Handlers** (HTTP) -> **Services** (business logic) -> **Repositories** (data access) -> **Database**.

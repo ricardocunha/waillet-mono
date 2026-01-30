@@ -364,7 +364,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
       </div>
 
       {/* Modals */}
-      {showSendModal && <SendTransactionModal onClose={() => setShowSendModal(false)} />}
+      {showSendModal && (
+        <SendTransactionModal
+          onClose={() => setShowSendModal(false)}
+          tokensWithBalance={tokenBalances
+            .filter(t => t.balance !== 'Error' && parseFloat(t.balance) > 0)
+            .map(t => ({ symbol: t.symbol, balance: t.balance }))}
+          currentChain={currentChain}
+        />
+      )}
       {showSaveFavoriteModal && (
         <SaveFavoriteModal onClose={() => setShowSaveFavoriteModal(false)} />
       )}

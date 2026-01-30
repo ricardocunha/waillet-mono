@@ -74,10 +74,10 @@ function AppContent() {
       }
     };
 
-    browserAPI.storage.local.onChanged.addListener(handleStorageChange);
+    browserAPI.storage.onChanged.addListener(handleStorageChange);
 
     return () => {
-      browserAPI.storage.local.onChanged.removeListener(handleStorageChange);
+      browserAPI.storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
 
