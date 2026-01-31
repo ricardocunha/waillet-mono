@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/waillet-app/backend-v2/internal/auth"
 	"github.com/waillet-app/backend-v2/internal/dto"
 	"github.com/waillet-app/backend-v2/internal/models"
 	"github.com/waillet-app/backend-v2/internal/repository"
@@ -22,9 +24,9 @@ func NewPolicyHandler(repo repository.PolicyRepository) *PolicyHandler {
 }
 
 func (h *PolicyHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
-	walletAddress := chi.URLParam(r, "wallet_address")
-	if !validator.IsValidEthereumAddress(walletAddress) {
-		writeError(w, http.StatusBadRequest, "invalid wallet address")
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
 		return
 	}
 
@@ -43,14 +45,15 @@ func (h *PolicyHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PolicyHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreatePolicyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
 		return
 	}
 
-	if !validator.IsValidEthereumAddress(req.WalletAddress) {
-		writeError(w, http.StatusBadRequest, "invalid wallet address")
+	var req dto.CreatePolicyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -78,7 +81,7 @@ func (h *PolicyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	policy := &models.Policy{
-		WalletAddress: req.WalletAddress,
+		WalletAddress: walletAddress,
 		PolicyType:    policyType,
 		Chain:         req.Chain,
 		IsActive:      true,
@@ -101,6 +104,12 @@ func (h *PolicyHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PolicyHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -116,6 +125,11 @@ func (h *PolicyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if policy == nil {
 		writeError(w, http.StatusNotFound, "policy not found")
+		return
+	}
+
+	if !strings.EqualFold(policy.WalletAddress, walletAddress) {
+		writeError(w, http.StatusForbidden, "not authorized to delete this policy")
 		return
 	}
 

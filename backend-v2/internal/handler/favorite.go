@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+	"github.com/waillet-app/backend-v2/internal/auth"
 	"github.com/waillet-app/backend-v2/internal/dto"
 	"github.com/waillet-app/backend-v2/internal/models"
 	"github.com/waillet-app/backend-v2/internal/repository"
@@ -24,13 +26,13 @@ func NewFavoriteHandler(repo repository.FavoriteRepository) *FavoriteHandler {
 }
 
 func (h *FavoriteHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
-	walletAddress := chi.URLParam(r, "wallet_address")
-	log.Info().Str("wallet_address", walletAddress).Msg("Getting favorites for wallet")
-
-	if !validator.IsValidEthereumAddress(walletAddress) {
-		writeError(w, http.StatusBadRequest, "invalid wallet address")
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
 		return
 	}
+
+	log.Info().Str("wallet_address", walletAddress).Msg("Getting favorites for wallet")
 
 	favorites, err := h.repo.GetByWalletAddress(r.Context(), walletAddress)
 	if err != nil {
@@ -50,6 +52,12 @@ func (h *FavoriteHandler) GetByWallet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
 	var req dto.CreateFavoriteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -57,15 +65,10 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info().
-		Str("wallet_address", req.WalletAddress).
+		Str("wallet_address", walletAddress).
 		Str("alias", req.Alias).
 		Str("address", req.Address).
 		Msg("Creating favorite")
-
-	if !validator.IsValidEthereumAddress(req.WalletAddress) {
-		writeError(w, http.StatusBadRequest, "invalid wallet address")
-		return
-	}
 
 	if !validator.IsValidEthereumAddress(req.Address) {
 		writeError(w, http.StatusBadRequest, "invalid address")
@@ -83,7 +86,7 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	favorite := &models.Favorite{
-		WalletAddress: req.WalletAddress,
+		WalletAddress: walletAddress,
 		Alias:         req.Alias,
 		Address:       req.Address,
 		Type:          favoriteType,
@@ -98,7 +101,7 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Create(r.Context(), favorite); err != nil {
-		log.Error().Err(err).Str("wallet_address", req.WalletAddress).Str("alias", req.Alias).Msg("Failed to create favorite")
+		log.Error().Err(err).Str("wallet_address", walletAddress).Str("alias", req.Alias).Msg("Failed to create favorite")
 		if isDuplicateKeyError(err) {
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("Alias '%s' already exists for this wallet", req.Alias))
 			return
@@ -109,7 +112,7 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	log.Info().
 		Int64("id", favorite.ID).
-		Str("wallet_address", req.WalletAddress).
+		Str("wallet_address", walletAddress).
 		Str("alias", req.Alias).
 		Msg("Favorite created successfully")
 
@@ -117,6 +120,12 @@ func (h *FavoriteHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FavoriteHandler) Update(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -138,6 +147,11 @@ func (h *FavoriteHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if favorite == nil {
 		writeError(w, http.StatusNotFound, "favorite not found")
+		return
+	}
+
+	if !strings.EqualFold(favorite.WalletAddress, walletAddress) {
+		writeError(w, http.StatusForbidden, "not authorized to update this favorite")
 		return
 	}
 
@@ -174,6 +188,12 @@ func (h *FavoriteHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FavoriteHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -189,6 +209,11 @@ func (h *FavoriteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if favorite == nil {
 		writeError(w, http.StatusNotFound, "favorite not found")
+		return
+	}
+
+	if !strings.EqualFold(favorite.WalletAddress, walletAddress) {
+		writeError(w, http.StatusForbidden, "not authorized to delete this favorite")
 		return
 	}
 
