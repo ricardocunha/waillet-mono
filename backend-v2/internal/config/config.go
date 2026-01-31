@@ -14,6 +14,15 @@ type Config struct {
 	RPC           RPCConfig
 	CORS          CORSConfig
 	CoinMarketCap CoinMarketCapConfig
+	Auth          AuthConfig
+}
+
+type AuthConfig struct {
+	JWTSecret       string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+	NonceTTL        time.Duration
+	Domain          string
 }
 
 type ServerConfig struct {
@@ -92,6 +101,12 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("CMC_SYNC_INTERVAL", "10m")
 
+	viper.SetDefault("JWT_SECRET", "")
+	viper.SetDefault("JWT_ACCESS_TTL", "15m")
+	viper.SetDefault("JWT_REFRESH_TTL", "168h")
+	viper.SetDefault("AUTH_NONCE_TTL", "10m")
+	viper.SetDefault("AUTH_DOMAIN", "localhost")
+
 	// Try to read config file (optional)
 	_ = viper.ReadInConfig()
 
@@ -114,6 +129,19 @@ func Load() (*Config, error) {
 	cmcSyncInterval, err := time.ParseDuration(viper.GetString("CMC_SYNC_INTERVAL"))
 	if err != nil {
 		cmcSyncInterval = 10 * time.Minute
+	}
+
+	jwtAccessTTL, err := time.ParseDuration(viper.GetString("JWT_ACCESS_TTL"))
+	if err != nil {
+		jwtAccessTTL = 15 * time.Minute
+	}
+	jwtRefreshTTL, err := time.ParseDuration(viper.GetString("JWT_REFRESH_TTL"))
+	if err != nil {
+		jwtRefreshTTL = 168 * time.Hour
+	}
+	authNonceTTL, err := time.ParseDuration(viper.GetString("AUTH_NONCE_TTL"))
+	if err != nil {
+		authNonceTTL = 10 * time.Minute
 	}
 
 	cfg := &Config{
@@ -151,6 +179,13 @@ func Load() (*Config, error) {
 		CoinMarketCap: CoinMarketCapConfig{
 			APIKey:       viper.GetString("CMC_API_KEY"),
 			SyncInterval: cmcSyncInterval,
+		},
+		Auth: AuthConfig{
+			JWTSecret:       viper.GetString("JWT_SECRET"),
+			AccessTokenTTL:  jwtAccessTTL,
+			RefreshTokenTTL: jwtRefreshTTL,
+			NonceTTL:        authNonceTTL,
+			Domain:          viper.GetString("AUTH_DOMAIN"),
 		},
 	}
 

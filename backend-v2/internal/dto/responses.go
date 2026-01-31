@@ -142,3 +142,19 @@ type RPCHealthResponse struct {
 	Status string            `json:"status"`
 	Chains map[string]string `json:"chains"`
 }
+
+type NonceResponse struct {
+	Nonce   string `json:"nonce"`
+	Message string `json:"message"`
+}
+
+type AuthTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+}
+
+type CurrentUserResponse struct {
+	WalletAddress string `json:"wallet_address"`
+}

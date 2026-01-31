@@ -61,3 +61,12 @@ type RiskDecisionRequest struct {
 	Decision string `json:"decision"`
 	TxHash   string `json:"tx_hash,omitempty"`
 }
+
+type VerifySignatureRequest struct {
+	Message   string `json:"message"`
+	Signature string `json:"signature"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
