@@ -142,6 +142,17 @@ func RunMigrations(db *sqlx.DB) error {
 			INDEX idx_network_id (network_id),
 			INDEX idx_contract_address (contract_address)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+		`CREATE TABLE IF NOT EXISTS auth_nonces (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			wallet_address VARCHAR(42) NOT NULL,
+			nonce VARCHAR(64) NOT NULL UNIQUE,
+			expires_at TIMESTAMP NOT NULL,
+			used BOOLEAN DEFAULT FALSE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			INDEX idx_wallet_nonce (wallet_address),
+			INDEX idx_expires (expires_at)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 	}
 
 	for i, stmt := range statements {
