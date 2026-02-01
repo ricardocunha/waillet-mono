@@ -1,18 +1,22 @@
-// Chain enum for supported networks
-export enum Chain {
-  ETHEREUM = 'ethereum',
-  BASE = 'base',
-  SEPOLIA = 'sepolia',
-  BASE_SEPOLIA = 'base_sepolia',
-  BSC = 'bsc',
-}
+// Chain type for supported networks
+export const Chain = {
+  ETHEREUM: 'ethereum',
+  BASE: 'base',
+  SEPOLIA: 'sepolia',
+  BASE_SEPOLIA: 'base_sepolia',
+  BSC: 'bsc',
+} as const
 
-// Token enum for supported tokens
-export enum Token {
-  ETH = 'ETH',
-  USDT = 'USDT',
-  USDC = 'USDC',
-}
+export type Chain = (typeof Chain)[keyof typeof Chain]
+
+// Token type for supported tokens
+export const Token = {
+  ETH: 'ETH',
+  USDT: 'USDT',
+  USDC: 'USDC',
+} as const
+
+export type Token = (typeof Token)[keyof typeof Token]
 
 // Chain configuration interface
 export interface ChainConfig {
@@ -34,18 +38,20 @@ export interface TokenConfig {
   enabled: boolean
 }
 
-// Bridge status enum
-export enum BridgeStatus {
-  IDLE = 'idle',
-  CONNECTING = 'connecting',
-  SWITCHING_CHAIN = 'switching_chain',
-  CONFIRMING = 'confirming',
-  LOCKING = 'locking',
-  LOCKED = 'locked',
-  BRIDGING = 'bridging',
-  COMPLETE = 'complete',
-  ERROR = 'error',
-}
+// Bridge status type
+export const BridgeStatus = {
+  IDLE: 'idle',
+  CONNECTING: 'connecting',
+  SWITCHING_CHAIN: 'switching_chain',
+  CONFIRMING: 'confirming',
+  LOCKING: 'locking',
+  LOCKED: 'locked',
+  BRIDGING: 'bridging',
+  COMPLETE: 'complete',
+  ERROR: 'error',
+} as const
+
+export type BridgeStatus = (typeof BridgeStatus)[keyof typeof BridgeStatus]
 
 // Bridge parameters
 export interface BridgeParams {

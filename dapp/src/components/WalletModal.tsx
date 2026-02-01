@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { X, Wallet, AlertCircle } from 'lucide-react'
-import { detectWallets, WalletProviderType } from '../hooks'
+import { detectWallets } from '../hooks'
+import type { WalletProviderType } from '../hooks'
 
 interface WalletModalProps {
   isOpen: boolean
