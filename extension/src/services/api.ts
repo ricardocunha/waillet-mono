@@ -1,16 +1,62 @@
 import type { Favorite, FavoriteCreate, IntentRequest, IntentResponse } from '../types/api';
+import { authService } from './auth';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
+// Endpoints that require authentication
+const PROTECTED_ENDPOINTS = [
+  '/favorites',
+  '/policies',
+  '/ai/',
+  '/simulate/',
+  '/settings/',
+  '/auth/me',
+  '/auth/logout',
+];
+
 class WailletAPI {
+  private isProtectedEndpoint(endpoint: string): boolean {
+    return PROTECTED_ENDPOINTS.some(
+      (protected_) => endpoint.startsWith(protected_) || endpoint === protected_.slice(0, -1)
+    );
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options?.headers as Record<string, string>),
+    };
+
+    // Add auth header for protected endpoints
+    if (this.isProtectedEndpoint(endpoint)) {
+      const token = await authService.getAccessToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    let response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     });
+
+    // Handle 401 by attempting token refresh
+    if (response.status === 401 && this.isProtectedEndpoint(endpoint)) {
+      try {
+        await authService.refreshAccessToken();
+        const newToken = await authService.getAccessToken();
+        if (newToken) {
+          headers['Authorization'] = `Bearer ${newToken}`;
+          response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers,
+          });
+        }
+      } catch (refreshError) {
+        console.error('[API] Token refresh failed:', refreshError);
+        throw new Error('Authentication required. Please unlock your wallet.');
+      }
+    }
 
     if (!response.ok) {
       const error = await response.text();
@@ -31,8 +77,8 @@ class WailletAPI {
     return JSON.parse(text);
   }
 
-  async getFavorites(walletAddress: string): Promise<Favorite[]> {
-    return this.request<Favorite[]>(`/favorites/${walletAddress}`);
+  async getFavorites(): Promise<Favorite[]> {
+    return this.request<Favorite[]>('/favorites');
   }
 
   async createFavorite(favorite: FavoriteCreate): Promise<Favorite> {

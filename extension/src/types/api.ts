@@ -14,7 +14,6 @@ export interface Favorite {
 }
 
 export interface FavoriteCreate {
-  wallet_address: string;
   alias: string;
   address: string;
   asset?: string;

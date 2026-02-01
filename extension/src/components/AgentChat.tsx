@@ -270,7 +270,7 @@ export const AgentChat: React.FC = () => {
   const handleDeleteFavorite = async (alias: string) => {
     try {
       // First get the favorites list to find the ID
-      const favorites = await api.getFavorites(account!.address);
+      const favorites = await api.getFavorites();
       const favorite = favorites.find(f => f.alias.toLowerCase() === alias.toLowerCase());
 
       if (!favorite) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { WalletProvider, useWallet } from './context/WalletContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Onboarding } from './components/Onboarding';
 import { Unlock } from './components/Unlock';
 import { Dashboard } from './components/Dashboard';
@@ -36,6 +37,7 @@ interface PendingRequest {
 
 function AppContent() {
   const { isUnlocked, hasWallet, isLoading, account } = useWallet();
+  const { isAuthenticated, isAuthenticating, authenticate } = useAuth();
   const [mode, setMode] = useState<Mode>('wallet');
   const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
   const [currentChain, setCurrentChain] = useState<string>('sepolia');
@@ -49,6 +51,23 @@ function AppContent() {
       setAiConfigured(false);
     }
   };
+
+  // Auto-authenticate when wallet is unlocked
+  useEffect(() => {
+    const doAuth = async () => {
+      if (isUnlocked && account && !isAuthenticated && !isAuthenticating) {
+        console.log('[App] Auto-authenticating with backend...');
+        try {
+          await authenticate(account.privateKey, account.address);
+          console.log('[App] Backend authentication successful');
+        } catch (error) {
+          console.error('[App] Backend authentication failed:', error);
+          // Continue anyway - some features may work without auth
+        }
+      }
+    };
+    doAuth();
+  }, [isUnlocked, account, isAuthenticated, isAuthenticating, authenticate]);
 
   // Check for pending dApp requests on mount and when unlocked
   useEffect(() => {
@@ -470,7 +489,9 @@ function AppContent() {
 function App() {
   return (
     <WalletProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </WalletProvider>
   );
 }

@@ -60,7 +60,6 @@ export const SaveFavoriteModal: React.FC<SaveFavoriteModalProps> = ({ onClose, o
       setIsSaving(true);
 
       const favorite: FavoriteCreate = {
-        wallet_address: account.address,
         alias: alias.trim(),
         address: address.trim(),
         asset: asset.trim() || undefined,
