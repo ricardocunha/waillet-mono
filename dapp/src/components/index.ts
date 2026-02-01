@@ -1,2 +1,1 @@
-// Components will be added here
-export {}
+export { Header } from './Header'
