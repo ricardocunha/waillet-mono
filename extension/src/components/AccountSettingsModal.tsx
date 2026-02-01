@@ -3,6 +3,8 @@ import { X, Eye, EyeOff, Copy, Check, AlertCircle, Key, AtSign, Loader2, Trash2,
 import { useWallet } from '../context/WalletContext';
 import { RegistryService, GasEstimate } from '../services/registry';
 import { api } from '../services/api';
+import { browserAPI } from '../utils/browser-api';
+import { StorageKey } from '../constants';
 
 interface AccountSettingsModalProps {
   onClose: () => void;
@@ -48,10 +50,28 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
 
   const loadOpenAIStatus = async () => {
     try {
+      // Check local storage first
+      const result = await browserAPI.storage.local.get(StorageKey.OPENAI_API_KEY);
+      const localKey = result[StorageKey.OPENAI_API_KEY];
+
+      if (localKey) {
+        setOpenaiConfigured(true);
+        // Also sync with backend if key exists locally
+        try {
+          await api.setOpenAIKey(localKey);
+        } catch {
+          // Backend may be offline, but local key is still valid
+        }
+        return;
+      }
+
+      // Fallback to checking backend status
       const status = await api.getOpenAIStatus();
       setOpenaiConfigured(status.configured);
     } catch {
-      // Backend may be offline, ignore
+      // Backend may be offline, check local storage only
+      const result = await browserAPI.storage.local.get(StorageKey.OPENAI_API_KEY);
+      setOpenaiConfigured(!!result[StorageKey.OPENAI_API_KEY]);
     }
   };
 
@@ -63,7 +83,19 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ onCl
     setOpenaiSuccess(null);
 
     try {
-      await api.setOpenAIKey(openaiKeyInput.trim());
+      const keyToSave = openaiKeyInput.trim();
+
+      // Save to local storage first (always works)
+      await browserAPI.storage.local.set({ [StorageKey.OPENAI_API_KEY]: keyToSave });
+
+      // Also send to backend (may fail if offline/unauthenticated)
+      try {
+        await api.setOpenAIKey(keyToSave);
+      } catch {
+        // Backend sync failed, but local storage succeeded - that's OK
+        console.log('[Settings] Backend sync failed, key saved locally');
+      }
+
       setOpenaiConfigured(true);
       setOpenaiKeyInput('');
       setOpenaiSuccess('API key saved successfully');

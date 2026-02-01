@@ -45,10 +45,30 @@ function AppContent() {
 
   const refreshAIStatus = async () => {
     try {
+      // Check local storage first
+      const result = await browserAPI.storage.local.get(StorageKey.OPENAI_API_KEY);
+      const localKey = result[StorageKey.OPENAI_API_KEY];
+
+      if (localKey) {
+        setAiConfigured(true);
+        // Sync with backend if authenticated
+        if (isAuthenticated) {
+          try {
+            await api.setOpenAIKey(localKey);
+          } catch {
+            // Backend sync failed, but local key is valid
+          }
+        }
+        return;
+      }
+
+      // Fallback to checking backend status
       const status = await api.getOpenAIStatus();
       setAiConfigured(status.configured);
     } catch {
-      setAiConfigured(false);
+      // Backend offline, check local storage only
+      const result = await browserAPI.storage.local.get(StorageKey.OPENAI_API_KEY);
+      setAiConfigured(!!result[StorageKey.OPENAI_API_KEY]);
     }
   };
 
@@ -77,7 +97,7 @@ function AppContent() {
       loadCurrentChain();
       refreshAIStatus();
     }
-  }, [isUnlocked, hasWallet]);
+  }, [isUnlocked, hasWallet, isAuthenticated]);
 
   // Listen for storage changes to detect new pending requests
   useEffect(() => {

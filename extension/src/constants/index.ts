@@ -10,7 +10,8 @@ export enum StorageKey {
   ENCRYPTED_WALLET = 'encryptedWallet',
   CONNECTED_SITES = 'connectedSites',
   PENDING_REQUEST = 'pendingRequest',
-  CHAT_HISTORY = 'chatHistory'  // AI chat messages (last 24 hours)
+  CHAT_HISTORY = 'chatHistory',  // AI chat messages (last 24 hours)
+  OPENAI_API_KEY = 'openaiApiKey'  // OpenAI API key stored locally
 }
 
 export const CHAIN_DISPLAY: Partial<Record<Chain, { name: string; color: string }>> = {
