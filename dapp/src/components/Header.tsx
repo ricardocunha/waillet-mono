@@ -4,6 +4,12 @@ interface HeaderProps {
   children?: React.ReactNode
 }
 
+const navLinks = [
+  { label: 'Roadmap', href: '#', disabled: true },
+  { label: 'Project', href: '#', disabled: true },
+  { label: 'Contact', href: '#', disabled: true },
+]
+
 export function Header({ children }: HeaderProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800">
@@ -18,6 +24,28 @@ export function Header({ children }: HeaderProps) {
               wAIllet <span className="text-purple-400">DApp</span>
             </span>
           </div>
+
+          {/* Navigation - hidden on mobile */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className={`text-sm font-medium transition-colors ${
+                  link.disabled
+                    ? 'text-slate-500 cursor-not-allowed'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+                onClick={(e) => link.disabled && e.preventDefault()}
+                title={link.disabled ? 'Coming Soon' : undefined}
+              >
+                {link.label}
+                {link.disabled && (
+                  <span className="ml-1 text-xs text-slate-600">(Soon)</span>
+                )}
+              </a>
+            ))}
+          </nav>
 
           {/* Right side - wallet connection slot */}
           <div className="flex items-center gap-4">
