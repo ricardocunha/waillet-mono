@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
-import { BrowserProvider, JsonRpcSigner, type Eip1193Provider } from 'ethers'
+import { useState, useCallback, useEffect } from 'react'
+import { BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
 import { Chain } from '../types'
-import { getChainFromId } from '../constants'
+import { getChainFromId, CHAIN_CONFIG } from '../constants'
 
 // Wallet provider type (MetaMask, wAIllet, etc.)
 export type WalletProviderType = 'metamask' | 'waillet'
@@ -12,8 +12,13 @@ declare global {
     ethereum?: Eip1193Provider & {
       isMetaMask?: boolean
       providers?: Array<Eip1193Provider & { isMetaMask?: boolean }>
+      on?: (event: string, callback: (...args: unknown[]) => void) => void
+      removeListener?: (event: string, callback: (...args: unknown[]) => void) => void
     }
-    waillet?: Eip1193Provider
+    waillet?: Eip1193Provider & {
+      on?: (event: string, callback: (...args: unknown[]) => void) => void
+      removeListener?: (event: string, callback: (...args: unknown[]) => void) => void
+    }
   }
 }
 
@@ -50,7 +55,6 @@ function getRawProvider(providerType: WalletProviderType): Eip1193Provider | nul
   }
 
   if (providerType === 'metamask') {
-    // Handle multiple providers (e.g., when both MetaMask and other wallets are installed)
     if (window.ethereum?.providers) {
       const metamaskProvider = window.ethereum.providers.find((p) => p.isMetaMask)
       if (metamaskProvider) return metamaskProvider
@@ -60,7 +64,6 @@ function getRawProvider(providerType: WalletProviderType): Eip1193Provider | nul
     }
   }
 
-  // Fallback to window.ethereum
   if (window.ethereum) {
     return window.ethereum
   }
@@ -76,6 +79,7 @@ export function useWallet(): UseWalletReturn {
   const [error, setError] = useState<string | null>(null)
   const [provider, setProvider] = useState<BrowserProvider | null>(null)
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
+  const [currentProviderType, setCurrentProviderType] = useState<WalletProviderType | null>(null)
 
   const isConnected = !!address
 
@@ -95,28 +99,24 @@ export function useWallet(): UseWalletReturn {
         )
       }
 
-      // Create ethers provider
       const ethersProvider = new BrowserProvider(rawProvider)
-
-      // Request account access
       const accounts = await ethersProvider.send('eth_requestAccounts', [])
 
       if (!accounts || accounts.length === 0) {
         throw new Error('No accounts found. Please unlock your wallet.')
       }
 
-      // Get signer and network
       const ethersSigner = await ethersProvider.getSigner()
       const network = await ethersProvider.getNetwork()
       const currentChainId = Number(network.chainId)
       const currentChain = getChainFromId(currentChainId)
 
-      // Update state
       setAddress(accounts[0])
       setChainId(currentChainId)
       setChain(currentChain || null)
       setProvider(ethersProvider)
       setSigner(ethersSigner)
+      setCurrentProviderType(providerType)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to connect wallet'
       setError(message)
@@ -134,12 +134,121 @@ export function useWallet(): UseWalletReturn {
     setProvider(null)
     setSigner(null)
     setError(null)
+    setCurrentProviderType(null)
   }, [])
 
-  // Switch chain - to be implemented in next commit
-  const switchChain = useCallback(async (_chain: Chain) => {
-    // Implementation will be added in next commit
-  }, [])
+  // Switch chain
+  const switchChain = useCallback(async (targetChain: Chain) => {
+    if (!provider) {
+      setError('Wallet not connected')
+      return
+    }
+
+    const config = CHAIN_CONFIG[targetChain]
+    const targetChainIdHex = `0x${config.chainId.toString(16)}`
+
+    try {
+      await provider.send('wallet_switchEthereumChain', [
+        { chainId: targetChainIdHex }
+      ])
+
+      const network = await provider.getNetwork()
+      const newChainId = Number(network.chainId)
+      setChainId(newChainId)
+      setChain(getChainFromId(newChainId) || null)
+
+      const newSigner = await provider.getSigner()
+      setSigner(newSigner)
+    } catch (switchError: unknown) {
+      const error = switchError as { code?: number }
+      if (error.code === 4902) {
+        try {
+          await provider.send('wallet_addEthereumChain', [
+            {
+              chainId: targetChainIdHex,
+              chainName: config.name,
+              nativeCurrency: {
+                name: 'ETH',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: [config.rpcUrl],
+              blockExplorerUrls: [config.explorer],
+            }
+          ])
+
+          const network = await provider.getNetwork()
+          const newChainId = Number(network.chainId)
+          setChainId(newChainId)
+          setChain(getChainFromId(newChainId) || null)
+
+          const newSigner = await provider.getSigner()
+          setSigner(newSigner)
+        } catch (addError) {
+          const message = addError instanceof Error ? addError.message : 'Failed to add chain'
+          setError(message)
+          console.error('Add chain error:', addError)
+        }
+      } else {
+        const message = switchError instanceof Error ? switchError.message : 'Failed to switch chain'
+        setError(message)
+        console.error('Switch chain error:', switchError)
+      }
+    }
+  }, [provider])
+
+  // Set up event listeners for wallet changes
+  useEffect(() => {
+    if (!currentProviderType) return
+
+    const rawProvider = currentProviderType === 'waillet' ? window.waillet : window.ethereum
+    if (!rawProvider?.on || !rawProvider?.removeListener) return
+
+    // Handle account changes
+    const handleAccountsChanged = async (accounts: unknown) => {
+      const accountList = accounts as string[]
+      if (accountList.length === 0) {
+        // User disconnected their wallet
+        disconnect()
+      } else if (accountList[0] !== address) {
+        // User switched accounts
+        setAddress(accountList[0])
+        if (provider) {
+          const newSigner = await provider.getSigner()
+          setSigner(newSigner)
+        }
+      }
+    }
+
+    // Handle chain changes
+    const handleChainChanged = (newChainId: unknown) => {
+      const chainIdNum = typeof newChainId === 'string'
+        ? parseInt(newChainId, 16)
+        : Number(newChainId)
+      setChainId(chainIdNum)
+      setChain(getChainFromId(chainIdNum) || null)
+
+      // Reload provider and signer for new chain
+      if (currentProviderType) {
+        const rawProv = getRawProvider(currentProviderType)
+        if (rawProv) {
+          const newProvider = new BrowserProvider(rawProv)
+          setProvider(newProvider)
+          newProvider.getSigner().then(setSigner).catch(console.error)
+        }
+      }
+    }
+
+    // Add listeners
+    rawProvider.on('accountsChanged', handleAccountsChanged)
+    rawProvider.on('chainChanged', handleChainChanged)
+
+    // Cleanup listeners on unmount
+    return () => {
+      rawProvider.removeListener?.('accountsChanged', handleAccountsChanged)
+      rawProvider.removeListener?.('chainChanged', handleChainChanged)
+    }
+  }, [currentProviderType, address, provider, disconnect])
 
   return {
     address,
