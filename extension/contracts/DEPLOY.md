@@ -66,3 +66,14 @@ After upgrades, no frontend changes are needed — the proxy address remains the
 ## Get Test ETH
 
 Base Sepolia faucet: https://www.alchemy.com/faucets/base-sepolia
+
+## Troubleshooting
+
+**"Nonce too high" error on deploy:**
+Reset your account nonce in MetaMask: Settings → Advanced → Reset Account.
+
+**"Insufficient funds" on Hardhat deploy:**
+Make sure the deployer wallet has enough Base Sepolia ETH. Use the faucet link above.
+
+**Contract not appearing on Basescan after verify:**
+Wait 1–2 minutes — Basescan indexing can be slow. If it still doesn't appear, double-check the implementation address (not the proxy).
