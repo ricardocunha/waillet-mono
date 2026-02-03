@@ -736,12 +736,38 @@ async function handleSwitchChain(params: any, origin: string, tabId: number, mes
 
   // Map known chain IDs to chain names
   const chainMap: Record<number, string> = {
+    // Major L1 Networks
     1: 'ethereum',
+    56: 'bsc',
+    137: 'polygon',
+    43114: 'avalanche',
+    250: 'fantom',
+    25: 'cronos',
+    100: 'gnosis',
+    42220: 'celo',
+    1284: 'moonbeam',
+    2222: 'kava',
+    1666600000: 'harmony',
+
+    // L2 Optimistic Rollups
+    42161: 'arbitrum',
+    10: 'optimism',
+    8453: 'base',
+    5000: 'mantle',
+    1088: 'metis',
+    81457: 'blast',
+    34443: 'mode',
+
+    // L2 ZK Rollups
+    324: 'zksync',
+    59144: 'linea',
+    1101: 'polygon-zkevm',
+    534352: 'scroll',
+    169: 'manta',
+
+    // Testnets
     11155111: 'sepolia',
     84532: 'base-sepolia',
-    137: 'polygon',
-    56: 'bsc',
-    8453: 'base'
   };
 
   const chainName = chainMap[chainIdDecimal];

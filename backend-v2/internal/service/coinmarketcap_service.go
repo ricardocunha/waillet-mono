@@ -232,6 +232,10 @@ func (s *CoinMarketCapService) StartPeriodicSync(ctx context.Context) {
 }
 
 func (s *CoinMarketCapService) cmcDataToToken(data CMCTokenData) models.Token {
+	// Generate logo URL from CoinMarketCap CDN using the CMC ID
+	// Format: https://s2.coinmarketcap.com/static/img/coins/64x64/{cmc_id}.png
+	logoURL := fmt.Sprintf("https://s2.coinmarketcap.com/static/img/coins/64x64/%d.png", data.ID)
+
 	return models.Token{
 		CMCID:             data.ID,
 		Symbol:            data.Symbol,
@@ -245,6 +249,7 @@ func (s *CoinMarketCapService) cmcDataToToken(data CMCTokenData) models.Token {
 		PercentChange7d:   sql.NullFloat64{Float64: data.Quote.USD.PercentChange7d, Valid: true},
 		CirculatingSupply: sql.NullFloat64{Float64: data.CirculatingSupply, Valid: data.CirculatingSupply > 0},
 		TotalSupply:       sql.NullFloat64{Float64: data.TotalSupply, Valid: data.TotalSupply > 0},
+		LogoURL:           sql.NullString{String: logoURL, Valid: true},
 		IsActive:          true,
 	}
 }

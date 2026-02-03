@@ -177,6 +177,35 @@ func seedNetworks(db *sqlx.DB) {
 		return // Table has data or error, skip seeding
 	}
 
+	// CoinMarketCap logo URL format: https://s2.coinmarketcap.com/static/img/coins/64x64/{cmc_id}.png
+	// CMC IDs for native/governance tokens:
+	// L1: ETH=1027, BNB=1839, POL=3890, AVAX=5805, FTM=3513, CRO=3635, GNO=1659, CELO=5567, GLMR=6836, KAVA=4846, ONE=3945
+	// L2 Optimistic: ARB=11841, OP=11840, MNT=27075, METIS=9640, BLAST=28480, MODE=30915
+	// L2 ZK: ZK=24091, SCR=26998, MANTA=13631
+	const (
+		ethIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+		bnbIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png"
+		polIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png"
+		avaxIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png"
+		ftmIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/3513.png"
+		croIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/3635.png"
+		gnoIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/1659.png"
+		celoIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/5567.png"
+		glmrIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/6836.png"
+		kavaIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/4846.png"
+		oneIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/3945.png"
+		arbIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/11841.png"
+		opIcon     = "https://s2.coinmarketcap.com/static/img/coins/64x64/11840.png"
+		baseIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/27716.png"
+		mntIcon    = "https://s2.coinmarketcap.com/static/img/coins/64x64/27075.png"
+		metisIcon  = "https://s2.coinmarketcap.com/static/img/coins/64x64/9640.png"
+		blastIcon  = "https://s2.coinmarketcap.com/static/img/coins/64x64/28480.png"
+		modeIcon   = "https://s2.coinmarketcap.com/static/img/coins/64x64/30915.png"
+		zkIcon     = "https://s2.coinmarketcap.com/static/img/coins/64x64/24091.png"
+		scrollIcon = "https://s2.coinmarketcap.com/static/img/coins/64x64/26998.png"
+		mantaIcon  = "https://s2.coinmarketcap.com/static/img/coins/64x64/13631.png"
+	)
+
 	networks := []struct {
 		slug, name                               string
 		chainID                                  int
@@ -184,23 +213,50 @@ func seedNetworks(db *sqlx.DB) {
 		nativeCurrencySymbol, nativeCurrencyName string
 		isTestnet                                bool
 		displayColor                             string
+		iconURL                                  string
 		sortOrder                                int
 	}{
-		{"ethereum", "Ethereum", 1, "https://eth-mainnet.g.alchemy.com/v2/", "https://eth.llamarpc.com", "https://etherscan.io", "ETH", "Ether", false, "#627EEA", 1},
-		{"bsc", "BNB Smart Chain", 56, "https://bsc-dataseed1.binance.org", "https://bsc-dataseed.binance.org", "https://bscscan.com", "BNB", "BNB", false, "#F0B90B", 2},
-		{"base", "Base", 8453, "https://base-mainnet.g.alchemy.com/v2/", "https://mainnet.base.org", "https://basescan.org", "ETH", "Ether", false, "#0052FF", 3},
-		{"polygon", "Polygon", 137, "https://polygon-mainnet.g.alchemy.com/v2/", "https://polygon-rpc.com", "https://polygonscan.com", "MATIC", "MATIC", false, "#8247E5", 4},
-		{"sepolia", "Sepolia Testnet", 11155111, "https://eth-sepolia.g.alchemy.com/v2/", "https://rpc2.sepolia.org", "https://sepolia.etherscan.io", "ETH", "Sepolia ETH", true, "#A855F7", 100},
-		{"base-sepolia", "Base Sepolia", 84532, "https://base-sepolia.g.alchemy.com/v2/", "https://sepolia.base.org", "https://sepolia.basescan.org", "ETH", "Sepolia ETH", true, "#0052FF", 101},
+		// Major L1 Networks
+		{"ethereum", "Ethereum", 1, "https://eth-mainnet.g.alchemy.com/v2/", "https://eth.llamarpc.com", "https://etherscan.io", "ETH", "Ether", false, "#627EEA", ethIcon, 1},
+		{"bsc", "BNB Smart Chain", 56, "https://bsc-dataseed1.binance.org", "https://bsc-dataseed.binance.org", "https://bscscan.com", "BNB", "BNB", false, "#F0B90B", bnbIcon, 2},
+		{"polygon", "Polygon", 137, "https://polygon-mainnet.g.alchemy.com/v2/", "https://polygon-rpc.com", "https://polygonscan.com", "POL", "POL", false, "#8247E5", polIcon, 3},
+		{"avalanche", "Avalanche C-Chain", 43114, "https://api.avax.network/ext/bc/C/rpc", "https://avalanche-c-chain.publicnode.com", "https://snowtrace.io", "AVAX", "Avalanche", false, "#E84142", avaxIcon, 4},
+		{"fantom", "Fantom Opera", 250, "https://rpc.ftm.tools", "https://fantom-rpc.publicnode.com", "https://ftmscan.com", "FTM", "Fantom", false, "#1969FF", ftmIcon, 5},
+		{"cronos", "Cronos", 25, "https://evm.cronos.org", "https://cronos-rpc.publicnode.com", "https://cronoscan.com", "CRO", "Cronos", false, "#002D74", croIcon, 6},
+		{"gnosis", "Gnosis Chain", 100, "https://rpc.gnosischain.com", "https://gnosis-rpc.publicnode.com", "https://gnosisscan.io", "xDAI", "xDAI", false, "#04795B", gnoIcon, 7},
+		{"celo", "Celo", 42220, "https://forno.celo.org", "https://celo-rpc.publicnode.com", "https://celoscan.io", "CELO", "Celo", false, "#35D07F", celoIcon, 8},
+		{"moonbeam", "Moonbeam", 1284, "https://rpc.api.moonbeam.network", "https://moonbeam-rpc.publicnode.com", "https://moonscan.io", "GLMR", "Glimmer", false, "#53CBC9", glmrIcon, 9},
+		{"kava", "Kava EVM", 2222, "https://evm.kava.io", "https://kava-rpc.publicnode.com", "https://kavascan.com", "KAVA", "Kava", false, "#FF433E", kavaIcon, 10},
+		{"harmony", "Harmony", 1666600000, "https://api.harmony.one", "https://harmony-rpc.publicnode.com", "https://explorer.harmony.one", "ONE", "ONE", false, "#00AEE9", oneIcon, 11},
+
+		// L2 Networks (Optimistic Rollups) - use governance token icons
+		{"arbitrum", "Arbitrum One", 42161, "https://arb-mainnet.g.alchemy.com/v2/", "https://arb1.arbitrum.io/rpc", "https://arbiscan.io", "ETH", "Ether", false, "#28A0F0", arbIcon, 20},
+		{"optimism", "Optimism", 10, "https://opt-mainnet.g.alchemy.com/v2/", "https://mainnet.optimism.io", "https://optimistic.etherscan.io", "ETH", "Ether", false, "#FF0420", opIcon, 21},
+		{"base", "Base", 8453, "https://base-mainnet.g.alchemy.com/v2/", "https://mainnet.base.org", "https://basescan.org", "ETH", "Ether", false, "#0052FF", baseIcon, 22},
+		{"mantle", "Mantle", 5000, "https://rpc.mantle.xyz", "https://mantle-rpc.publicnode.com", "https://mantlescan.xyz", "MNT", "Mantle", false, "#000000", mntIcon, 23},
+		{"metis", "Metis Andromeda", 1088, "https://andromeda.metis.io/?owner=1088", "https://metis-pokt.nodies.app", "https://andromeda-explorer.metis.io", "METIS", "Metis", false, "#00DACC", metisIcon, 24},
+		{"blast", "Blast", 81457, "https://rpc.blast.io", "https://blast-rpc.publicnode.com", "https://blastscan.io", "ETH", "Ether", false, "#FCFC03", blastIcon, 25},
+		{"mode", "Mode", 34443, "https://mainnet.mode.network", "https://mode-rpc.publicnode.com", "https://modescan.io", "ETH", "Ether", false, "#DFFE00", modeIcon, 26},
+
+		// L2 Networks (ZK Rollups) - use governance token icons where available
+		{"zksync", "zkSync Era", 324, "https://mainnet.era.zksync.io", "https://zksync-era-rpc.publicnode.com", "https://explorer.zksync.io", "ETH", "Ether", false, "#8C8DFC", zkIcon, 30},
+		{"linea", "Linea", 59144, "https://linea-mainnet.g.alchemy.com/v2/", "https://rpc.linea.build", "https://lineascan.build", "ETH", "Ether", false, "#61DFFF", ethIcon, 31},
+		{"polygon-zkevm", "Polygon zkEVM", 1101, "https://polygonzkevm-mainnet.g.alchemy.com/v2/", "https://zkevm-rpc.com", "https://zkevm.polygonscan.com", "ETH", "Ether", false, "#8247E5", polIcon, 32},
+		{"scroll", "Scroll", 534352, "https://rpc.scroll.io", "https://scroll-rpc.publicnode.com", "https://scrollscan.com", "ETH", "Ether", false, "#FFEEDA", scrollIcon, 33},
+		{"manta", "Manta Pacific", 169, "https://pacific-rpc.manta.network/http", "https://manta-pacific-rpc.publicnode.com", "https://pacific-explorer.manta.network", "ETH", "Ether", false, "#0091FF", mantaIcon, 34},
+
+		// Testnets
+		{"sepolia", "Sepolia Testnet", 11155111, "https://eth-sepolia.g.alchemy.com/v2/", "https://rpc2.sepolia.org", "https://sepolia.etherscan.io", "ETH", "Sepolia ETH", true, "#A855F7", ethIcon, 100},
+		{"base-sepolia", "Base Sepolia", 84532, "https://base-sepolia.g.alchemy.com/v2/", "https://sepolia.base.org", "https://sepolia.basescan.org", "ETH", "Sepolia ETH", true, "#0052FF", baseIcon, 101},
 	}
 
 	query := `INSERT INTO networks (slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
-		native_currency_symbol, native_currency_name, is_testnet, display_color, sort_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		native_currency_symbol, native_currency_name, is_testnet, display_color, icon_url, sort_order)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	for _, n := range networks {
 		_, err := db.Exec(query, n.slug, n.name, n.chainID, n.rpcURL, n.rpcURLFallback, n.explorerURL,
-			n.nativeCurrencySymbol, n.nativeCurrencyName, n.isTestnet, n.displayColor, n.sortOrder)
+			n.nativeCurrencySymbol, n.nativeCurrencyName, n.isTestnet, n.displayColor, n.iconURL, n.sortOrder)
 		if err != nil {
 			log.Warn().Err(err).Str("network", n.slug).Msg("Failed to seed network")
 		}

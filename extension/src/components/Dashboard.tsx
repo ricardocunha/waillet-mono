@@ -7,6 +7,8 @@ import { SaveFavoriteModal } from './SaveFavoriteModal';
 import { AccountSettingsModal } from './AccountSettingsModal';
 import { AccountSelector } from './AccountSelector';
 import { AddAccountModal } from './AddAccountModal';
+import { NetworkIcon } from './NetworkIcon';
+import { TokenIcon } from './TokenIcon';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
 import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS } from '../constants';
 import { NetworkService } from '../services/networkService';
@@ -214,18 +216,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
             className="w-full flex items-center justify-between px-4 py-2 bg-purple-700/50 hover:bg-purple-700 rounded-lg transition-colors"
           >
             <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: chainInfo.color }}
-              />
+              <NetworkIcon chain={currentChain} size="sm" />
               <span className="font-semibold">{chainInfo.name}</span>
             </div>
             <ChevronDown size={16} className={showNetworkDropdown ? 'rotate-180 transition-transform' : 'transition-transform'} />
           </button>
 
           {showNetworkDropdown && (
-            <div className="absolute top-full mt-2 w-full bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50 overflow-hidden">
-              {MAINNET_CHAINS.map((chain, index) => {
+            <div className="absolute top-full mt-2 w-full bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50 max-h-80 overflow-y-auto scrollbar-hide">
+              {/* Mainnets section */}
+              <div className="sticky top-0 bg-slate-800 border-b border-slate-700 px-4 py-1.5 z-10">
+                <span className="text-xs text-slate-400 font-medium">Mainnets</span>
+              </div>
+              {MAINNET_CHAINS.map((chain) => {
                 const info = CHAIN_DISPLAY[chain]!;
                 return (
                   <button
@@ -236,22 +239,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
                       handleNetworkSwitch(chain);
                     }}
                     type="button"
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
                       chain === currentChain ? 'bg-slate-700' : ''
-                    } ${index === 0 ? 'rounded-t-lg' : ''}`}
+                    }`}
                   >
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: info.color }} />
-                    <span className="font-medium">{info.name}</span>
+                    <NetworkIcon chain={chain} size="sm" />
+                    <span className="font-medium text-sm">{info.name}</span>
                     {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
                   </button>
                 );
               })}
 
-              <div className="border-t border-slate-700 px-4 py-1.5">
-                <span className="text-xs text-slate-500">Testnets</span>
+              {/* Testnets section */}
+              <div className="sticky top-0 bg-slate-800 border-t border-b border-slate-700 px-4 py-1.5 z-10">
+                <span className="text-xs text-slate-400 font-medium">Testnets</span>
               </div>
-
-              {TESTNET_CHAINS.map((chain, index) => {
+              {TESTNET_CHAINS.map((chain) => {
                 const info = CHAIN_DISPLAY[chain]!;
                 return (
                   <button
@@ -262,12 +265,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
                       handleNetworkSwitch(chain);
                     }}
                     type="button"
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
                       chain === currentChain ? 'bg-slate-700' : ''
-                    } ${index === TESTNET_CHAINS.length - 1 ? 'rounded-b-lg' : ''}`}
+                    }`}
                   >
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: info.color }} />
-                    <span className="font-medium">{info.name}</span>
+                    <NetworkIcon chain={chain} size="sm" />
+                    <span className="font-medium text-sm">{info.name}</span>
                     {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
                   </button>
                 );
@@ -340,9 +343,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center font-bold text-[10px]">
-                        {token.symbol.slice(0, 2)}
-                      </div>
+                      <TokenIcon symbol={token.symbol} size="md" />
                       <div>
                         <div className="font-semibold text-xs">{token.symbol}</div>
                         <div className="text-[10px] text-slate-400">

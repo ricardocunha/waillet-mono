@@ -113,6 +113,7 @@ const ERC20_ABI = [
 
 
 export const CHAINS: Record<string, ChainConfig> = {
+  // Major L1 Networks
   ethereum: {
     name: 'Ethereum',
     rpcUrl: 'https://ethereum-rpc.publicnode.com',
@@ -127,6 +128,85 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'BNB',
     explorer: 'https://bscscan.com',
   },
+  polygon: {
+    name: 'Polygon',
+    rpcUrl: 'https://polygon-rpc.com',
+    chainId: 137,
+    nativeCurrency: 'POL',
+    explorer: 'https://polygonscan.com',
+  },
+  avalanche: {
+    name: 'Avalanche C-Chain',
+    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+    chainId: 43114,
+    nativeCurrency: 'AVAX',
+    explorer: 'https://snowtrace.io',
+  },
+  fantom: {
+    name: 'Fantom Opera',
+    rpcUrl: 'https://rpc.ftm.tools',
+    chainId: 250,
+    nativeCurrency: 'FTM',
+    explorer: 'https://ftmscan.com',
+  },
+  cronos: {
+    name: 'Cronos',
+    rpcUrl: 'https://evm.cronos.org',
+    chainId: 25,
+    nativeCurrency: 'CRO',
+    explorer: 'https://cronoscan.com',
+  },
+  gnosis: {
+    name: 'Gnosis Chain',
+    rpcUrl: 'https://rpc.gnosischain.com',
+    chainId: 100,
+    nativeCurrency: 'xDAI',
+    explorer: 'https://gnosisscan.io',
+  },
+  celo: {
+    name: 'Celo',
+    rpcUrl: 'https://forno.celo.org',
+    chainId: 42220,
+    nativeCurrency: 'CELO',
+    explorer: 'https://celoscan.io',
+  },
+  moonbeam: {
+    name: 'Moonbeam',
+    rpcUrl: 'https://rpc.api.moonbeam.network',
+    chainId: 1284,
+    nativeCurrency: 'GLMR',
+    explorer: 'https://moonscan.io',
+  },
+  kava: {
+    name: 'Kava EVM',
+    rpcUrl: 'https://evm.kava.io',
+    chainId: 2222,
+    nativeCurrency: 'KAVA',
+    explorer: 'https://kavascan.com',
+  },
+  harmony: {
+    name: 'Harmony',
+    rpcUrl: 'https://api.harmony.one',
+    chainId: 1666600000,
+    nativeCurrency: 'ONE',
+    explorer: 'https://explorer.harmony.one',
+  },
+
+  // L2 Optimistic Rollups
+  arbitrum: {
+    name: 'Arbitrum One',
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    chainId: 42161,
+    nativeCurrency: 'ETH',
+    explorer: 'https://arbiscan.io',
+  },
+  optimism: {
+    name: 'Optimism',
+    rpcUrl: 'https://mainnet.optimism.io',
+    chainId: 10,
+    nativeCurrency: 'ETH',
+    explorer: 'https://optimistic.etherscan.io',
+  },
   base: {
     name: 'Base',
     rpcUrl: 'https://mainnet.base.org',
@@ -134,6 +214,73 @@ export const CHAINS: Record<string, ChainConfig> = {
     nativeCurrency: 'ETH',
     explorer: 'https://basescan.org',
   },
+  mantle: {
+    name: 'Mantle',
+    rpcUrl: 'https://rpc.mantle.xyz',
+    chainId: 5000,
+    nativeCurrency: 'MNT',
+    explorer: 'https://mantlescan.xyz',
+  },
+  metis: {
+    name: 'Metis Andromeda',
+    rpcUrl: 'https://andromeda.metis.io/?owner=1088',
+    chainId: 1088,
+    nativeCurrency: 'METIS',
+    explorer: 'https://andromeda-explorer.metis.io',
+  },
+  blast: {
+    name: 'Blast',
+    rpcUrl: 'https://rpc.blast.io',
+    chainId: 81457,
+    nativeCurrency: 'ETH',
+    explorer: 'https://blastscan.io',
+  },
+  mode: {
+    name: 'Mode',
+    rpcUrl: 'https://mainnet.mode.network',
+    chainId: 34443,
+    nativeCurrency: 'ETH',
+    explorer: 'https://modescan.io',
+  },
+
+  // L2 ZK Rollups
+  zksync: {
+    name: 'zkSync Era',
+    rpcUrl: 'https://mainnet.era.zksync.io',
+    chainId: 324,
+    nativeCurrency: 'ETH',
+    explorer: 'https://explorer.zksync.io',
+  },
+  linea: {
+    name: 'Linea',
+    rpcUrl: 'https://rpc.linea.build',
+    chainId: 59144,
+    nativeCurrency: 'ETH',
+    explorer: 'https://lineascan.build',
+  },
+  'polygon-zkevm': {
+    name: 'Polygon zkEVM',
+    rpcUrl: 'https://zkevm-rpc.com',
+    chainId: 1101,
+    nativeCurrency: 'ETH',
+    explorer: 'https://zkevm.polygonscan.com',
+  },
+  scroll: {
+    name: 'Scroll',
+    rpcUrl: 'https://rpc.scroll.io',
+    chainId: 534352,
+    nativeCurrency: 'ETH',
+    explorer: 'https://scrollscan.com',
+  },
+  manta: {
+    name: 'Manta Pacific',
+    rpcUrl: 'https://pacific-rpc.manta.network/http',
+    chainId: 169,
+    nativeCurrency: 'ETH',
+    explorer: 'https://pacific-explorer.manta.network',
+  },
+
+  // Testnets
   sepolia: {
     name: 'Sepolia Testnet',
     rpcUrl: 'sepolia',

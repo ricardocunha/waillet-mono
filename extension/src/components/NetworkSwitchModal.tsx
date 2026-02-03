@@ -1,7 +1,8 @@
 import React from 'react';
-import { Shield, Network, ArrowRight, X } from 'lucide-react';
+import { Shield, ArrowRight, X, Network } from 'lucide-react';
 import { CHAIN_DISPLAY } from '../constants';
 import { Chain } from '../types/messaging';
+import { NetworkIcon } from './NetworkIcon';
 
 interface NetworkSwitchModalProps {
   origin: string;
@@ -54,13 +55,13 @@ export const NetworkSwitchModal: React.FC<NetworkSwitchModalProps> = ({
         <div className="bg-slate-700 rounded-lg p-3 mb-3">
           <div className="flex items-center justify-between">
             {/* Current Chain */}
-            {fromChain && (
+            {fromChain && currentChain && (
               <div className="flex-1 text-center">
                 <div
-                  className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center"
+                  className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center overflow-hidden"
                   style={{ backgroundColor: fromChain.color + '30', border: `2px solid ${fromChain.color}` }}
                 >
-                  <Network size={18} style={{ color: fromChain.color }} />
+                  <NetworkIcon chain={currentChain as Chain} size="lg" />
                 </div>
                 <div className="text-xs text-slate-400">Current</div>
                 <div className="text-sm font-semibold">{fromChain.name}</div>
@@ -77,10 +78,10 @@ export const NetworkSwitchModal: React.FC<NetworkSwitchModalProps> = ({
             {/* Target Chain */}
             <div className="flex-1 text-center">
               <div
-                className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center"
+                className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center overflow-hidden"
                 style={{ backgroundColor: targetChain.color + '30', border: `2px solid ${targetChain.color}` }}
               >
-                <Network size={18} style={{ color: targetChain.color }} />
+                <NetworkIcon chain={chainName as Chain} size="lg" />
               </div>
               <div className="text-xs text-slate-400">Switch to</div>
               <div className="text-sm font-semibold">{targetChain.name}</div>
