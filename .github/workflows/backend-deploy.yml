@@ -1,0 +1,222 @@
+name: Backend Deploy
+
+on:
+  push:
+    tags:
+      - 'api-v*'  # Trigger on tags like api-v1.0.0
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      version:
+        description: 'Version to deploy (optional, uses latest if empty)'
+        required: false
+        type: string
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.config.outputs.environment }}
+      version: ${{ steps.config.outputs.version }}
+    steps:
+      - name: Determine configuration
+        id: config
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # Tag push - deploy to staging first, then promote to production
+            VERSION="${GITHUB_REF#refs/tags/api-v}"
+            ENVIRONMENT="staging"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            if [ -z "$VERSION" ]; then
+              VERSION="${GITHUB_SHA:0:7}"
+            fi
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "Deploying version $VERSION to $ENVIRONMENT"
+
+  build:
+    name: Build Lambda Package
+    runs-on: ubuntu-latest
+    needs: prepare
+    defaults:
+      run:
+        working-directory: backend-v2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: backend-v2/go.sum
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Build Lambda binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w -X main.Version=${{ needs.prepare.outputs.version }}" \
+            -o bootstrap \
+            cmd/lambda/main.go
+
+      - name: Create deployment package
+        run: zip -j function.zip bootstrap
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-${{ needs.prepare.outputs.version }}
+          path: backend-v2/function.zip
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    environment: ${{ needs.prepare.outputs.environment }}
+    defaults:
+      run:
+        working-directory: infra/terraform/environments/${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Download Lambda artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-${{ needs.prepare.outputs.version }}
+          path: ./
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="lambda_package_path=${{ github.workspace }}/function.zip" \
+            -var="app_version=${{ needs.prepare.outputs.version }}" \
+            -out=tfplan
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ needs.prepare.outputs.environment }}
+          path: infra/terraform/environments/${{ needs.prepare.outputs.environment }}/tfplan
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: [prepare, terraform-plan]
+    environment: ${{ needs.prepare.outputs.environment }}
+    defaults:
+      run:
+        working-directory: infra/terraform/environments/${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Download Lambda artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-${{ needs.prepare.outputs.version }}
+          path: ./
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ needs.prepare.outputs.environment }}
+          path: infra/terraform/environments/${{ needs.prepare.outputs.environment }}/
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get Lambda URL
+        id: lambda-url
+        run: |
+          URL=$(terraform output -raw api_url)
+          echo "api_url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Post deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.prepare.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**API URL:** ${{ steps.lambda-url.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [prepare, terraform-apply]
+    steps:
+      - name: Health check
+        run: |
+          # Get the API URL from Terraform output or environment variable
+          API_URL="${{ needs.terraform-apply.outputs.api_url || secrets[format('{0}_API_URL', needs.prepare.outputs.environment)] }}"
+
+          echo "Testing API at $API_URL"
+
+          # Health check endpoint
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health")
+
+          if [ "$response" != "200" ]; then
+            echo "Health check failed with status $response"
+            exit 1
+          fi
+
+          echo "Health check passed!"
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [prepare, terraform-apply, smoke-test]
+    if: always()
+    steps:
+      - name: Deployment notification
+        run: |
+          if [ "${{ needs.smoke-test.result }}" == "success" ]; then
+            echo "Deployment successful!"
+            # Add Slack/Discord notification here if needed
+          else
+            echo "Deployment failed or smoke tests failed"
+            # Add failure notification here
+          fi
