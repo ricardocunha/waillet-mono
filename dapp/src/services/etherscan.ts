@@ -25,21 +25,6 @@ export interface TransactionDisplay {
 
 const API_BASE_URL = 'https://api.etherscan.io/v2/api'
 
-function getChainName(chain: Chain): string {
-  switch (chain) {
-    case Chain.ETHEREUM:
-      return 'etherscan.io'
-    case Chain.BASE:
-      return 'basescan.org'
-    case Chain.SEPOLIA:
-      return 'sepolia.etherscan.io'
-    case Chain.BASE_SEPOLIA:
-      return 'sepolia.basescan.org'
-    default:
-      return 'etherscan.io'
-  }
-}
-
 function formatRelativeTime(timestamp: Date): string {
   const now = new Date()
   const diffMs = now.getTime() - timestamp.getTime()
