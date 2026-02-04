@@ -101,13 +101,28 @@ export enum Chain {
   SCROLL = 'scroll',
   MANTA = 'manta',
 
-  // Testnets
+  // EVM Testnets
   SEPOLIA = 'sepolia',
   BASE_SEPOLIA = 'base-sepolia',
+
+  // Solana
+  SOLANA_MAINNET = 'solana-mainnet',
+  SOLANA_DEVNET = 'solana-devnet',
+  SOLANA_TESTNET = 'solana-testnet',
+
+  // SUI
+  SUI_MAINNET = 'sui-mainnet',
+  SUI_TESTNET = 'sui-testnet',
+  SUI_DEVNET = 'sui-devnet',
+
+  // TON
+  TON_MAINNET = 'ton-mainnet',
+  TON_TESTNET = 'ton-testnet',
 }
 
 // Supported tokens
 export enum Token {
+  // EVM Native Tokens
   ETH = 'ETH',
   BNB = 'BNB',
   MATIC = 'MATIC',
@@ -122,8 +137,29 @@ export enum Token {
   ONE = 'ONE',
   MNT = 'MNT',
   METIS = 'METIS',
+
+  // Stablecoins
   USDT = 'USDT',
-  USDC = 'USDC'
+  USDC = 'USDC',
+
+  // Non-EVM Native Tokens
+  SOL = 'SOL',
+  SUI = 'SUI',
+  TON = 'TON',
+
+  // Solana Tokens
+  BONK = 'BONK',
+  RAY = 'RAY',
+  JTO = 'JTO',
+  JUP = 'JUP',
+  WIF = 'WIF',
+  PYTH = 'PYTH',
+
+  // TON Tokens
+  NOT = 'NOT',
+  DOGS = 'DOGS',
+  CATI = 'CATI',
+  HMSTR = 'HMSTR',
 }
 
 export const CHAIN_TOKENS: Partial<Record<Chain, Token[]>> = {
@@ -156,7 +192,21 @@ export const CHAIN_TOKENS: Partial<Record<Chain, Token[]>> = {
   [Chain.SCROLL]: [Token.ETH, Token.USDT, Token.USDC],
   [Chain.MANTA]: [Token.ETH, Token.USDC],
 
-  // Testnets
+  // EVM Testnets
   [Chain.SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC],
   [Chain.BASE_SEPOLIA]: [Token.ETH, Token.USDT, Token.USDC],
+
+  // Solana
+  [Chain.SOLANA_MAINNET]: [Token.SOL, Token.USDC, Token.USDT, Token.BONK, Token.RAY, Token.JTO, Token.JUP, Token.WIF],
+  [Chain.SOLANA_DEVNET]: [Token.SOL, Token.USDC],
+  [Chain.SOLANA_TESTNET]: [Token.SOL],
+
+  // SUI
+  [Chain.SUI_MAINNET]: [Token.SUI, Token.USDC, Token.USDT],
+  [Chain.SUI_TESTNET]: [Token.SUI, Token.USDC],
+  [Chain.SUI_DEVNET]: [Token.SUI],
+
+  // TON
+  [Chain.TON_MAINNET]: [Token.TON, Token.USDT, Token.NOT, Token.DOGS, Token.CATI, Token.HMSTR],
+  [Chain.TON_TESTNET]: [Token.TON],
 }

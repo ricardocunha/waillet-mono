@@ -160,9 +160,56 @@ export const CHAIN_DISPLAY: Partial<Record<Chain, ChainDisplayInfo>> = {
     color: '#0052FF',
     iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/27716.png'
   },
+
+  // Solana Networks
+  [Chain.SOLANA_MAINNET]: {
+    name: 'Solana',
+    color: '#9945FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png'
+  },
+  [Chain.SOLANA_DEVNET]: {
+    name: 'Solana Devnet',
+    color: '#9945FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png'
+  },
+  [Chain.SOLANA_TESTNET]: {
+    name: 'Solana Testnet',
+    color: '#9945FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png'
+  },
+
+  // SUI Networks
+  [Chain.SUI_MAINNET]: {
+    name: 'SUI',
+    color: '#4DA2FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/20947.png'
+  },
+  [Chain.SUI_TESTNET]: {
+    name: 'SUI Testnet',
+    color: '#4DA2FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/20947.png'
+  },
+  [Chain.SUI_DEVNET]: {
+    name: 'SUI Devnet',
+    color: '#4DA2FF',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/20947.png'
+  },
+
+  // TON Networks
+  [Chain.TON_MAINNET]: {
+    name: 'TON',
+    color: '#0098EA',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/11419.png'
+  },
+  [Chain.TON_TESTNET]: {
+    name: 'TON Testnet',
+    color: '#0098EA',
+    iconUrl: 'https://s2.coinmarketcap.com/static/img/coins/64x64/11419.png'
+  },
 };
 
-export const MAINNET_CHAINS: Chain[] = [
+// EVM Chains
+export const EVM_MAINNET_CHAINS: Chain[] = [
   Chain.ETHEREUM,
   Chain.BSC,
   Chain.POLYGON,
@@ -175,9 +222,53 @@ export const MAINNET_CHAINS: Chain[] = [
   Chain.LINEA,
 ];
 
-export const TESTNET_CHAINS: Chain[] = [
+export const EVM_TESTNET_CHAINS: Chain[] = [
   Chain.SEPOLIA,
   Chain.BASE_SEPOLIA,
 ];
 
-export const SUPPORTED_CHAINS: Chain[] = [...MAINNET_CHAINS, ...TESTNET_CHAINS];
+// Solana Chains
+export const SOLANA_MAINNET_CHAINS: Chain[] = [
+  Chain.SOLANA_MAINNET,
+];
+
+export const SOLANA_TESTNET_CHAINS: Chain[] = [
+  Chain.SOLANA_DEVNET,
+  Chain.SOLANA_TESTNET,
+];
+
+// SUI Chains
+export const SUI_MAINNET_CHAINS: Chain[] = [
+  Chain.SUI_MAINNET,
+];
+
+export const SUI_TESTNET_CHAINS: Chain[] = [
+  Chain.SUI_TESTNET,
+  Chain.SUI_DEVNET,
+];
+
+// TON Chains
+export const TON_MAINNET_CHAINS: Chain[] = [
+  Chain.TON_MAINNET,
+];
+
+export const TON_TESTNET_CHAINS: Chain[] = [
+  Chain.TON_TESTNET,
+];
+
+// Legacy exports for backward compatibility
+export const MAINNET_CHAINS: Chain[] = EVM_MAINNET_CHAINS;
+export const TESTNET_CHAINS: Chain[] = EVM_TESTNET_CHAINS;
+
+// All supported chains by type
+export const SUPPORTED_EVM_CHAINS: Chain[] = [...EVM_MAINNET_CHAINS, ...EVM_TESTNET_CHAINS];
+export const SUPPORTED_SOLANA_CHAINS: Chain[] = [...SOLANA_MAINNET_CHAINS, ...SOLANA_TESTNET_CHAINS];
+export const SUPPORTED_SUI_CHAINS: Chain[] = [...SUI_MAINNET_CHAINS, ...SUI_TESTNET_CHAINS];
+export const SUPPORTED_TON_CHAINS: Chain[] = [...TON_MAINNET_CHAINS, ...TON_TESTNET_CHAINS];
+
+export const SUPPORTED_CHAINS: Chain[] = [
+  ...SUPPORTED_EVM_CHAINS,
+  ...SUPPORTED_SOLANA_CHAINS,
+  ...SUPPORTED_SUI_CHAINS,
+  ...SUPPORTED_TON_CHAINS,
+];
