@@ -10,8 +10,19 @@ import { AddAccountModal } from './AddAccountModal';
 import { NetworkIcon } from './NetworkIcon';
 import { TokenIcon } from './TokenIcon';
 import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
-import { CHAIN_DISPLAY, MAINNET_CHAINS, TESTNET_CHAINS } from '../constants';
+import {
+  CHAIN_DISPLAY,
+  EVM_MAINNET_CHAINS,
+  EVM_TESTNET_CHAINS,
+  SOLANA_MAINNET_CHAINS,
+  SOLANA_TESTNET_CHAINS,
+  SUI_MAINNET_CHAINS,
+  SUI_TESTNET_CHAINS,
+  TON_MAINNET_CHAINS,
+  TON_TESTNET_CHAINS
+} from '../constants';
 import { NetworkService } from '../services/networkService';
+import { ChainType } from '../types/chainTypes';
 
 interface TokenBalance {
   symbol: string;
@@ -24,8 +35,31 @@ interface DashboardProps {
   onAIKeyChanged?: () => void;
 }
 
+// Chain type tab configuration
+const CHAIN_TYPE_TABS = [
+  { type: ChainType.EVM, label: 'EVM', color: '#627EEA' },
+  { type: ChainType.SOLANA, label: 'Solana', color: '#9945FF' },
+  { type: ChainType.SUI, label: 'SUI', color: '#4DA2FF' },
+  { type: ChainType.TON, label: 'TON', color: '#0098EA' },
+];
+
+// Get mainnet and testnet chains for a chain type
+const getNetworksForChainType = (chainType: ChainType): { mainnets: Chain[], testnets: Chain[] } => {
+  switch (chainType) {
+    case ChainType.SOLANA:
+      return { mainnets: SOLANA_MAINNET_CHAINS, testnets: SOLANA_TESTNET_CHAINS };
+    case ChainType.SUI:
+      return { mainnets: SUI_MAINNET_CHAINS, testnets: SUI_TESTNET_CHAINS };
+    case ChainType.TON:
+      return { mainnets: TON_MAINNET_CHAINS, testnets: TON_TESTNET_CHAINS };
+    case ChainType.EVM:
+    default:
+      return { mainnets: EVM_MAINNET_CHAINS, testnets: EVM_TESTNET_CHAINS };
+  }
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
-  const { account, updateChain } = useWallet();
+  const { account, activeChainType, updateChain, switchChainType } = useWallet();
   const [currentChain, setCurrentChain] = useState<Chain>(
     (account?.chain as Chain) || Chain.ETHEREUM
   );
@@ -56,7 +90,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     if (account?.chain) {
       setCurrentChain(account.chain as Chain);
     }
-  }, [account?.chain]);
+    // Set default chain based on chain type if no chain is set
+    if (!account?.chain && activeChainType) {
+      const { mainnets } = getNetworksForChainType(activeChainType);
+      if (mainnets.length > 0) {
+        setCurrentChain(mainnets[0]);
+      }
+    }
+  }, [account?.chain, activeChainType]);
+
+  const handleChainTypeSwitch = async (chainType: ChainType) => {
+    await switchChainType(chainType);
+    // Set first mainnet of the new chain type
+    const { mainnets } = getNetworksForChainType(chainType);
+    if (mainnets.length > 0) {
+      setCurrentChain(mainnets[0]);
+      await updateChain(mainnets[0]);
+    }
+  };
 
   const handleNetworkSwitch = async (newChain: Chain) => {
     if (!account) return;
@@ -148,6 +199,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     <div className="h-full bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20 flex-shrink-0">
+        {/* Chain Type Tabs */}
+        <div className="flex gap-1 mb-3 bg-purple-900/50 rounded-lg p-1">
+          {CHAIN_TYPE_TABS.map((tab) => (
+            <button
+              key={tab.type}
+              onClick={() => handleChainTypeSwitch(tab.type)}
+              className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeChainType === tab.type
+                  ? 'bg-white text-purple-900 shadow-sm'
+                  : 'text-purple-200 hover:text-white hover:bg-purple-700/50'
+              }`}
+              style={activeChainType === tab.type ? { borderBottom: `2px solid ${tab.color}` } : {}}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <img src="/icons/icon-48.png" alt="wAIllet" className="w-8 h-8" />
@@ -225,56 +294,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
           {showNetworkDropdown && (
             <div className="absolute top-full mt-2 w-full bg-slate-800 rounded-lg border border-slate-700 shadow-lg z-50 max-h-80 overflow-y-auto scrollbar-hide">
               {/* Mainnets section */}
-              <div className="sticky top-0 bg-slate-800 border-b border-slate-700 px-4 py-1.5 z-10">
-                <span className="text-xs text-slate-400 font-medium">Mainnets</span>
-              </div>
-              {MAINNET_CHAINS.map((chain) => {
-                const info = CHAIN_DISPLAY[chain]!;
-                return (
-                  <button
-                    key={chain}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleNetworkSwitch(chain);
-                    }}
-                    type="button"
-                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
-                      chain === currentChain ? 'bg-slate-700' : ''
-                    }`}
-                  >
-                    <NetworkIcon chain={chain} size="sm" />
-                    <span className="font-medium text-sm">{info.name}</span>
-                    {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
-                  </button>
-                );
-              })}
+              {getNetworksForChainType(activeChainType).mainnets.length > 0 && (
+                <>
+                  <div className="sticky top-0 bg-slate-800 border-b border-slate-700 px-4 py-1.5 z-10">
+                    <span className="text-xs text-slate-400 font-medium">Mainnets</span>
+                  </div>
+                  {getNetworksForChainType(activeChainType).mainnets.map((chain) => {
+                    const info = CHAIN_DISPLAY[chain];
+                    if (!info) return null;
+                    return (
+                      <button
+                        key={chain}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleNetworkSwitch(chain);
+                        }}
+                        type="button"
+                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
+                          chain === currentChain ? 'bg-slate-700' : ''
+                        }`}
+                      >
+                        <NetworkIcon chain={chain} size="sm" />
+                        <span className="font-medium text-sm">{info.name}</span>
+                        {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
 
               {/* Testnets section */}
-              <div className="sticky top-0 bg-slate-800 border-t border-b border-slate-700 px-4 py-1.5 z-10">
-                <span className="text-xs text-slate-400 font-medium">Testnets</span>
-              </div>
-              {TESTNET_CHAINS.map((chain) => {
-                const info = CHAIN_DISPLAY[chain]!;
-                return (
-                  <button
-                    key={chain}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleNetworkSwitch(chain);
-                    }}
-                    type="button"
-                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
-                      chain === currentChain ? 'bg-slate-700' : ''
-                    }`}
-                  >
-                    <NetworkIcon chain={chain} size="sm" />
-                    <span className="font-medium text-sm">{info.name}</span>
-                    {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
-                  </button>
-                );
-              })}
+              {getNetworksForChainType(activeChainType).testnets.length > 0 && (
+                <>
+                  <div className="sticky top-0 bg-slate-800 border-t border-b border-slate-700 px-4 py-1.5 z-10">
+                    <span className="text-xs text-slate-400 font-medium">Testnets</span>
+                  </div>
+                  {getNetworksForChainType(activeChainType).testnets.map((chain) => {
+                    const info = CHAIN_DISPLAY[chain];
+                    if (!info) return null;
+                    return (
+                      <button
+                        key={chain}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleNetworkSwitch(chain);
+                        }}
+                        type="button"
+                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-700 transition-colors ${
+                          chain === currentChain ? 'bg-slate-700' : ''
+                        }`}
+                      >
+                        <NetworkIcon chain={chain} size="sm" />
+                        <span className="font-medium text-sm">{info.name}</span>
+                        {chain === currentChain && <Check size={14} className="ml-auto text-purple-400" />}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
             </div>
           )}
         </div>
