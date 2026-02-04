@@ -139,8 +139,9 @@ type RPCError struct {
 }
 
 type RPCHealthResponse struct {
-	Status string            `json:"status"`
-	Chains map[string]string `json:"chains"`
+	Status          string            `json:"status"`
+	Chains          map[string]string `json:"chains"`
+	SupportedChains []string          `json:"supported_chains"`
 }
 
 type NonceResponse struct {

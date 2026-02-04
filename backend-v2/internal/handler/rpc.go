@@ -56,11 +56,11 @@ func (h *RPCHandler) Proxy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RPCHandler) Health(w http.ResponseWriter, r *http.Request) {
-	health := h.rpcService.GetHealth()
+	health := h.rpcService.GetHealth(r.Context())
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"status":           health.Status,
 		"chains":           health.Chains,
-		"supported_chains": service.SupportedChains,
+		"supported_chains": health.SupportedChains,
 		"recommended":      "Add ALCHEMY_API_KEY to .env for best reliability",
 	})
 }

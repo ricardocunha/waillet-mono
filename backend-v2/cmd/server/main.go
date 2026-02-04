@@ -59,7 +59,7 @@ func main() {
 	authRepo := repository.NewAuthRepository(db)
 
 	// Initialize services
-	rpcService := service.NewRPCService(&cfg.RPC)
+	rpcService := service.NewRPCService(&cfg.RPC, networkRepo)
 	scamService := service.NewScamService()
 	aiService := service.NewAIService(&cfg.OpenAI, favoriteRepo)
 	simulationService := service.NewSimulationService(rpcService)

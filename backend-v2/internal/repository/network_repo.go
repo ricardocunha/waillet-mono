@@ -14,6 +14,8 @@ type NetworkRepository interface {
 	GetActive(ctx context.Context) ([]models.Network, error)
 	GetBySlug(ctx context.Context, slug string) (*models.Network, error)
 	GetByChainID(ctx context.Context, chainID int) (*models.Network, error)
+	GetByChainType(ctx context.Context, chainType models.ChainType) ([]models.Network, error)
+	GetActiveByChainType(ctx context.Context, chainType models.ChainType) ([]models.Network, error)
 	Create(ctx context.Context, network *models.Network) error
 	Update(ctx context.Context, network *models.Network) error
 }
@@ -28,7 +30,7 @@ func NewNetworkRepository(db *sqlx.DB) NetworkRepository {
 
 func (r *networkRepository) GetAll(ctx context.Context) ([]models.Network, error) {
 	var networks []models.Network
-	query := `SELECT id, slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
 		native_currency_symbol, native_currency_name, native_currency_decimals,
 		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
 		FROM networks ORDER BY sort_order ASC, name ASC`
@@ -42,7 +44,7 @@ func (r *networkRepository) GetAll(ctx context.Context) ([]models.Network, error
 
 func (r *networkRepository) GetActive(ctx context.Context) ([]models.Network, error) {
 	var networks []models.Network
-	query := `SELECT id, slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
 		native_currency_symbol, native_currency_name, native_currency_decimals,
 		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
 		FROM networks WHERE is_active = TRUE ORDER BY sort_order ASC, name ASC`
@@ -56,7 +58,7 @@ func (r *networkRepository) GetActive(ctx context.Context) ([]models.Network, er
 
 func (r *networkRepository) GetBySlug(ctx context.Context, slug string) (*models.Network, error) {
 	var network models.Network
-	query := `SELECT id, slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
 		native_currency_symbol, native_currency_name, native_currency_decimals,
 		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
 		FROM networks WHERE slug = ?`
@@ -73,7 +75,7 @@ func (r *networkRepository) GetBySlug(ctx context.Context, slug string) (*models
 
 func (r *networkRepository) GetByChainID(ctx context.Context, chainID int) (*models.Network, error) {
 	var network models.Network
-	query := `SELECT id, slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
 		native_currency_symbol, native_currency_name, native_currency_decimals,
 		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
 		FROM networks WHERE chain_id = ?`
@@ -88,14 +90,43 @@ func (r *networkRepository) GetByChainID(ctx context.Context, chainID int) (*mod
 	return &network, nil
 }
 
+func (r *networkRepository) GetByChainType(ctx context.Context, chainType models.ChainType) ([]models.Network, error) {
+	var networks []models.Network
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+		native_currency_symbol, native_currency_name, native_currency_decimals,
+		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
+		FROM networks WHERE chain_type = ? ORDER BY sort_order ASC, name ASC`
+
+	err := r.db.SelectContext(ctx, &networks, query, chainType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get networks by chain_type: %w", err)
+	}
+	return networks, nil
+}
+
+func (r *networkRepository) GetActiveByChainType(ctx context.Context, chainType models.ChainType) ([]models.Network, error) {
+	var networks []models.Network
+	query := `SELECT id, slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+		native_currency_symbol, native_currency_name, native_currency_decimals,
+		is_testnet, is_active, display_color, icon_url, sort_order, created_at, updated_at
+		FROM networks WHERE chain_type = ? AND is_active = TRUE ORDER BY sort_order ASC, name ASC`
+
+	err := r.db.SelectContext(ctx, &networks, query, chainType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active networks by chain_type: %w", err)
+	}
+	return networks, nil
+}
+
 func (r *networkRepository) Create(ctx context.Context, network *models.Network) error {
-	query := `INSERT INTO networks (slug, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
+	query := `INSERT INTO networks (slug, chain_type, name, chain_id, rpc_url, rpc_url_fallback, explorer_url,
 		native_currency_symbol, native_currency_name, native_currency_decimals,
 		is_testnet, is_active, display_color, icon_url, sort_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := r.db.ExecContext(ctx, query,
 		network.Slug,
+		network.ChainType,
 		network.Name,
 		network.ChainID,
 		network.RPCURL,
