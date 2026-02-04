@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { BrowserProvider } from 'ethers'
 import { formatEth } from '../constants'
 
+const REFRESH_INTERVAL = 15000 // 15 seconds
+
 export interface UseTokenBalanceReturn {
   balance: string
   balanceWei: bigint
@@ -46,6 +48,14 @@ export function useTokenBalance(
   useEffect(() => {
     fetchBalance()
   }, [fetchBalance])
+
+  // Auto-refresh interval
+  useEffect(() => {
+    if (!address || !provider) return
+
+    const interval = setInterval(fetchBalance, REFRESH_INTERVAL)
+    return () => clearInterval(interval)
+  }, [address, provider, fetchBalance])
 
   return {
     balance,
