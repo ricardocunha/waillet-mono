@@ -63,6 +63,7 @@ func init() {
 	networkRepo := repository.NewNetworkRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
 	authRepo := repository.NewAuthRepository(db)
+	chainTypeConfigRepo := repository.NewChainTypeConfigRepository(db)
 
 	// Initialize services
 	rpcService := service.NewRPCService(&cfg.RPC, networkRepo)
@@ -84,6 +85,7 @@ func init() {
 	tokenHandler := handler.NewTokenHandler(tokenRepo, cmcService)
 	settingsHandler := handler.NewSettingsHandler(aiService)
 	authHandler := handler.NewAuthHandler(authService)
+	chainTypeConfigHandler := handler.NewChainTypeConfigHandler(chainTypeConfigRepo)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -111,6 +113,12 @@ func init() {
 		r.Route("/networks", func(r chi.Router) {
 			r.Get("/", networkHandler.GetAll)
 			r.Get("/{slug}", networkHandler.GetBySlug)
+		})
+
+		// Chain Type Configs (public)
+		r.Route("/chain-types", func(r chi.Router) {
+			r.Get("/", chainTypeConfigHandler.GetAll)
+			r.Get("/{id}", chainTypeConfigHandler.GetByID)
 		})
 
 		// Tokens (public)
