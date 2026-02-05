@@ -190,15 +190,37 @@ class WailletAPI {
   async getTokenPrices(symbols: string[]): Promise<Record<string, number>> {
     return this.request<Record<string, number>>(`/tokens/prices?symbols=${symbols.join(',')}`);
   }
+
+  // ==================== CHAIN TYPES ====================
+
+  async getChainTypes(): Promise<ChainTypeConfig[]> {
+    return this.request<ChainTypeConfig[]>('/chain-types');
+  }
+
+  async getChainType(id: string): Promise<ChainTypeConfig> {
+    return this.request<ChainTypeConfig>(`/chain-types/${id}`);
+  }
 }
 
 // ==================== NETWORK & TOKEN TYPES ====================
 
+export type ChainTypeAPI = 'evm' | 'solana' | 'sui' | 'ton';
+
+export interface ChainTypeConfig {
+  id: string;           // 'evm', 'solana', 'sui', 'ton'
+  name: string;         // Display name
+  coin_type: number;    // BIP-44 coin type
+  curve: string;        // 'secp256k1' or 'ed25519'
+  address_format: string;      // 'hex', 'base58', 'base64url'
+  derivation_template: string; // Path with {index} placeholder
+}
+
 export interface Network {
   id: number;
   slug: string;
+  chain_type: ChainTypeAPI;
   name: string;
-  chain_id: number;
+  chain_id?: number; // Optional for non-EVM chains
   rpc_url: string;
   rpc_url_fallback?: string;
   explorer_url: string;
