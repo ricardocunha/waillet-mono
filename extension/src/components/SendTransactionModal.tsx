@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { CHAINS } from '../services/wallet';
+import { getAllChains } from '../services/wallet';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
 import type { IntentResponse } from '../types/api';
 import { isAddress } from 'ethers';
@@ -42,7 +42,8 @@ export const SendTransactionModal: React.FC<SendTransactionModalProps> = ({
     }
   }, [availableTokens, token]);
 
-  const availableChains = Object.keys(CHAINS);
+  const chains = getAllChains();
+  const availableChains = Object.keys(chains);
 
   const handleReviewTransaction = () => {
     setError(null);
@@ -183,7 +184,7 @@ export const SendTransactionModal: React.FC<SendTransactionModalProps> = ({
               >
                 {availableChains.map((chainKey) => (
                   <option key={chainKey} value={chainKey}>
-                    {CHAINS[chainKey].name}
+                    {chains[chainKey].name}
                   </option>
                 ))}
               </select>

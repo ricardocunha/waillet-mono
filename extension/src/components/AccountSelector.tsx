@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Check, Copy, ExternalLink, User } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
-import { CHAINS } from '../services/wallet';
+import { getAllChains } from '../services/wallet';
 import { ChainType } from '../types/chainTypes';
 import { chainAdapterRegistry } from '../adapters';
 
@@ -51,7 +51,8 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ onAddAccount }
 
     if (chainType === ChainType.EVM || !chainType) {
       const chain = account?.chain || 'ethereum';
-      const explorer = CHAINS[chain]?.explorer || 'https://etherscan.io';
+      const chains = getAllChains();
+      const explorer = chains[chain]?.explorer || 'https://etherscan.io';
       explorerUrl = `${explorer}/address/${address}`;
     } else {
       // Use adapter's explorer URL method

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Check, X, ExternalLink, Loader2 } from 'lucide-react';
-import { WalletService, CHAINS } from '../services/wallet';
+import { WalletService, getAllChains } from '../services/wallet';
 import { RegistryService } from '../services/registry';
 import { useWallet } from '../context/WalletContext';
 import type { IntentResponse } from '../types/api';
@@ -104,7 +104,8 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
 
       // Now estimate gas with the resolved address
       const privateKey = await getPrivateKey();
-      const isNativeToken = !intent.token || intent.token === CHAINS[intent.chain.toLowerCase()]?.nativeCurrency;
+      const chains = getAllChains();
+      const isNativeToken = !intent.token || intent.token === chains[intent.chain.toLowerCase()]?.nativeCurrency;
 
       const estimate = await WalletService.estimateGas(
         privateKey,
@@ -151,7 +152,8 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
       const privateKey = await getPrivateKey();
       setStatus(TransactionStatus.SENDING);
 
-      const isNativeToken = !intent.token || intent.token === CHAINS[intent.chain.toLowerCase()]?.nativeCurrency;
+      const chains = getAllChains();
+      const isNativeToken = !intent.token || intent.token === chains[intent.chain.toLowerCase()]?.nativeCurrency;
 
       let result;
       if (isNativeToken) {
@@ -185,7 +187,7 @@ export const TransactionConfirmModal: React.FC<TransactionConfirmModalProps> = (
     }
   };
 
-  const chainConfig = intent.chain ? CHAINS[intent.chain.toLowerCase()] : null;
+  const chainConfig = intent.chain ? getAllChains()[intent.chain.toLowerCase()] : null;
   const explorerUrl = txHash && chainConfig ? `${chainConfig.explorer}/tx/${txHash}` : null;
 
   const hasInsufficientBalance = balance && intent.value && parseFloat(balance) < parseFloat(intent.value);

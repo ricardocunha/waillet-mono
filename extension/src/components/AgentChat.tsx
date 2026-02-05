@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import { TransactionConfirmModal } from './TransactionConfirmModal';
 import { SaveFavoriteModal } from './SaveFavoriteModal';
-import { CHAINS } from '../services/wallet';
+import { getAllChains } from '../services/wallet';
 import type { IntentResponse } from '../types/api';
 import { MessageType, IntentAction } from '../constants/enums';
 import { loadChatHistory, saveChatHistory, toStoredMessage, fromStoredMessage } from '../utils/chatStorage';
@@ -155,7 +155,8 @@ export const AgentChat: React.FC = () => {
     // Handle transfer with network already specified
     if (intent.action === IntentAction.TRANSFER && intent.to && intent.value && intent.token && intent.chain) {
       const fromInfo = intent.resolved_from ? ` (${intent.resolved_from})` : '';
-      return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on **${CHAINS[intent.chain]?.name || intent.chain}**.\n\nClick "Send Transaction" below to proceed.`;
+      const chains = getAllChains();
+      return `I understand! You want to send **${intent.value} ${intent.token}** to ${intent.to}${fromInfo} on **${chains[intent.chain]?.name || intent.chain}**.\n\nClick "Send Transaction" below to proceed.`;
     }
 
     if (intent.action === IntentAction.SAVE_FAVORITE) {
@@ -371,7 +372,7 @@ export const AgentChat: React.FC = () => {
                     <div className="mt-1 text-slate-400">Confidence: {message.intent.confidence}%</div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(CHAINS).map(([chainKey, chainConfig]) => (
+                    {Object.entries(getAllChains()).map(([chainKey, chainConfig]) => (
                       <button
                         key={chainKey}
                         onClick={() => handleNetworkSelect(message.id, chainKey)}
@@ -392,7 +393,7 @@ export const AgentChat: React.FC = () => {
                     <div className="font-semibold mb-1">Transaction Preview:</div>
                     <div>To: {message.intent.to}</div>
                     <div>Amount: {message.intent.value} {message.intent.token}</div>
-                    <div>Network: {CHAINS[message.intent.chain]?.name || message.intent.chain}</div>
+                    <div>Network: {getAllChains()[message.intent.chain]?.name || message.intent.chain}</div>
                     {message.intent.resolved_from && (
                       <div>From Favorite: {message.intent.resolved_from}</div>
                     )}
