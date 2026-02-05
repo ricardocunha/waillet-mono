@@ -24,6 +24,9 @@ import { NetworkService } from '../services/networkService';
 import { ChainType, TokenConfig } from '../types/chainTypes';
 import { chainAdapterRegistry } from '../adapters';
 import { initTokenCache } from '../adapters/evm/tokens';
+import { initSolanaTokenCache } from '../adapters/solana/tokens';
+import { initSuiTokenCache } from '../adapters/sui/tokens';
+import { initTonTokenCache } from '../adapters/ton/jettons';
 
 interface TokenBalance {
   symbol: string;
@@ -146,13 +149,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     // Get adapter for current chain type
     const adapter = chainAdapterRegistry.getAdapter(activeChainType);
 
-    // Initialize token cache for EVM networks (lazy loading)
-    if (activeChainType === ChainType.EVM) {
-      try {
-        await initTokenCache(targetChain);
-      } catch (error) {
-        console.warn('Failed to initialize token cache:', error);
+    // Initialize token cache for the current chain type (lazy loading)
+    try {
+      switch (activeChainType) {
+        case ChainType.EVM:
+          await initTokenCache(targetChain);
+          break;
+        case ChainType.SOLANA:
+          await initSolanaTokenCache(targetChain);
+          break;
+        case ChainType.SUI:
+          await initSuiTokenCache(targetChain);
+          break;
+        case ChainType.TON:
+          await initTonTokenCache(targetChain);
+          break;
       }
+    } catch (error) {
+      console.warn('Failed to initialize token cache:', error);
     }
 
     // Get tokens from adapter for the network

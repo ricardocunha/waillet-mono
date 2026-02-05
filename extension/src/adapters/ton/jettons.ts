@@ -1,5 +1,5 @@
 /**
- * SUI token/coin configurations
+ * TON Jetton (token) configurations
  * All token data is fetched from the backend API
  */
 
@@ -12,14 +12,9 @@ let tokenMetadataCache: Record<string, TokenConfig> = {};
 let cacheInitialized = false;
 
 /**
- * SUI native coin type
- */
-export const SUI_COIN_TYPE = '0x2::sui::SUI';
-
-/**
  * Initialize token cache from backend
  */
-export async function initSuiTokenCache(networkId: string): Promise<void> {
+export async function initTonTokenCache(networkId: string): Promise<void> {
   try {
     const tokens = await api.getTokensForNetwork(networkId);
     for (const tokenData of tokens) {
@@ -41,36 +36,33 @@ export async function initSuiTokenCache(networkId: string): Promise<void> {
     }
     cacheInitialized = true;
   } catch (error) {
-    console.warn('[SuiTokens] Failed to fetch tokens from backend:', error);
+    console.warn('[TonTokens] Failed to fetch tokens from backend:', error);
   }
 }
 
 /**
- * Get token type address for a network
+ * Get jetton master address for a network
  */
-export function getSuiTokenAddress(symbol: string, networkId: string): string | undefined {
-  if (symbol.toUpperCase() === 'SUI') {
-    return SUI_COIN_TYPE;
-  }
+export function getTonJettonAddress(symbol: string, networkId: string): string | undefined {
   return tokenAddressCache[symbol.toUpperCase()]?.[networkId];
 }
 
 /**
  * Get token metadata
  */
-export function getSuiTokenMetadata(symbol: string): TokenConfig | undefined {
+export function getTonTokenMetadata(symbol: string): TokenConfig | undefined {
   return tokenMetadataCache[symbol.toUpperCase()];
 }
 
 /**
  * Get available tokens for a network
  */
-export function getSuiNetworkTokens(networkId: string): TokenConfig[] {
+export function getTonNetworkTokens(networkId: string): TokenConfig[] {
   const tokens: TokenConfig[] = [];
 
   for (const [symbol, addresses] of Object.entries(tokenAddressCache)) {
     if (addresses[networkId]) {
-      const metadata = getSuiTokenMetadata(symbol);
+      const metadata = getTonTokenMetadata(symbol);
       if (metadata) {
         tokens.push({
           ...metadata,
@@ -86,6 +78,6 @@ export function getSuiNetworkTokens(networkId: string): TokenConfig[] {
 /**
  * Check if token cache is initialized
  */
-export function isSuiTokenCacheInitialized(): boolean {
+export function isTonTokenCacheInitialized(): boolean {
   return cacheInitialized;
 }
