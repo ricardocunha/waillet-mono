@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Send, RefreshCw, ChevronDown, Star, MoreVertical, Settings, Check } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
-import { WalletService, TOKENS } from '../services/wallet';
 import { SendTransactionModal } from './SendTransactionModal';
 import { SaveFavoriteModal } from './SaveFavoriteModal';
 import { AccountSettingsModal } from './AccountSettingsModal';
@@ -9,7 +8,7 @@ import { AccountSelector } from './AccountSelector';
 import { AddAccountModal } from './AddAccountModal';
 import { NetworkIcon } from './NetworkIcon';
 import { TokenIcon } from './TokenIcon';
-import { Chain, Token, CHAIN_TOKENS } from '../types/messaging';
+import { Chain } from '../types/messaging';
 import {
   CHAIN_DISPLAY,
   EVM_MAINNET_CHAINS,
@@ -22,7 +21,9 @@ import {
   TON_TESTNET_CHAINS
 } from '../constants';
 import { NetworkService } from '../services/networkService';
-import { ChainType } from '../types/chainTypes';
+import { ChainType, TokenConfig } from '../types/chainTypes';
+import { chainAdapterRegistry } from '../adapters';
+import { initTokenCache } from '../adapters/evm/tokens';
 
 interface TokenBalance {
   symbol: string;
@@ -34,14 +35,6 @@ interface TokenBalance {
 interface DashboardProps {
   onAIKeyChanged?: () => void;
 }
-
-// Chain type tab configuration
-const CHAIN_TYPE_TABS = [
-  { type: ChainType.EVM, label: 'EVM', color: '#627EEA' },
-  { type: ChainType.SOLANA, label: 'Solana', color: '#9945FF' },
-  { type: ChainType.SUI, label: 'SUI', color: '#4DA2FF' },
-  { type: ChainType.TON, label: 'TON', color: '#0098EA' },
-];
 
 // Get mainnet and testnet chains for a chain type
 const getNetworksForChainType = (chainType: ChainType): { mainnets: Chain[], testnets: Chain[] } => {
@@ -59,7 +52,7 @@ const getNetworksForChainType = (chainType: ChainType): { mainnets: Chain[], tes
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
-  const { account, activeChainType, updateChain, switchChainType } = useWallet();
+  const { account, activeChainType, updateChain } = useWallet();
   const [currentChain, setCurrentChain] = useState<Chain>(
     (account?.chain as Chain) || Chain.ETHEREUM
   );
@@ -86,28 +79,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     }
   }, []);
 
+  // Update current network when account or chain type changes
   useEffect(() => {
-    if (account?.chain) {
+    const { mainnets, testnets } = getNetworksForChainType(activeChainType);
+    const validNetworks = [...mainnets, ...testnets];
+
+    // If account has a chain set and it's valid for the current chain type, use it
+    if (account?.chain && validNetworks.includes(account.chain as Chain)) {
       setCurrentChain(account.chain as Chain);
-    }
-    // Set default chain based on chain type if no chain is set
-    if (!account?.chain && activeChainType) {
-      const { mainnets } = getNetworksForChainType(activeChainType);
-      if (mainnets.length > 0) {
-        setCurrentChain(mainnets[0]);
-      }
+    } else if (mainnets.length > 0) {
+      // Otherwise, set to first mainnet of the chain type
+      setCurrentChain(mainnets[0]);
     }
   }, [account?.chain, activeChainType]);
-
-  const handleChainTypeSwitch = async (chainType: ChainType) => {
-    await switchChainType(chainType);
-    // Set first mainnet of the new chain type
-    const { mainnets } = getNetworksForChainType(chainType);
-    if (mainnets.length > 0) {
-      setCurrentChain(mainnets[0]);
-      await updateChain(mainnets[0]);
-    }
-  };
 
   const handleNetworkSwitch = async (newChain: Chain) => {
     if (!account) return;
@@ -116,7 +100,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
       setCurrentChain(newChain);
       setShowNetworkDropdown(false);
 
-      const availableTokens = CHAIN_TOKENS[newChain] || [];
+      // Get adapter for current chain type
+      const adapter = chainAdapterRegistry.getAdapter(activeChainType);
+
+      // Initialize token cache for EVM networks
+      if (activeChainType === ChainType.EVM) {
+        try {
+          await initTokenCache(newChain);
+        } catch (error) {
+          console.warn('Failed to initialize token cache:', error);
+        }
+      }
+
+      const networkTokens = adapter.getTokens(newChain);
+      const network = adapter.getNetwork(newChain);
+      const nativeSymbol = network?.nativeCurrency?.symbol || 'ETH';
+
+      const availableTokens = [nativeSymbol, ...networkTokens.map(t => t.symbol).filter(s => s !== nativeSymbol)];
       const loadingBalances = availableTokens.map(symbol => ({
         symbol,
         balance: '0',
@@ -143,7 +143,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     const targetChain = chainToFetch || currentChain;
     setIsRefreshing(true);
 
-    const availableTokens = CHAIN_TOKENS[targetChain] || [];
+    // Get adapter for current chain type
+    const adapter = chainAdapterRegistry.getAdapter(activeChainType);
+
+    // Initialize token cache for EVM networks (lazy loading)
+    if (activeChainType === ChainType.EVM) {
+      try {
+        await initTokenCache(targetChain);
+      } catch (error) {
+        console.warn('Failed to initialize token cache:', error);
+      }
+    }
+
+    // Get tokens from adapter for the network
+    const networkTokens: TokenConfig[] = adapter.getTokens(targetChain);
+
+    // Get native currency info from the network config
+    const network = adapter.getNetwork(targetChain);
+    const nativeSymbol = network?.nativeCurrency?.symbol || 'ETH';
+
+    // Build token list: native token first, then other tokens
+    const availableTokens = [nativeSymbol, ...networkTokens.map(t => t.symbol).filter(s => s !== nativeSymbol)];
+
     const initialBalances: TokenBalance[] = availableTokens.map(symbol => ({
       symbol,
       balance: '0',
@@ -152,21 +173,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     }));
     setTokenBalances(initialBalances);
 
-    // Fetch prices from backend (or use fallback)
+    // Fetch prices from backend
     const prices = await fetchPrices(availableTokens);
 
     const balancePromises = availableTokens.map(async (symbol): Promise<TokenBalance> => {
       try {
         let balance: string;
 
-        if (symbol === Token.ETH || symbol === Token.BNB) {
-          balance = await WalletService.getBalance(targetAddress, targetChain);
+        if (symbol === nativeSymbol) {
+          // Native token balance
+          balance = await adapter.getBalance(targetAddress, targetChain);
         } else {
-          const tokenAddress = TOKENS[symbol]?.[targetChain];
-          if (!tokenAddress) {
+          // Token balance - find the token config to get address
+          const tokenConfig = networkTokens.find(t => t.symbol === symbol);
+          if (!tokenConfig?.address) {
             return { symbol, balance: '0', usdValue: 0, isLoading: false };
           }
-          balance = await WalletService.getBalance(targetAddress, targetChain, symbol);
+          balance = await adapter.getBalance(targetAddress, targetChain, tokenConfig.address);
         }
 
         const balanceNum = parseFloat(balance);
@@ -199,24 +222,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onAIKeyChanged }) => {
     <div className="h-full bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-4 relative z-20 flex-shrink-0">
-        {/* Chain Type Tabs */}
-        <div className="flex gap-1 mb-3 bg-purple-900/50 rounded-lg p-1">
-          {CHAIN_TYPE_TABS.map((tab) => (
-            <button
-              key={tab.type}
-              onClick={() => handleChainTypeSwitch(tab.type)}
-              className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
-                activeChainType === tab.type
-                  ? 'bg-white text-purple-900 shadow-sm'
-                  : 'text-purple-200 hover:text-white hover:bg-purple-700/50'
-              }`}
-              style={activeChainType === tab.type ? { borderBottom: `2px solid ${tab.color}` } : {}}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <img src="/icons/icon-48.png" alt="wAIllet" className="w-8 h-8" />

@@ -1,13 +1,27 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // Extension scripts (background, content, inpage) are built separately
 // via build-extension-scripts.js to ensure they are standalone IIFE bundles
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    nodePolyfills({
+      // Enable Buffer polyfill for @ton/ton library
+      include: ['buffer'],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+    }),
+  ],
   publicDir: 'public',
+  define: {
+    'global': 'globalThis',
+  },
   build: {
     minify: false,
     sourcemap: true,
@@ -23,5 +37,11 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
 });
-

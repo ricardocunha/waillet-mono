@@ -1,4 +1,8 @@
 import { HDNodeWallet, Wallet, JsonRpcProvider, parseUnits, formatUnits, Contract } from 'ethers';
+import { ChainType } from '../types/chainTypes';
+import { chainAdapterRegistry } from '../adapters';
+import { networkService } from './networkService';
+import { api } from './api';
 
 const BACKEND_RPC_PROXY = 'http://localhost:8000/api/rpc/proxy';
 
@@ -76,8 +80,11 @@ export interface WalletAccount {
   privateKey: string;
   index: number;
   name?: string; // Account label (e.g., "Account 1", "Trading")
-  chain?: string; // Current chain (ethereum, sepolia, base, base-sepolia)
+  chainType: ChainType; // Chain type (evm, solana, sui, ton)
+  network?: string; // Specific network (solana-mainnet, sui-testnet, etc.)
+  publicKey?: string; // Public key (needed for Ed25519 chains)
   imported?: boolean; // True if imported via private key (not derived from mnemonic)
+  chain?: string; // DEPRECATED: kept for migration, use chainType instead
 }
 
 export interface ChainConfig {
@@ -112,206 +119,52 @@ const ERC20_ABI = [
 ];
 
 
-export const CHAINS: Record<string, ChainConfig> = {
-  // Major L1 Networks
-  ethereum: {
-    name: 'Ethereum',
-    rpcUrl: 'https://ethereum-rpc.publicnode.com',
-    chainId: 1,
-    nativeCurrency: 'ETH',
-    explorer: 'https://etherscan.io',
-  },
-  bsc: {
-    name: 'BNB Smart Chain',
-    rpcUrl: 'https://bsc-dataseed1.binance.org',
-    chainId: 56,
-    nativeCurrency: 'BNB',
-    explorer: 'https://bscscan.com',
-  },
-  polygon: {
-    name: 'Polygon',
-    rpcUrl: 'https://polygon-rpc.com',
-    chainId: 137,
-    nativeCurrency: 'POL',
-    explorer: 'https://polygonscan.com',
-  },
-  avalanche: {
-    name: 'Avalanche C-Chain',
-    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
-    chainId: 43114,
-    nativeCurrency: 'AVAX',
-    explorer: 'https://snowtrace.io',
-  },
-  fantom: {
-    name: 'Fantom Opera',
-    rpcUrl: 'https://rpc.ftm.tools',
-    chainId: 250,
-    nativeCurrency: 'FTM',
-    explorer: 'https://ftmscan.com',
-  },
-  cronos: {
-    name: 'Cronos',
-    rpcUrl: 'https://evm.cronos.org',
-    chainId: 25,
-    nativeCurrency: 'CRO',
-    explorer: 'https://cronoscan.com',
-  },
-  gnosis: {
-    name: 'Gnosis Chain',
-    rpcUrl: 'https://rpc.gnosischain.com',
-    chainId: 100,
-    nativeCurrency: 'xDAI',
-    explorer: 'https://gnosisscan.io',
-  },
-  celo: {
-    name: 'Celo',
-    rpcUrl: 'https://forno.celo.org',
-    chainId: 42220,
-    nativeCurrency: 'CELO',
-    explorer: 'https://celoscan.io',
-  },
-  moonbeam: {
-    name: 'Moonbeam',
-    rpcUrl: 'https://rpc.api.moonbeam.network',
-    chainId: 1284,
-    nativeCurrency: 'GLMR',
-    explorer: 'https://moonscan.io',
-  },
-  kava: {
-    name: 'Kava EVM',
-    rpcUrl: 'https://evm.kava.io',
-    chainId: 2222,
-    nativeCurrency: 'KAVA',
-    explorer: 'https://kavascan.com',
-  },
-  harmony: {
-    name: 'Harmony',
-    rpcUrl: 'https://api.harmony.one',
-    chainId: 1666600000,
-    nativeCurrency: 'ONE',
-    explorer: 'https://explorer.harmony.one',
-  },
+// Cached chains from backend (no fallback - must be initialized from API)
+let cachedChains: Record<string, ChainConfig> = {};
+let chainsInitialized = false;
 
-  // L2 Optimistic Rollups
-  arbitrum: {
-    name: 'Arbitrum One',
-    rpcUrl: 'https://arb1.arbitrum.io/rpc',
-    chainId: 42161,
-    nativeCurrency: 'ETH',
-    explorer: 'https://arbiscan.io',
-  },
-  optimism: {
-    name: 'Optimism',
-    rpcUrl: 'https://mainnet.optimism.io',
-    chainId: 10,
-    nativeCurrency: 'ETH',
-    explorer: 'https://optimistic.etherscan.io',
-  },
-  base: {
-    name: 'Base',
-    rpcUrl: 'https://mainnet.base.org',
-    chainId: 8453,
-    nativeCurrency: 'ETH',
-    explorer: 'https://basescan.org',
-  },
-  mantle: {
-    name: 'Mantle',
-    rpcUrl: 'https://rpc.mantle.xyz',
-    chainId: 5000,
-    nativeCurrency: 'MNT',
-    explorer: 'https://mantlescan.xyz',
-  },
-  metis: {
-    name: 'Metis Andromeda',
-    rpcUrl: 'https://andromeda.metis.io/?owner=1088',
-    chainId: 1088,
-    nativeCurrency: 'METIS',
-    explorer: 'https://andromeda-explorer.metis.io',
-  },
-  blast: {
-    name: 'Blast',
-    rpcUrl: 'https://rpc.blast.io',
-    chainId: 81457,
-    nativeCurrency: 'ETH',
-    explorer: 'https://blastscan.io',
-  },
-  mode: {
-    name: 'Mode',
-    rpcUrl: 'https://mainnet.mode.network',
-    chainId: 34443,
-    nativeCurrency: 'ETH',
-    explorer: 'https://modescan.io',
-  },
+/**
+ * Initialize chains from backend
+ */
+export async function initChains(): Promise<void> {
+  const networks = await networkService.getNetworksByChainType(ChainType.EVM);
+  cachedChains = {};
+  for (const network of networks) {
+    cachedChains[network.id] = {
+      name: network.name,
+      rpcUrl: network.id, // Use network ID for proxy routing
+      chainId: network.chainId || 1,
+      nativeCurrency: network.nativeCurrency.symbol,
+      explorer: network.explorerUrl,
+    };
+  }
+  chainsInitialized = true;
+}
 
-  // L2 ZK Rollups
-  zksync: {
-    name: 'zkSync Era',
-    rpcUrl: 'https://mainnet.era.zksync.io',
-    chainId: 324,
-    nativeCurrency: 'ETH',
-    explorer: 'https://explorer.zksync.io',
-  },
-  linea: {
-    name: 'Linea',
-    rpcUrl: 'https://rpc.linea.build',
-    chainId: 59144,
-    nativeCurrency: 'ETH',
-    explorer: 'https://lineascan.build',
-  },
-  'polygon-zkevm': {
-    name: 'Polygon zkEVM',
-    rpcUrl: 'https://zkevm-rpc.com',
-    chainId: 1101,
-    nativeCurrency: 'ETH',
-    explorer: 'https://zkevm.polygonscan.com',
-  },
-  scroll: {
-    name: 'Scroll',
-    rpcUrl: 'https://rpc.scroll.io',
-    chainId: 534352,
-    nativeCurrency: 'ETH',
-    explorer: 'https://scrollscan.com',
-  },
-  manta: {
-    name: 'Manta Pacific',
-    rpcUrl: 'https://pacific-rpc.manta.network/http',
-    chainId: 169,
-    nativeCurrency: 'ETH',
-    explorer: 'https://pacific-explorer.manta.network',
-  },
+/**
+ * Get chain config by network ID
+ */
+export function getChainConfig(networkId: string): ChainConfig | undefined {
+  return cachedChains[networkId];
+}
 
-  // Testnets
-  sepolia: {
-    name: 'Sepolia Testnet',
-    rpcUrl: 'sepolia',
-    chainId: 11155111,
-    nativeCurrency: 'ETH',
-    explorer: 'https://sepolia.etherscan.io',
-  },
-  'base-sepolia': {
-    name: 'Base Sepolia',
-    rpcUrl: 'https://sepolia.base.org',
-    chainId: 84532,
-    nativeCurrency: 'ETH',
-    explorer: 'https://sepolia.basescan.org',
-  },
-};
+/**
+ * Check if chains are loaded from backend
+ */
+export function isChainsInitialized(): boolean {
+  return chainsInitialized;
+}
 
-export const TOKENS: Record<string, Record<string, string>> = {
-  USDT: {
-    ethereum: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    bsc: '0x55d398326f99059fF775485246999027B3197955',
-    sepolia: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
-    'base-sepolia': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
-  },
-  USDC: {
-    ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    bsc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-    base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    sepolia: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-    'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-  },
-};
+/**
+ * Get all chain configs
+ */
+export function getAllChains(): Record<string, ChainConfig> {
+  return cachedChains;
+}
+
+// Token addresses are now fetched from backend via api.getTokensForNetwork()
+// This is kept for backwards compatibility but should be migrated to use the API
+export const TOKENS: Record<string, Record<string, string>> = {};
 
 export class WalletService {
   static generateMnemonic(): string {
@@ -319,6 +172,9 @@ export class WalletService {
     return wallet.mnemonic!.phrase;
   }
 
+  /**
+   * Derive EVM account from mnemonic (default behavior for backward compatibility)
+   */
   static fromMnemonic(mnemonic: string, index: number = 0): WalletAccount {
     const path = `m/44'/60'/0'/0/${index}`;
     const hdNode = HDNodeWallet.fromPhrase(mnemonic, undefined, path);
@@ -327,21 +183,65 @@ export class WalletService {
       address: hdNode.address,
       privateKey: hdNode.privateKey,
       index,
-      name: `Account ${index + 1}`
+      name: `Account ${index + 1}`,
+      chainType: ChainType.EVM,
+      publicKey: hdNode.publicKey
     };
+  }
+
+  /**
+   * Derive account for any chain type from mnemonic
+   */
+  static async fromMnemonicForChain(
+    mnemonic: string,
+    chainType: ChainType,
+    index: number = 0
+  ): Promise<WalletAccount> {
+    const adapter = chainAdapterRegistry.getAdapter(chainType);
+    const derived = await adapter.deriveAccount(mnemonic, index);
+
+    // Convert private key bytes to hex string for storage
+    const privateKeyHex = '0x' + Array.from(derived.privateKey)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return {
+      address: derived.address,
+      privateKey: privateKeyHex,
+      index,
+      name: `${chainType.toUpperCase()} Account ${index + 1}`,
+      chainType,
+      publicKey: derived.publicKey,
+      network: adapter.getDefaultNetwork().id
+    };
+  }
+
+  /**
+   * Derive accounts for all chain types from the same mnemonic
+   */
+  static async deriveAllChainAccounts(mnemonic: string, index: number = 0): Promise<WalletAccount[]> {
+    const accounts: WalletAccount[] = [];
+
+    for (const chainType of Object.values(ChainType)) {
+      try {
+        const account = await this.fromMnemonicForChain(mnemonic, chainType as ChainType, index);
+        accounts.push(account);
+      } catch (error) {
+        console.error(`Failed to derive ${chainType} account:`, error);
+      }
+    }
+
+    return accounts;
   }
 
   static async getProvider(chain: string): Promise<JsonRpcProvider> {
     const chainName = chain.toLowerCase();
-    const chainConfig = CHAINS[chainName];
+    const chainConfig = getChainConfig(chainName);
     if (!chainConfig) {
       throw new Error(`Unsupported chain: ${chain}`);
     }
 
-    if (chainConfig.rpcUrl.startsWith('http')) {
-      return new JsonRpcProvider(chainConfig.rpcUrl);
-    }
-
+    // Always use proxied provider - let backend handle RPC routing
     return new ProxiedJsonRpcProvider(chainName);
   }
 
@@ -420,7 +320,10 @@ export class WalletService {
   ): Promise<TransactionResult> {
     const provider = await this.getProvider(chain);
     const wallet = new Wallet(privateKey, provider);
-    const chainConfig = CHAINS[chain.toLowerCase()];
+    const chainConfig = getChainConfig(chain.toLowerCase());
+    if (!chainConfig) {
+      throw new Error(`Unsupported chain: ${chain}`);
+    }
 
     const value = parseUnits(amount, 18);
 
@@ -449,16 +352,21 @@ export class WalletService {
   ): Promise<TransactionResult> {
     const provider = await this.getProvider(chain);
     const wallet = new Wallet(privateKey, provider);
-    const chainConfig = CHAINS[chain.toLowerCase()];
+    const chainConfig = getChainConfig(chain.toLowerCase());
+    if (!chainConfig) {
+      throw new Error(`Unsupported chain: ${chain}`);
+    }
 
-    const tokenAddress = TOKENS[tokenSymbol.toUpperCase()]?.[chain.toLowerCase()];
+    // Fetch token address from backend
+    const tokenData = await api.getToken(tokenSymbol.toUpperCase());
+    const tokenAddress = tokenData.addresses?.[chain.toLowerCase()]?.contract_address;
     if (!tokenAddress) {
       throw new Error(`Token ${tokenSymbol} not supported on ${chain}`);
     }
 
     const tokenContract = new Contract(tokenAddress, ERC20_ABI, wallet);
 
-    const decimals = await tokenContract.decimals();
+    const decimals = tokenData.addresses[chain.toLowerCase()]?.decimals || await tokenContract.decimals();
     const value = parseUnits(amount, decimals);
 
     const tx = await tokenContract.transfer(to, value);
@@ -485,13 +393,15 @@ export class WalletService {
       return formatUnits(balance, 18);
     }
 
-    const tokenAddress = TOKENS[tokenSymbol.toUpperCase()]?.[chain.toLowerCase()];
+    // Fetch token address from backend
+    const tokenData = await api.getToken(tokenSymbol.toUpperCase());
+    const tokenAddress = tokenData.addresses?.[chain.toLowerCase()]?.contract_address;
     if (!tokenAddress) {
       throw new Error(`Token ${tokenSymbol} not supported on ${chain}`);
     }
 
     const tokenContract = new Contract(tokenAddress, ERC20_ABI, provider);
-    const decimals = await tokenContract.decimals();
+    const decimals = tokenData.addresses[chain.toLowerCase()]?.decimals || await tokenContract.decimals();
     const balance = await tokenContract.balanceOf(address);
 
     return formatUnits(balance, decimals);
@@ -519,13 +429,15 @@ export class WalletService {
         value,
       });
     } else {
-      const tokenAddress = TOKENS[tokenSymbol.toUpperCase()]?.[chain.toLowerCase()];
+      // Fetch token address from backend
+      const tokenData = await api.getToken(tokenSymbol.toUpperCase());
+      const tokenAddress = tokenData.addresses?.[chain.toLowerCase()]?.contract_address;
       if (!tokenAddress) {
         throw new Error(`Token ${tokenSymbol} not supported on ${chain}`);
       }
 
       const tokenContract = new Contract(tokenAddress, ERC20_ABI, wallet);
-      const decimals = await tokenContract.decimals();
+      const decimals = tokenData.addresses[chain.toLowerCase()]?.decimals || await tokenContract.decimals();
       const value = parseUnits(amount, decimals);
 
       gasLimit = await tokenContract.transfer.estimateGas(to, value);

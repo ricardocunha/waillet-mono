@@ -4,6 +4,10 @@ import { decrypt, encrypt } from '../utils/crypto';
 import { StorageKey } from '../constants';
 import { browserAPI } from '../utils/browser-api';
 import { ChainType, initChainTypeConfigs } from '../types/chainTypes';
+import { initEvmNetworks } from '../adapters/evm/networks';
+import { initSolanaNetworks } from '../adapters/solana/networks';
+import { initSuiNetworks } from '../adapters/sui/networks';
+import { initTonNetworks } from '../adapters/ton/networks';
 
 interface WalletContextType {
   account: WalletAccount | null;
@@ -138,7 +142,20 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           }),
           initChains().catch(err => {
             console.warn('[WalletContext] Failed to init chains:', err);
-          })
+          }),
+          // Initialize adapter network caches
+          initEvmNetworks().catch(err => {
+            console.warn('[WalletContext] Failed to init EVM networks:', err);
+          }),
+          initSolanaNetworks().catch(err => {
+            console.warn('[WalletContext] Failed to init Solana networks:', err);
+          }),
+          initSuiNetworks().catch(err => {
+            console.warn('[WalletContext] Failed to init SUI networks:', err);
+          }),
+          initTonNetworks().catch(err => {
+            console.warn('[WalletContext] Failed to init TON networks:', err);
+          }),
         ]);
 
         const encrypted = localStorage.getItem('wallet');
@@ -148,9 +165,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           const sessionMnemonic = checkSession();
           if (sessionMnemonic) {
             try {
-              const { accounts: savedAccounts, activeIndex, chainType } = await loadAccountsFromStorage();
-
-              setActiveChainType(chainType);
+              const { accounts: savedAccounts, activeIndex } = await loadAccountsFromStorage();
 
               if (savedAccounts.length > 0) {
                 const restoredAccounts = await Promise.all(savedAccounts.map(async (acc) => {
@@ -171,9 +186,14 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                   }
                 }));
 
+                // Derive chain type from the active account
+                const activeAccount = restoredAccounts[activeIndex] || restoredAccounts[0];
+                const derivedChainType = activeAccount?.chainType || ChainType.EVM;
+
                 setAccounts(restoredAccounts);
                 setActiveAccountIndex(activeIndex);
-                await saveAccountsToStorage(restoredAccounts, activeIndex, chainType);
+                setActiveChainType(derivedChainType);
+                await saveAccountsToStorage(restoredAccounts, activeIndex, derivedChainType);
               } else {
                 const wallet = WalletService.fromMnemonic(sessionMnemonic);
                 const walletWithChain = { ...wallet, chain: 'ethereum', chainType: ChainType.EVM };
@@ -217,9 +237,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (!encrypted) throw new Error('No wallet found');
 
     const mnemonic = await decrypt(encrypted, password);
-    const { accounts: savedAccounts, activeIndex, chainType } = await loadAccountsFromStorage();
-
-    setActiveChainType(chainType);
+    const { accounts: savedAccounts, activeIndex } = await loadAccountsFromStorage();
 
     if (savedAccounts.length > 0) {
       const restoredAccounts = await Promise.all(savedAccounts.map(async (acc) => {
@@ -234,14 +252,20 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       }));
 
+      // Derive chain type from the active account
+      const activeAccount = restoredAccounts[activeIndex] || restoredAccounts[0];
+      const derivedChainType = activeAccount?.chainType || ChainType.EVM;
+
       setAccounts(restoredAccounts);
       setActiveAccountIndex(activeIndex);
-      await saveAccountsToStorage(restoredAccounts, activeIndex, chainType);
+      setActiveChainType(derivedChainType);
+      await saveAccountsToStorage(restoredAccounts, activeIndex, derivedChainType);
     } else {
       const wallet = WalletService.fromMnemonic(mnemonic);
       const walletWithChain = { ...wallet, chain: 'ethereum', chainType: ChainType.EVM };
       setAccounts([walletWithChain]);
       setActiveAccountIndex(0);
+      setActiveChainType(ChainType.EVM);
       await saveAccountsToStorage([walletWithChain], 0, ChainType.EVM);
     }
 
@@ -294,8 +318,12 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (index < 0 || index >= accounts.length) {
       throw new Error('Invalid account index');
     }
+    const selectedAccount = accounts[index];
+    const chainType = selectedAccount.chainType || ChainType.EVM;
+
     setActiveAccountIndex(index);
-    await saveAccountsToStorage(accounts, index);
+    setActiveChainType(chainType);
+    await saveAccountsToStorage(accounts, index, chainType);
   };
 
   const addAccount = async (chainType: ChainType = ChainType.EVM): Promise<WalletAccount> => {
