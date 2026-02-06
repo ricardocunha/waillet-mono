@@ -20,6 +20,8 @@
 - **Go** 1.23+
 - **Node.js** 20+
 - **Python** 3.11+
+- 
+- **uv** (Python package manager — `pip install uv`)
 - **Docker & Docker Compose** (for MySQL)
 - **Chrome** or **Firefox** browser
 
