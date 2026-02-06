@@ -1,5 +1,18 @@
 # Manual Testing Checklist
 
+## Quick Smoke Test
+
+Run this before any full manual session to verify the environment is healthy:
+
+1. Backend responds: `curl http://localhost:8000/health` → `{"status":"ok"}`
+2. Extension loads in Chrome without errors in background console
+3. Wallet unlocks with correct password
+4. AI Agent tab parses: `send 0.001 ETH to 0x000...001` → shows transaction preview
+
+If all four pass, proceed with the full checklist below.
+
+---
+
 ## Test Environment Setup
 - [ ] Chrome browser installed (v120+)
 - [ ] Node.js 20+ installed
