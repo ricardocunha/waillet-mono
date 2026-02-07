@@ -87,6 +87,11 @@ curl -X POST "http://localhost:8000/api/auth/verify" \
 # 3. Use token for protected routes
 curl "http://localhost:8000/api/favorites" \
   -H "Authorization: Bearer eyJ..."
+
+# 4. Refresh access token when it expires
+curl -X POST "http://localhost:8000/api/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token": "eyJ..."}'
 ```
 
 ## Extension Integration
