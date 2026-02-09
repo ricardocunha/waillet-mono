@@ -79,6 +79,10 @@ waillet-mono/
 │   ├── .env.example            # Environment variable template
 │   └── go.mod
 │
+├── dapp/                       # Decentralized app (React + Vite)
+│   ├── src/
+│   └── package.json
+│
 ├── extension/                  # Browser extension (React + TypeScript)
 │   ├── src/
 │   │   ├── components/         # React UI components
