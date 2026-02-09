@@ -53,6 +53,12 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Lint
+npm run lint
+
+# Type check
+npm run typecheck
 ```
 
 ## Environment Variables
