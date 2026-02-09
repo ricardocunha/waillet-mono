@@ -31,6 +31,19 @@ Integration tests with Uniswap on Ethereum Mainnet:
 
 ## Running Tests
 
+### Environment Setup
+
+Create a `.env.test` file in `extension/e2e/` for test-specific config:
+
+```env
+# Backend URL for tests that require API calls
+TEST_BACKEND_URL=http://localhost:8000
+
+# Test wallet credentials (use the default test mnemonic for safe tests)
+TEST_WALLET_MNEMONIC="abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+TEST_WALLET_PASSWORD=TestPassword123
+```
+
 ### Prerequisites
 
 1. **Build the extension first:**
