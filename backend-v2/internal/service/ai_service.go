@@ -99,7 +99,7 @@ Saved favorites (shortcuts):
 
 Parse the user's command and return ONLY a JSON object (no markdown, no explanation) with these fields:
 {
-    "action": "transfer" | "swap" | "approve" | "save_favorite" | "delete_favorite" | "list_favorites" | "unknown",
+    "action": "transfer" | "swap" | "bridge" | "signal" | "approve" | "save_favorite" | "delete_favorite" | "list_favorites" | "unknown",
     "to": recipient address - use ONE of these:
         - If favorite mentioned: use exact address from favorites list above
         - If ENS name (*.eth): preserve it exactly as given (e.g., "vitalik.eth")
@@ -113,7 +113,12 @@ Parse the user's command and return ONLY a JSON object (no markdown, no explanat
     "value": amount as string (null for save_favorite/list_favorites),
     "token": token symbol (e.g., "USDC", "ETH"),
     "chain": blockchain name if EXPLICITLY specified by user (e.g., "ethereum", "base", "sepolia", "base-sepolia"), or null if not specified,
-    "needs_network": true if the user did NOT specify a network and this is a transfer action, false otherwise,
+    "from_token": source token for swaps (e.g., "USDC"),
+    "to_token": destination token for swaps (e.g., "ETH"),
+    "from_chain": source chain for bridges (e.g., "ethereum"),
+    "to_chain": destination chain for bridges (e.g., "base"),
+    "slippage": slippage tolerance as decimal (default 0.03),
+    "needs_network": true if the user did NOT specify a network and this is a transfer/swap action, false otherwise,
     "resolved_from": favorite alias if used (or null),
     "alias": For save_favorite or delete_favorite - the nickname/alias to save or delete (or null for other actions),
     "confidence": 0-100 (how confident you are),
@@ -168,7 +173,21 @@ DELETE FAVORITE EXAMPLES:
 - "delete ricardo1 from favorites" -> {"action": "delete_favorite", "alias": "ricardo1", "confidence": 95}
 - "remove binance from my favorites" -> {"action": "delete_favorite", "alias": "binance", "confidence": 95}
 - "delete favorite alice" -> {"action": "delete_favorite", "alias": "alice", "confidence": 90}
-- "remove contact john" -> {"action": "delete_favorite", "alias": "john", "confidence": 85}`, walletAddress, favoritesContext)
+- "remove contact john" -> {"action": "delete_favorite", "alias": "john", "confidence": 85}
+
+SWAP EXAMPLES:
+- "swap 100 USDC to ETH" -> {"action":"swap","from_token":"USDC","to_token":"ETH","value":"100","needs_network":true,"confidence":95}
+- "swap 100 USDC to ETH on base" -> {"action":"swap","from_token":"USDC","to_token":"ETH","value":"100","chain":"base","needs_network":false,"confidence":95}
+- "convert 0.5 ETH to USDC on ethereum" -> {"action":"swap","from_token":"ETH","to_token":"USDC","value":"0.5","chain":"ethereum","needs_network":false,"confidence":90}
+
+BRIDGE EXAMPLES:
+- "bridge 0.1 ETH from ethereum to base" -> {"action":"bridge","from_token":"ETH","value":"0.1","from_chain":"ethereum","to_chain":"base","needs_network":false,"confidence":95}
+- "move 50 USDC from base to ethereum" -> {"action":"bridge","from_token":"USDC","value":"50","from_chain":"base","to_chain":"ethereum","needs_network":false,"confidence":90}
+- "bridge 1 ETH to base" -> {"action":"bridge","from_token":"ETH","value":"1","to_chain":"base","needs_network":true,"confidence":85}
+
+SIGNAL EXAMPLES:
+- "show signals for ETH" -> {"action":"signal","token":"ETH","confidence":80}
+- "trading signals" -> {"action":"signal","confidence":75}`, walletAddress, favoritesContext)
 
 	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: model,
@@ -177,7 +196,7 @@ DELETE FAVORITE EXAMPLES:
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
 		Temperature: 0.3,
-		MaxTokens:   300,
+		MaxTokens:   500,
 	})
 
 	if err != nil {
@@ -233,6 +252,21 @@ DELETE FAVORITE EXAMPLES:
 	}
 	if alias, ok := parsed["alias"].(string); ok && alias != "" {
 		response.Alias = &alias
+	}
+	if fromToken, ok := parsed["from_token"].(string); ok && fromToken != "" {
+		response.FromToken = &fromToken
+	}
+	if toToken, ok := parsed["to_token"].(string); ok && toToken != "" {
+		response.ToToken = &toToken
+	}
+	if fromChain, ok := parsed["from_chain"].(string); ok && fromChain != "" {
+		response.FromChain = &fromChain
+	}
+	if toChain, ok := parsed["to_chain"].(string); ok && toChain != "" {
+		response.ToChain = &toChain
+	}
+	if slippage, ok := parsed["slippage"].(float64); ok {
+		response.Slippage = &slippage
 	}
 	if errMsg, ok := parsed["error"].(string); ok && errMsg != "" {
 		response.Error = &errMsg

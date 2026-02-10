@@ -15,6 +15,12 @@ type Config struct {
 	CORS          CORSConfig
 	CoinMarketCap CoinMarketCapConfig
 	Auth          AuthConfig
+	Lifi          LifiConfig
+}
+
+type LifiConfig struct {
+	APIKey  string
+	BaseURL string
 }
 
 type AuthConfig struct {
@@ -101,6 +107,8 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("CMC_SYNC_INTERVAL", "10m")
 
+	viper.SetDefault("LIFI_BASE_URL", "https://li.quest/v1")
+
 	viper.SetDefault("JWT_SECRET", "")
 	viper.SetDefault("JWT_ACCESS_TTL", "15m")
 	viper.SetDefault("JWT_REFRESH_TTL", "168h")
@@ -186,6 +194,10 @@ func Load() (*Config, error) {
 			RefreshTokenTTL: jwtRefreshTTL,
 			NonceTTL:        authNonceTTL,
 			Domain:          viper.GetString("AUTH_DOMAIN"),
+		},
+		Lifi: LifiConfig{
+			APIKey:  viper.GetString("LIFI_API_KEY"),
+			BaseURL: viper.GetString("LIFI_BASE_URL"),
 		},
 	}
 

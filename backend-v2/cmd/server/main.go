@@ -67,6 +67,7 @@ func main() {
 	riskService := service.NewRiskService(rpcService, scamService, riskLogRepo, &cfg.OpenAI)
 	cmcService := service.NewCoinMarketCapService(&cfg.CoinMarketCap, tokenRepo)
 	authService := auth.NewAuthService(&cfg.Auth, authRepo)
+	lifiService := service.NewLifiService(&cfg.Lifi)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -80,6 +81,7 @@ func main() {
 	settingsHandler := handler.NewSettingsHandler(aiService)
 	authHandler := handler.NewAuthHandler(authService)
 	chainTypeConfigHandler := handler.NewChainTypeConfigHandler(chainTypeConfigRepo)
+	lifiHandler := handler.NewLifiHandler(lifiService)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -128,6 +130,14 @@ func main() {
 		r.Route("/rpc", func(r chi.Router) {
 			r.Post("/proxy", rpcHandler.Proxy)
 			r.Get("/health", rpcHandler.Health)
+		})
+
+		// LI.FI Proxy (public)
+		r.Route("/lifi", func(r chi.Router) {
+			r.Get("/quote", lifiHandler.GetQuote)
+			r.Get("/tokens", lifiHandler.GetTokens)
+			r.Get("/chains", lifiHandler.GetChains)
+			r.Get("/status", lifiHandler.GetStatus)
 		})
 
 		// Protected routes

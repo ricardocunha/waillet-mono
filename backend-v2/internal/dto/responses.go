@@ -53,6 +53,11 @@ type ParseIntentResponse struct {
 	NeedsNetwork bool           `json:"needs_network"`
 	ResolvedFrom *string        `json:"resolved_from,omitempty"`
 	Alias        *string        `json:"alias,omitempty"`
+	FromToken    *string        `json:"from_token,omitempty"`
+	ToToken      *string        `json:"to_token,omitempty"`
+	FromChain    *string        `json:"from_chain,omitempty"`
+	ToChain      *string        `json:"to_chain,omitempty"`
+	Slippage     *float64       `json:"slippage,omitempty"`
 	Confidence   int            `json:"confidence"`
 	Error        *string        `json:"error,omitempty"`
 	Favorites    []FavoriteItem `json:"favorites,omitempty"`

@@ -9,6 +9,8 @@ const (
 	AIActionSaveFavorite   AIAction = "save_favorite"
 	AIActionDeleteFavorite AIAction = "delete_favorite"
 	AIActionListFavorites  AIAction = "list_favorites"
+	AIActionBridge         AIAction = "bridge"
+	AIActionSignal         AIAction = "signal"
 	AIActionUnknown        AIAction = "unknown"
 )
 
