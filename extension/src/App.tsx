@@ -10,14 +10,15 @@ import { DAppTransactionModal } from './components/DAppTransactionModal';
 import { SignatureApprovalModal } from './components/SignatureApprovalModal';
 import { NetworkSwitchModal } from './components/NetworkSwitchModal';
 import { ConnectionStatus } from './components/ConnectionStatus';
-import { Bot, Wallet } from 'lucide-react';
+import { Bot, Wallet, Clock } from 'lucide-react';
+import { TransactionHistory } from './components/TransactionHistory';
 import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
 import { Chain } from './types/messaging';
 import { api } from './services/api';
 import { browserAPI } from './utils/browser-api';
 
-type Mode = 'wallet' | 'agent';
+type Mode = 'wallet' | 'agent' | 'history';
 
 interface PendingRequest {
   id: number;
@@ -416,6 +417,17 @@ function AppContent() {
               Wallet
             </button>
             <button
+              onClick={() => setMode('history')}
+              className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
+                mode === 'history'
+                  ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              <Clock size={18} />
+              History
+            </button>
+            <button
               onClick={() => {
                 if (!aiConfigured) {
                   alert('Please configure your OpenAI API key in Account Settings');
@@ -437,7 +449,9 @@ function AppContent() {
           </div>
 
           <div className="flex-1 overflow-hidden">
-            {mode === 'wallet' ? <Dashboard onAIKeyChanged={refreshAIStatus} /> : <AgentChat />}
+            {mode === 'wallet' && <Dashboard onAIKeyChanged={refreshAIStatus} />}
+            {mode === 'history' && <TransactionHistory currentChain={currentChain} address={account?.address || null} />}
+            {mode === 'agent' && <AgentChat />}
           </div>
         </div>
       )}
