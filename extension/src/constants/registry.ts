@@ -9,6 +9,7 @@ export const ADDRESS_REGISTRY = {
 
   // Contract ABI (minimal interface for frontend)
   abi: [
+    'function initialize() external',
     'function register(bytes32 identifierHash) external',
     'function updateRegistration(bytes32 identifierHash, address newAddress) external',
     'function removeRegistration(bytes32 identifierHash) external',
