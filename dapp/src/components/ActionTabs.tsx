@@ -12,9 +12,9 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: 'bridge', label: 'Bridge', icon: <ArrowLeftRight className="w-4 h-4" />, comingSoon: false },
-  { id: 'swap', label: 'Swap', icon: <ArrowUpDown className="w-4 h-4" />, comingSoon: true },
+  { id: 'swap', label: 'Swap', icon: <ArrowUpDown className="w-4 h-4" />, comingSoon: false },
   { id: 'send', label: 'Send', icon: <Send className="w-4 h-4" />, comingSoon: true },
-  { id: 'signals', label: 'AI Signals', icon: <Bot className="w-4 h-4" />, comingSoon: true },
+  { id: 'signals', label: 'AI Signals', icon: <Bot className="w-4 h-4" />, comingSoon: false },
 ]
 
 interface ActionTabsProps {
