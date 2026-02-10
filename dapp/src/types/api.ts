@@ -16,6 +16,8 @@ export interface Favorite {
 export type IntentAction =
   | 'TRANSFER'
   | 'SWAP'
+  | 'BRIDGE'
+  | 'SIGNAL'
   | 'APPROVE'
   | 'SAVE_FAVORITE'
   | 'LIST_FAVORITES'
@@ -30,6 +32,12 @@ export interface IntentResponse {
   chain?: string
   resolved_from?: string
   alias?: string
+  from_token?: string
+  to_token?: string
+  from_chain?: string
+  to_chain?: string
+  slippage?: number
+  needs_network?: boolean
   confidence: number
   error?: string
   favorites?: Favorite[]
