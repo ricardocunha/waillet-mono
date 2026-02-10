@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title AddressRegistry
  * @notice On-chain registry mapping identifier hashes (emails, aliases) to wallet addresses
  * @dev Identifiers are hashed off-chain using keccak256 for privacy
+ * @dev UUPS upgradeable - state variable order must never change, only append new variables
  */
-contract AddressRegistry is ReentrancyGuard, Ownable {
+contract AddressRegistry is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
     // ==================== STATE VARIABLES ====================
+    // WARNING: Never reorder or remove existing state variables. Only append new ones at the end.
 
     /// @notice Mapping from identifier hash to registered wallet address
     mapping(bytes32 => address) public registry;
@@ -60,9 +64,20 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
     error AliasNotFound();
     error InvalidAddress();
 
-    // ==================== CONSTRUCTOR ====================
+    // ==================== CONSTRUCTOR & INITIALIZER ====================
 
-    constructor() Ownable(msg.sender) {}
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract (replaces constructor for upgradeable pattern)
+    /// @dev Can only be called once via the proxy
+    function initialize() public initializer {
+        __ReentrancyGuard_init();
+        __Ownable_init(msg.sender);
+        __UUPSUpgradeable_init();
+    }
 
     // ==================== EXTERNAL FUNCTIONS ====================
 
@@ -173,6 +188,11 @@ contract AddressRegistry is ReentrancyGuard, Ownable {
         paused = _paused;
         emit RegistryPaused(_paused);
     }
+
+    // ==================== UUPS UPGRADE AUTHORIZATION ====================
+
+    /// @notice Restricts upgrades to the contract owner
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // ==================== INTERNAL FUNCTIONS ====================
 
