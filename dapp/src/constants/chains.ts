@@ -88,3 +88,15 @@ export function getExplorerTxUrl(chain: Chain, txHash: string): string {
 export function getExplorerAddressUrl(chain: Chain, address: string): string {
   return `${CHAIN_CONFIG[chain].explorer}/address/${address}`
 }
+
+// Get LI.FI-compatible chain ID from Chain enum
+export function getLifiChainId(chain: Chain): number {
+  return CHAIN_CONFIG[chain].chainId
+}
+
+// Map intent chain name strings to Chain enum — populated from backend at startup.
+export const CHAIN_NAME_MAP: Record<string, Chain> = {}
+
+export function getChainFromName(name: string): Chain | undefined {
+  return CHAIN_NAME_MAP[name.toLowerCase()]
+}
