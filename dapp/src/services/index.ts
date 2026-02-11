@@ -1,3 +1,6 @@
 export { fetchTransactionHistory } from './etherscan'
 export type { EtherscanTransaction, TransactionDisplay } from './etherscan'
 export { api } from './api'
+export { lifiService } from './lifi'
+export type { LifiQuoteParams } from './lifi'
+export { initConfig } from './configLoader'

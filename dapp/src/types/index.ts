@@ -81,3 +81,5 @@ export interface LockEvent {
 
 // Re-export API types
 export * from './api'
+export * from './lifi'
+export * from './network'
