@@ -1,26 +1,18 @@
 import { Token, type TokenConfig } from '../types'
 
-// Token configurations
-export const TOKEN_CONFIG: Record<Token, TokenConfig> = {
-  [Token.ETH]: {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    decimals: 18,
-    enabled: true,
-  },
-  [Token.USDT]: {
-    name: 'Tether USD',
-    symbol: 'USDT',
-    decimals: 6,
-    enabled: false, // Coming soon
-  },
-  [Token.USDC]: {
-    name: 'USD Coin',
-    symbol: 'USDC',
-    decimals: 6,
-    enabled: false, // Coming soon
-  },
+// Native token address used by LI.FI for native tokens
+export const NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+// Token contract addresses by symbol and chainId — populated from backend at startup.
+export const TOKEN_ADDRESSES: Record<string, Record<number, string>> = {}
+
+// Get token address for a given symbol and chainId
+export function getTokenAddress(symbol: string, chainId: number): string | undefined {
+  return TOKEN_ADDRESSES[symbol.toUpperCase()]?.[chainId]
 }
+
+// Token configurations — populated from backend at startup.
+export const TOKEN_CONFIG: Record<string, TokenConfig> = {}
 
 // Get all enabled tokens
 export function getEnabledTokens(): Token[] {

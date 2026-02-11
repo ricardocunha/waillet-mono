@@ -23,20 +23,22 @@ export interface TokenAddressApiResponse {
   is_native: boolean
 }
 
+export interface TokenListItemResponse {
+  id: number
+  cmc_id: number
+  symbol: string
+  name: string
+  slug: string
+  cmc_rank?: number
+  price_usd?: number
+  market_cap_usd?: number
+  volume_24h_usd?: number
+  percent_change_24h?: number
+  percent_change_7d?: number
+  logo_url?: string
+}
+
 export interface TokenApiResponse {
-  token: {
-    id: number
-    cmc_id: number
-    symbol: string
-    name: string
-    slug: string
-    cmc_rank?: number
-    price_usd?: number
-    market_cap_usd?: number
-    volume_24h_usd?: number
-    percent_change_24h?: number
-    percent_change_7d?: number
-    logo_url?: string
-  }
+  token: TokenListItemResponse
   addresses: Record<string, TokenAddressApiResponse> // keyed by network slug
 }
