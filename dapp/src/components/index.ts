@@ -8,3 +8,7 @@ export { ComingSoon, SwapComingSoon, SendComingSoon, SignalsComingSoon } from '.
 export { ChainSelector } from './ChainSelector'
 export { TokenSelector } from './TokenSelector'
 export { AmountInput } from './AmountInput'
+export { SwapForm } from './SwapForm'
+export { SwapConfirmModal } from './SwapConfirmModal'
+export { SignalsPanel } from './SignalsPanel'
+export { AgentChat } from './AgentChat'
