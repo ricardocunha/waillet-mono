@@ -925,6 +925,35 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 
 ---
 
+---
+
+## Test 21: Settings Management ❌ MANUAL ONLY
+
+### Test 21.1: Change Backend URL
+1. Open extension → Settings tab
+2. Change backend URL to `http://localhost:9000` (wrong port)
+
+**Expected:**
+- [ ] Error displayed when backend is unreachable
+- [ ] Setting reverts or user is notified clearly
+
+3. Restore correct URL: `http://localhost:8000`
+
+**Expected:**
+- [ ] Setting saved and applied immediately
+- [ ] No restart required
+
+### Test 21.2: Reset Extension
+1. Go to Settings → Reset
+2. Confirm reset
+
+**Expected:**
+- [ ] All wallet data cleared
+- [ ] Extension returns to onboarding screen
+- [ ] No stale data persists in `chrome.storage.local`
+
+---
+
 ## Known Issues / Notes
 
 ### ChainAbuse API
