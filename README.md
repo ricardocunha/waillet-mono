@@ -150,6 +150,7 @@ Key variables in `.env`:
 | `ALCHEMY_API_KEY` | Alchemy RPC key for blockchain calls |
 | `CMC_API_KEY` | CoinMarketCap API key for token prices |
 | `CMC_SYNC_INTERVAL` | Price sync interval (default: `10m`) |
+| `LOG_LEVEL` | Log verbosity: `debug`, `info`, `warn`, `error` (default: `info`) |
 
 **3. Run the backend:**
 
