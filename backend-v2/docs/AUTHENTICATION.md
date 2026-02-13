@@ -94,6 +94,21 @@ curl -X POST "http://localhost:8000/api/auth/refresh" \
   -d '{"refresh_token": "eyJ..."}'
 ```
 
+## Get Current User
+
+```bash
+curl "http://localhost:8000/api/auth/me" \
+  -H "Authorization: Bearer eyJ..."
+```
+
+**Response:**
+```json
+{
+  "wallet_address": "0x742d...",
+  "created_at": "2026-01-01T00:00:00Z"
+}
+```
+
 ## Extension Integration
 
 The extension auto-authenticates when the wallet is unlocked:
