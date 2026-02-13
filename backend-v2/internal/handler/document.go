@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -200,8 +199,4 @@ func toSmartDocumentResponse(doc *models.SmartDocument) dto.SmartDocumentRespons
 	}
 
 	return resp
-}
-
-func formatTime(t time.Time) string {
-	return t.Format(time.RFC3339)
 }
