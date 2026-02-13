@@ -16,6 +16,15 @@ type Config struct {
 	CoinMarketCap CoinMarketCapConfig
 	Auth          AuthConfig
 	Lifi          LifiConfig
+	S3            S3Config
+}
+
+type S3Config struct {
+	Region    string
+	Bucket    string
+	AccessKey string
+	SecretKey string
+	Endpoint  string
 }
 
 type LifiConfig struct {
@@ -109,6 +118,9 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("LIFI_BASE_URL", "https://li.quest/v1")
 
+	viper.SetDefault("AWS_REGION", "us-east-1")
+	viper.SetDefault("S3_BUCKET", "waillet-documents")
+
 	viper.SetDefault("JWT_SECRET", "")
 	viper.SetDefault("JWT_ACCESS_TTL", "15m")
 	viper.SetDefault("JWT_REFRESH_TTL", "168h")
@@ -198,6 +210,13 @@ func Load() (*Config, error) {
 		Lifi: LifiConfig{
 			APIKey:  viper.GetString("LIFI_API_KEY"),
 			BaseURL: viper.GetString("LIFI_BASE_URL"),
+		},
+		S3: S3Config{
+			Region:    viper.GetString("AWS_REGION"),
+			Bucket:    viper.GetString("S3_BUCKET"),
+			AccessKey: viper.GetString("AWS_ACCESS_KEY_ID"),
+			SecretKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
+			Endpoint:  viper.GetString("S3_ENDPOINT"),
 		},
 	}
 

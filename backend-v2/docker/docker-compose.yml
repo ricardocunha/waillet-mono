@@ -19,13 +19,17 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
       - CORS_ORIGINS=*
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET=${S3_BUCKET:-waillet-documents}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     depends_on:
-      mysql:
+      waillet:
         condition: service_healthy
     networks:
       - waillet-network
 
-  mysql:
+  waillet:
     image: mysql:8.0
     ports:
       - "3306:3306"

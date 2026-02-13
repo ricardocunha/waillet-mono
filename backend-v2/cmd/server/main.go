@@ -58,6 +58,7 @@ func main() {
 	tokenRepo := repository.NewTokenRepository(db)
 	authRepo := repository.NewAuthRepository(db)
 	chainTypeConfigRepo := repository.NewChainTypeConfigRepository(db)
+	docRepo := repository.NewSmartDocumentRepository(db)
 
 	// Initialize services
 	rpcService := service.NewRPCService(&cfg.RPC, networkRepo)
@@ -68,6 +69,7 @@ func main() {
 	cmcService := service.NewCoinMarketCapService(&cfg.CoinMarketCap, tokenRepo)
 	authService := auth.NewAuthService(&cfg.Auth, authRepo)
 	lifiService := service.NewLifiService(&cfg.Lifi)
+	docService := service.NewDocumentService(&cfg.S3, &cfg.OpenAI, docRepo)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -82,6 +84,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	chainTypeConfigHandler := handler.NewChainTypeConfigHandler(chainTypeConfigRepo)
 	lifiHandler := handler.NewLifiHandler(lifiService)
+	documentHandler := handler.NewDocumentHandler(docService)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -173,6 +176,14 @@ func main() {
 				r.Post("/transaction", simulationHandler.SimulateTransaction)
 				r.Post("/risk-analysis", simulationHandler.RiskAnalysis)
 				r.Post("/risk-decision", simulationHandler.RiskDecision)
+			})
+
+			// Documents (protected)
+			r.Route("/documents", func(r chi.Router) {
+				r.Get("/", documentHandler.GetAll)
+				r.Post("/upload", documentHandler.Upload)
+				r.Get("/{id}", documentHandler.GetByID)
+				r.Delete("/{id}", documentHandler.Delete)
 			})
 
 			// Settings (protected)

@@ -143,6 +143,27 @@ func RunMigrations(db *sqlx.DB) error {
 			INDEX idx_contract_address (contract_address)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+		`CREATE TABLE IF NOT EXISTS smart_documents (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			wallet_address VARCHAR(42) NOT NULL,
+			title VARCHAR(255) NOT NULL DEFAULT '',
+			file_name VARCHAR(255) NOT NULL,
+			file_type VARCHAR(50) NOT NULL,
+			file_size INT NOT NULL,
+			s3_key VARCHAR(500) NOT NULL,
+			s3_url VARCHAR(1000) NOT NULL,
+			document_type VARCHAR(100) DEFAULT NULL,
+			ocr_status ENUM('pending','processing','completed','failed') DEFAULT 'pending',
+			ocr_raw_text TEXT DEFAULT NULL,
+			metadata_json JSON DEFAULT NULL,
+			ocr_error TEXT DEFAULT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			INDEX idx_wallet_documents (wallet_address),
+			INDEX idx_ocr_status (ocr_status),
+			INDEX idx_document_type (document_type)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
 		`CREATE TABLE IF NOT EXISTS auth_nonces (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			wallet_address VARCHAR(42) NOT NULL,

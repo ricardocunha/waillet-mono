@@ -143,6 +143,51 @@ type RPCError struct {
 	Message string `json:"message"`
 }
 
+// Smart Document DTOs
+type SmartDocumentResponse struct {
+	ID            int64                `json:"id"`
+	WalletAddress string               `json:"wallet_address"`
+	Title         string               `json:"title"`
+	FileName      string               `json:"file_name"`
+	FileType      string               `json:"file_type"`
+	FileSize      int                  `json:"file_size"`
+	S3URL         string               `json:"s3_url"`
+	DocumentType  *string              `json:"document_type,omitempty"`
+	OCRStatus     string               `json:"ocr_status"`
+	Metadata      *DocumentMetadataDTO `json:"metadata,omitempty"`
+	OCRError      *string              `json:"ocr_error,omitempty"`
+	CreatedAt     time.Time            `json:"created_at"`
+	UpdatedAt     time.Time            `json:"updated_at"`
+}
+
+type DocumentMetadataDTO struct {
+	DocumentType string            `json:"document_type"`
+	Title        string            `json:"title"`
+	Summary      string            `json:"summary"`
+	Dates        []DateFieldDTO    `json:"dates"`
+	Parties      []PartyDTO        `json:"parties"`
+	Amounts      []AmountDTO       `json:"amounts"`
+	KeyFields    map[string]string `json:"key_fields"`
+	Language     string            `json:"language"`
+	Confidence   int               `json:"confidence"`
+}
+
+type DateFieldDTO struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type PartyDTO struct {
+	Role string `json:"role"`
+	Name string `json:"name"`
+}
+
+type AmountDTO struct {
+	Label    string `json:"label"`
+	Value    string `json:"value"`
+	Currency string `json:"currency"`
+}
+
 type RPCHealthResponse struct {
 	Status          string            `json:"status"`
 	Chains          map[string]string `json:"chains"`
