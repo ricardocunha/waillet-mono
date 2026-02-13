@@ -1,4 +1,5 @@
 import type { Favorite, FavoriteCreate, IntentRequest, IntentResponse } from '../types/api';
+import type { SmartDocument } from '../types/documents';
 import { authService } from './auth';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -12,6 +13,7 @@ const PROTECTED_ENDPOINTS = [
   '/settings/',
   '/auth/me',
   '/auth/logout',
+  '/documents',
 ];
 
 class WailletAPI {
@@ -76,6 +78,74 @@ class WailletAPI {
 
     return JSON.parse(text);
   }
+
+  private async uploadRequest<T>(endpoint: string, formData: FormData): Promise<T> {
+    const headers: Record<string, string> = {};
+
+    if (this.isProtectedEndpoint(endpoint)) {
+      const token = await authService.getAccessToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (response.status === 401 && this.isProtectedEndpoint(endpoint)) {
+      try {
+        await authService.refreshAccessToken();
+        const newToken = await authService.getAccessToken();
+        if (newToken) {
+          headers['Authorization'] = `Bearer ${newToken}`;
+          response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: formData,
+          });
+        }
+      } catch (refreshError) {
+        console.error('[API] Token refresh failed:', refreshError);
+        throw new Error('Authentication required. Please unlock your wallet.');
+      }
+    }
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`API Error: ${response.status} - ${error}`);
+    }
+
+    const text = await response.text();
+    if (!text) return undefined as T;
+    return JSON.parse(text);
+  }
+
+  // ==================== DOCUMENTS ====================
+
+  async getDocuments(): Promise<SmartDocument[]> {
+    return this.request<SmartDocument[]>('/documents');
+  }
+
+  async getDocument(id: number): Promise<SmartDocument> {
+    return this.request<SmartDocument>(`/documents/${id}`);
+  }
+
+  async uploadDocument(file: File): Promise<SmartDocument> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.uploadRequest<SmartDocument>('/documents/upload', formData);
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    return this.request<void>(`/documents/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================== FAVORITES ====================
 
   async getFavorites(): Promise<Favorite[]> {
     return this.request<Favorite[]>('/favorites');
