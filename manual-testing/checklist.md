@@ -918,5 +918,14 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 ### Test Automation
 - Backend API tests: Fully automated
 - Extension unit tests: Partially automated (some require full context)
-- E2E browser tests: Not implemented (complex setup, manual testing sufficient for now)
+- E2E browser tests: Playwright suite available — see `extension/e2e/README.md`
+
+### Test Coverage Summary
+
+| Area | Coverage | Notes |
+|------|----------|-------|
+| Backend API | ✅ Automated | `tests/run_tests.py` |
+| Wallet crypto | ✅ Unit tested | `extension/testing/` |
+| E2E extension | ⚠️ Partial | Playwright, headed mode |
+| Real dApp flow | ❌ Manual only | Uniswap, OpenSea |
 
