@@ -33,6 +33,16 @@ Implementation: 0x...
 
 The proxy address is what users and the frontend interact with. It never changes after initial deployment.
 
+### Upgrade Safety Checklist
+
+Before running an upgrade:
+
+- [ ] New implementation passes all unit tests (`npm test`)
+- [ ] No storage layout conflicts (only appended new variables at the end)
+- [ ] Upgrade tested on Base Sepolia first
+- [ ] Proxy address confirmed in `registry.ts`
+- [ ] Team notified — proxy state is shared
+
 ### Upgrade an Existing Deployment
 ```bash
 PROXY_ADDRESS=0x...your_proxy_address... npx hardhat run scripts/upgrade-registry.ts --network baseSepolia
