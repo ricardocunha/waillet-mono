@@ -59,6 +59,9 @@ npm run lint
 
 # Type check
 npm run typecheck
+
+# Preview production build locally
+npm run preview
 ```
 
 ## Environment Variables
