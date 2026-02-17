@@ -152,6 +152,7 @@ Key variables in `.env`:
 | `CMC_SYNC_INTERVAL` | Price sync interval (default: `10m`) |
 | `LOG_LEVEL` | Log verbosity: `debug`, `info`, `warn`, `error` (default: `info`) |
 | `PORT` | HTTP server port (default: `8000`) |
+| `CHAINABUSE_API_KEY` | ChainAbuse API key for scam address lookups |
 
 **3. Run the backend:**
 
