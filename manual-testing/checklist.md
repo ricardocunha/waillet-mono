@@ -927,6 +927,30 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 
 ---
 
+## Test 22: Network Switching ❌ MANUAL ONLY
+
+### Test 22.1: Switch Between Networks
+1. Unlock wallet
+2. Open network selector
+3. Switch from Ethereum to Base
+
+**Expected:**
+- [ ] Network selector shows all supported networks
+- [ ] Switching updates displayed balance and token list
+- [ ] Selected network persists after closing and reopening extension
+- [ ] Network badge updates in header
+
+### Test 22.2: Add Custom RPC (if supported)
+1. Open network settings
+2. Try adding a custom RPC URL
+
+**Expected:**
+- [ ] Form validates URL format
+- [ ] Custom network appears in selector after adding
+- [ ] Connection tested before saving
+
+---
+
 ## Test 21: Settings Management ❌ MANUAL ONLY
 
 ### Test 21.1: Change Backend URL
