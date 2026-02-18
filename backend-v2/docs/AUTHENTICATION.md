@@ -118,6 +118,26 @@ The extension auto-authenticates when the wallet is unlocked:
 3. Tokens stored in `chrome.storage.local`
 4. `api.ts` auto-includes JWT in protected requests
 
+## SIWE Message Format
+
+The Sign-In with Ethereum message follows [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361):
+
+```
+localhost wants you to sign in with your Ethereum account:
+0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+
+Sign in to wAIllet
+
+URI: http://localhost:8000
+Version: 1
+Chain ID: 1
+Nonce: abc123xyz
+Issued At: 2026-01-01T00:00:00.000Z
+Expiration Time: 2026-01-01T00:10:00.000Z
+```
+
+The backend validates the domain, chain ID, and expiration before accepting the signature.
+
 ## Security Notes
 
 - Nonces are single-use and expire in 10 minutes — prevents replay attacks
