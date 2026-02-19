@@ -10,6 +10,7 @@ export interface SmartDocument {
   ocr_status: 'pending' | 'processing' | 'completed' | 'failed';
   metadata?: DocumentMetadata;
   ocr_error?: string;
+  thumbnail_url?: string;
   created_at: string;
   updated_at: string;
 }

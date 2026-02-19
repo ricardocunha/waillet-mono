@@ -157,6 +157,7 @@ func RunMigrations(db *sqlx.DB) error {
 			ocr_raw_text TEXT DEFAULT NULL,
 			metadata_json JSON DEFAULT NULL,
 			ocr_error TEXT DEFAULT NULL,
+			thumbnail_key VARCHAR(500) DEFAULT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			INDEX idx_wallet_documents (wallet_address),
@@ -181,6 +182,14 @@ func RunMigrations(db *sqlx.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to run migration statement %d: %w", i+1, err)
 		}
+	}
+
+	// Add thumbnail_key column to smart_documents if it doesn't exist
+	alterStatements := []string{
+		`ALTER TABLE smart_documents ADD COLUMN thumbnail_key VARCHAR(500) DEFAULT NULL`,
+	}
+	for _, stmt := range alterStatements {
+		_, _ = db.Exec(stmt) // Ignore errors (column may already exist)
 	}
 
 	// Seed default networks (only if table is empty)

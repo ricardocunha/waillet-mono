@@ -80,7 +80,10 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toSmartDocumentResponse(doc))
+	thumbURL := h.service.GenerateThumbnailURL(r.Context(), doc)
+	hasThumb := thumbURL != nil
+	log.Info().Int64("doc_id", doc.ID).Bool("has_thumbnail_url", hasThumb).Str("thumbnail_key", doc.ThumbnailKey.String).Msg("[Upload] Response thumbnail status")
+	writeJSON(w, http.StatusCreated, toSmartDocumentResponse(doc, thumbURL))
 }
 
 func (h *DocumentHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +102,8 @@ func (h *DocumentHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	response := make([]dto.SmartDocumentResponse, len(docs))
 	for i, d := range docs {
-		response[i] = toSmartDocumentResponse(&d)
+		thumbURL := h.service.GenerateThumbnailURL(r.Context(), &d)
+		response[i] = toSmartDocumentResponse(&d, thumbURL)
 	}
 
 	writeJSON(w, http.StatusOK, response)
@@ -134,7 +138,8 @@ func (h *DocumentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toSmartDocumentResponse(doc))
+	thumbURL := h.service.GenerateThumbnailURL(r.Context(), doc)
+	writeJSON(w, http.StatusOK, toSmartDocumentResponse(doc, thumbURL))
 }
 
 func (h *DocumentHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +221,8 @@ func (h *DocumentHandler) Rename(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Title string `json:"title"`
+		Title    string `json:"title"`
+		FileName string `json:"file_name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -227,7 +233,7 @@ func (h *DocumentHandler) Rename(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doc, err := h.service.RenameDocument(r.Context(), id, walletAddress, strings.TrimSpace(body.Title))
+	doc, err := h.service.RenameDocument(r.Context(), id, walletAddress, strings.TrimSpace(body.Title), strings.TrimSpace(body.FileName))
 	if err != nil {
 		if strings.Contains(err.Error(), "not authorized") {
 			writeError(w, http.StatusForbidden, "not authorized")
@@ -241,10 +247,11 @@ func (h *DocumentHandler) Rename(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toSmartDocumentResponse(doc))
+	thumbURL := h.service.GenerateThumbnailURL(r.Context(), doc)
+	writeJSON(w, http.StatusOK, toSmartDocumentResponse(doc, thumbURL))
 }
 
-func toSmartDocumentResponse(doc *models.SmartDocument) dto.SmartDocumentResponse {
+func toSmartDocumentResponse(doc *models.SmartDocument, thumbnailURL *string) dto.SmartDocumentResponse {
 	resp := dto.SmartDocumentResponse{
 		ID:            doc.ID,
 		WalletAddress: doc.WalletAddress,
@@ -254,6 +261,7 @@ func toSmartDocumentResponse(doc *models.SmartDocument) dto.SmartDocumentRespons
 		FileSize:      doc.FileSize,
 		S3URL:         doc.S3URL,
 		OCRStatus:     string(doc.OCRStatus),
+		ThumbnailURL:  thumbnailURL,
 		CreatedAt:     doc.CreatedAt,
 		UpdatedAt:     doc.UpdatedAt,
 	}
