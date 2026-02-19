@@ -5,10 +5,6 @@ import type { SmartDocument } from '../types/documents';
 import { UploadDocumentModal } from './UploadDocumentModal';
 import { DocumentDetailModal } from './DocumentDetailModal';
 
-function isImageType(fileType: string) {
-  return fileType.startsWith('image/');
-}
-
 export function SmartDocuments() {
   const [documents, setDocuments] = useState<SmartDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +12,6 @@ export function SmartDocuments() {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<SmartDocument | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
-  const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
@@ -35,23 +30,6 @@ export function SmartDocuments() {
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
-
-  // Fetch presigned URLs for image documents
-  useEffect(() => {
-    const imageDocs = documents.filter(
-      (d) => isImageType(d.file_type) && !thumbnails[d.id]
-    );
-    if (imageDocs.length === 0) return;
-
-    imageDocs.forEach(async (doc) => {
-      try {
-        const url = await api.getDocumentURL(doc.id);
-        setThumbnails((prev) => ({ ...prev, [doc.id]: url }));
-      } catch {
-        // Silently fail — will show icon fallback
-      }
-    });
-  }, [documents, thumbnails]);
 
   // Auto-poll if any documents are pending/processing
   useEffect(() => {
@@ -181,9 +159,9 @@ export function SmartDocuments() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    {thumbnails[doc.id] ? (
+                    {doc.thumbnail_url ? (
                       <img
-                        src={thumbnails[doc.id]}
+                        src={doc.thumbnail_url}
                         alt=""
                         className="w-8 h-8 rounded-lg object-cover shrink-0 bg-slate-700"
                       />

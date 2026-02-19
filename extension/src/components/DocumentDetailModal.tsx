@@ -12,11 +12,15 @@ interface DocumentDetailModalProps {
 
 export function DocumentDetailModal({ document, onClose, onDelete, onRename }: DocumentDetailModalProps) {
   const meta = document.metadata;
-  const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [previewURL, setPreviewURL] = useState<string | null>(document.thumbnail_url || null);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(document.title);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingFileName, setIsEditingFileName] = useState(false);
+  const [editFileName, setEditFileName] = useState(document.file_name);
+  const [isSavingFileName, setIsSavingFileName] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileNameInputRef = useRef<HTMLInputElement>(null);
 
   const isImage = document.file_type.startsWith('image/');
 
@@ -32,6 +36,10 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
   useEffect(() => {
     if (isEditing) inputRef.current?.select();
   }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditingFileName) fileNameInputRef.current?.select();
+  }, [isEditingFileName]);
 
   const handleSaveTitle = async () => {
     const trimmed = editTitle.trim();
@@ -58,6 +66,34 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
     if (e.key === 'Escape') {
       setIsEditing(false);
       setEditTitle(document.title);
+    }
+  };
+
+  const handleSaveFileName = async () => {
+    const trimmed = editFileName.trim();
+    if (!trimmed || trimmed === document.file_name) {
+      setIsEditingFileName(false);
+      setEditFileName(document.file_name);
+      return;
+    }
+    setIsSavingFileName(true);
+    try {
+      const updated = await api.renameDocument(document.id, document.title, trimmed);
+      onRename(updated);
+      setIsEditingFileName(false);
+    } catch {
+      setEditFileName(document.file_name);
+      setIsEditingFileName(false);
+    } finally {
+      setIsSavingFileName(false);
+    }
+  };
+
+  const handleFileNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSaveFileName();
+    if (e.key === 'Escape') {
+      setIsEditingFileName(false);
+      setEditFileName(document.file_name);
     }
   };
 
@@ -159,9 +195,36 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
 
           {/* File Info */}
           <div className="bg-slate-700/50 rounded-lg p-3 space-y-1.5">
-            <div className="flex justify-between text-xs">
+            <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400">File</span>
-              <span className="text-white truncate ml-2 max-w-[200px]">{document.file_name}</span>
+              {isEditingFileName ? (
+                <div className="flex items-center gap-1 ml-2">
+                  <input
+                    ref={fileNameInputRef}
+                    value={editFileName}
+                    onChange={(e) => setEditFileName(e.target.value)}
+                    onKeyDown={handleFileNameKeyDown}
+                    onBlur={handleSaveFileName}
+                    className="bg-slate-600 text-white text-xs rounded px-1.5 py-0.5 w-[180px] outline-none focus:ring-1 focus:ring-purple-500"
+                    disabled={isSavingFileName}
+                  />
+                  {isSavingFileName && <Loader2 className="w-3 h-3 text-purple-400 animate-spin shrink-0" />}
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 ml-2 min-w-0">
+                  <span className="text-white truncate max-w-[180px]">{document.file_name}</span>
+                  <button
+                    onClick={() => {
+                      setEditFileName(document.file_name);
+                      setIsEditingFileName(true);
+                    }}
+                    className="p-0.5 text-slate-500 hover:text-purple-400 transition-colors shrink-0"
+                    title="Rename file"
+                  >
+                    <Pencil className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-slate-400">Type</span>
