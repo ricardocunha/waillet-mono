@@ -202,6 +202,22 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## Screenshots on Failure
+
+Playwright saves screenshots automatically when a test fails. Find them in:
+
+```
+extension/e2e/test-results/<test-name>/screenshot.png
+```
+
+To always capture screenshots (pass or fail), add to `playwright.config.ts`:
+
+```ts
+use: {
+  screenshot: 'on',
+},
+```
+
 ## Known Limitations
 
 - Extension popups require programmatic interaction — no real user-click simulation
