@@ -10,15 +10,16 @@ import { DAppTransactionModal } from './components/DAppTransactionModal';
 import { SignatureApprovalModal } from './components/SignatureApprovalModal';
 import { NetworkSwitchModal } from './components/NetworkSwitchModal';
 import { ConnectionStatus } from './components/ConnectionStatus';
-import { Bot, Wallet, Clock } from 'lucide-react';
+import { Bot, Wallet, Clock, FileText } from 'lucide-react';
 import { TransactionHistory } from './components/TransactionHistory';
+import { SmartDocuments } from './components/SmartDocuments';
 import { PendingRequestType, EthMethod } from './types/messaging';
 import { StorageKey } from './constants';
 import { Chain } from './types/messaging';
 import { api } from './services/api';
 import { browserAPI } from './utils/browser-api';
 
-type Mode = 'wallet' | 'agent' | 'history';
+type Mode = 'wallet' | 'agent' | 'history' | 'documents';
 
 interface PendingRequest {
   id: number;
@@ -428,6 +429,17 @@ function AppContent() {
               History
             </button>
             <button
+              onClick={() => setMode('documents')}
+              className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-semibold transition-colors ${
+                mode === 'documents'
+                  ? 'bg-slate-900 text-purple-400 border-b-2 border-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              <FileText size={18} />
+              Docs
+            </button>
+            <button
               onClick={() => {
                 if (!aiConfigured) {
                   alert('Please configure your OpenAI API key in Account Settings');
@@ -451,6 +463,7 @@ function AppContent() {
           <div className="flex-1 overflow-hidden">
             {mode === 'wallet' && <Dashboard onAIKeyChanged={refreshAIStatus} />}
             {mode === 'history' && <TransactionHistory currentChain={currentChain} address={account?.address || null} />}
+            {mode === 'documents' && <SmartDocuments />}
             {mode === 'agent' && <AgentChat />}
           </div>
         </div>

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -239,6 +241,53 @@ func (s *DocumentService) GetDocument(ctx context.Context, id int64, walletAddre
 	if !strings.EqualFold(doc.WalletAddress, walletAddress) {
 		return nil, fmt.Errorf("not authorized")
 	}
+	return doc, nil
+}
+
+func (s *DocumentService) GetPresignedURL(ctx context.Context, id int64, walletAddress string) (string, error) {
+	doc, err := s.docRepo.GetByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	if doc == nil {
+		return "", fmt.Errorf("document not found")
+	}
+	if !strings.EqualFold(doc.WalletAddress, walletAddress) {
+		return "", fmt.Errorf("not authorized")
+	}
+	if s.s3Client == nil {
+		return "", fmt.Errorf("S3 client not configured")
+	}
+
+	presignClient := s3.NewPresignClient(s.s3Client)
+	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.s3Bucket),
+		Key:    aws.String(doc.S3Key),
+	}, s3.WithPresignExpires(15*time.Minute))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignedReq.URL, nil
+}
+
+func (s *DocumentService) RenameDocument(ctx context.Context, id int64, walletAddress, newTitle string) (*models.SmartDocument, error) {
+	doc, err := s.docRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		return nil, fmt.Errorf("document not found")
+	}
+	if !strings.EqualFold(doc.WalletAddress, walletAddress) {
+		return nil, fmt.Errorf("not authorized")
+	}
+
+	if err := s.docRepo.UpdateTitle(ctx, id, newTitle); err != nil {
+		return nil, err
+	}
+
+	doc.Title = newTitle
 	return doc, nil
 }
 

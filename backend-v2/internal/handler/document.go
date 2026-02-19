@@ -170,6 +170,80 @@ func (h *DocumentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *DocumentHandler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	url, err := h.service.GetPresignedURL(r.Context(), id, walletAddress)
+	if err != nil {
+		if strings.Contains(err.Error(), "not authorized") {
+			writeError(w, http.StatusForbidden, "not authorized")
+			return
+		}
+		if strings.Contains(err.Error(), "not found") {
+			writeError(w, http.StatusNotFound, "document not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"url": url})
+}
+
+func (h *DocumentHandler) Rename(w http.ResponseWriter, r *http.Request) {
+	walletAddress := auth.WalletFromContext(r.Context())
+	if walletAddress == "" {
+		writeError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	var body struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if strings.TrimSpace(body.Title) == "" {
+		writeError(w, http.StatusBadRequest, "title is required")
+		return
+	}
+
+	doc, err := h.service.RenameDocument(r.Context(), id, walletAddress, strings.TrimSpace(body.Title))
+	if err != nil {
+		if strings.Contains(err.Error(), "not authorized") {
+			writeError(w, http.StatusForbidden, "not authorized")
+			return
+		}
+		if strings.Contains(err.Error(), "not found") {
+			writeError(w, http.StatusNotFound, "document not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toSmartDocumentResponse(doc))
+}
+
 func toSmartDocumentResponse(doc *models.SmartDocument) dto.SmartDocumentResponse {
 	resp := dto.SmartDocumentResponse{
 		ID:            doc.ID,

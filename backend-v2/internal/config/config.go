@@ -99,7 +99,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("WRITE_TIMEOUT", "30s")
 
 	viper.SetDefault("DB_HOST", "localhost")
-	viper.SetDefault("DB_PORT", 3306)
+	viper.SetDefault("DB_PORT", 13306)
 	viper.SetDefault("DB_USER", "root")
 	viper.SetDefault("DB_PASSWORD", "")
 	viper.SetDefault("DB_NAME", "waillet")

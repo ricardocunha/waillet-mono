@@ -183,6 +183,8 @@ func main() {
 				r.Get("/", documentHandler.GetAll)
 				r.Post("/upload", documentHandler.Upload)
 				r.Get("/{id}", documentHandler.GetByID)
+				r.Get("/{id}/url", documentHandler.GetPresignedURL)
+				r.Put("/{id}", documentHandler.Rename)
 				r.Delete("/{id}", documentHandler.Delete)
 			})
 

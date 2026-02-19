@@ -14,6 +14,7 @@ type SmartDocumentRepository interface {
 	GetByID(ctx context.Context, id int64) (*models.SmartDocument, error)
 	GetByWalletAddress(ctx context.Context, walletAddress string) ([]models.SmartDocument, error)
 	UpdateOCRResult(ctx context.Context, id int64, status models.OCRStatus, rawText, metadataJSON, ocrError, documentType string) error
+	UpdateTitle(ctx context.Context, id int64, title string) error
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -97,6 +98,17 @@ func (r *smartDocumentRepository) UpdateOCRResult(ctx context.Context, id int64,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update OCR result: %w", err)
+	}
+
+	return nil
+}
+
+func (r *smartDocumentRepository) UpdateTitle(ctx context.Context, id int64, title string) error {
+	query := `UPDATE smart_documents SET title = ? WHERE id = ?`
+
+	_, err := r.db.ExecContext(ctx, query, title, id)
+	if err != nil {
+		return fmt.Errorf("failed to update document title: %w", err)
 	}
 
 	return nil

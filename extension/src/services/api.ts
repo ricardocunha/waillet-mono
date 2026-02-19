@@ -139,6 +139,18 @@ class WailletAPI {
     return this.uploadRequest<SmartDocument>('/documents/upload', formData);
   }
 
+  async getDocumentURL(id: number): Promise<string> {
+    const res = await this.request<{ url: string }>(`/documents/${id}/url`);
+    return res.url;
+  }
+
+  async renameDocument(id: number, title: string): Promise<SmartDocument> {
+    return this.request<SmartDocument>(`/documents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ title }),
+    });
+  }
+
   async deleteDocument(id: number): Promise<void> {
     return this.request<void>(`/documents/${id}`, {
       method: 'DELETE',
