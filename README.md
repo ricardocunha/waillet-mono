@@ -153,6 +153,7 @@ Key variables in `.env`:
 | `LOG_LEVEL` | Log verbosity: `debug`, `info`, `warn`, `error` (default: `info`) |
 | `PORT` | HTTP server port (default: `8000`) |
 | `CHAINABUSE_API_KEY` | ChainAbuse API key for scam address lookups |
+| `CORS_ORIGINS` | Comma-separated allowed origins (default: `*` in dev) |
 
 **3. Run the backend:**
 
