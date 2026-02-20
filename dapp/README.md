@@ -71,6 +71,16 @@ VITE_RPC_URL=https://mainnet.infura.io/v3/YOUR_KEY
 VITE_BASE_RPC_URL=https://mainnet.base.org
 ```
 
+## Architecture
+
+```
+dapp (React + Vite)
+  └── ethers.js v6       — wallet connection & on-chain reads
+  └── Tailwind CSS v4    — styling
+  └── React Router       — client-side routing
+  └── wAIllet backend    — bridge coordination & token prices
+```
+
 ## License
 
 MIT
