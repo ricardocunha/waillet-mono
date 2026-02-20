@@ -144,10 +144,14 @@ class WailletAPI {
     return res.url;
   }
 
-  async renameDocument(id: number, title: string): Promise<SmartDocument> {
+  async renameDocument(id: number, title: string, fileName?: string): Promise<SmartDocument> {
+    const body: { title: string; file_name?: string } = { title };
+    if (fileName) {
+      body.file_name = fileName;
+    }
     return this.request<SmartDocument>(`/documents/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ title }),
+      body: JSON.stringify(body),
     });
   }
 

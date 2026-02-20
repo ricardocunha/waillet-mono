@@ -163,11 +163,11 @@ export function SmartDocuments() {
                       <img
                         src={doc.thumbnail_url}
                         alt=""
-                        className="w-8 h-8 rounded-lg object-cover shrink-0 bg-slate-700"
+                        className="w-12 h-12 rounded-lg object-cover shrink-0 bg-slate-700"
                       />
                     ) : (
-                      <div className="p-1.5 bg-slate-700 rounded-lg shrink-0">
-                        <FileText className="w-3.5 h-3.5 text-purple-400" />
+                      <div className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-lg shrink-0">
+                        <FileText className="w-5 h-5 text-purple-400" />
                       </div>
                     )}
                     <div className="min-w-0">

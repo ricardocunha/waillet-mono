@@ -15,6 +15,8 @@ type SmartDocumentRepository interface {
 	GetByWalletAddress(ctx context.Context, walletAddress string) ([]models.SmartDocument, error)
 	UpdateOCRResult(ctx context.Context, id int64, status models.OCRStatus, rawText, metadataJSON, ocrError, documentType string) error
 	UpdateTitle(ctx context.Context, id int64, title string) error
+	UpdateFileInfo(ctx context.Context, id int64, title, fileName, s3Key, s3URL string, thumbnailKey string) error
+	UpdateThumbnailKey(ctx context.Context, id int64, thumbnailKey string) error
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -56,7 +58,7 @@ func (r *smartDocumentRepository) Create(ctx context.Context, doc *models.SmartD
 func (r *smartDocumentRepository) GetByID(ctx context.Context, id int64) (*models.SmartDocument, error) {
 	var doc models.SmartDocument
 	query := `SELECT id, wallet_address, title, file_name, file_type, file_size, s3_key, s3_url,
-		document_type, ocr_status, ocr_raw_text, metadata_json, ocr_error, created_at, updated_at
+		document_type, ocr_status, ocr_raw_text, metadata_json, ocr_error, thumbnail_key, created_at, updated_at
 		FROM smart_documents WHERE id = ?`
 
 	err := r.db.GetContext(ctx, &doc, query, id)
@@ -73,7 +75,7 @@ func (r *smartDocumentRepository) GetByID(ctx context.Context, id int64) (*model
 func (r *smartDocumentRepository) GetByWalletAddress(ctx context.Context, walletAddress string) ([]models.SmartDocument, error) {
 	var docs []models.SmartDocument
 	query := `SELECT id, wallet_address, title, file_name, file_type, file_size, s3_key, s3_url,
-		document_type, ocr_status, ocr_raw_text, metadata_json, ocr_error, created_at, updated_at
+		document_type, ocr_status, ocr_raw_text, metadata_json, ocr_error, thumbnail_key, created_at, updated_at
 		FROM smart_documents WHERE LOWER(wallet_address) = LOWER(?) ORDER BY created_at DESC`
 
 	err := r.db.SelectContext(ctx, &docs, query, walletAddress)
@@ -109,6 +111,33 @@ func (r *smartDocumentRepository) UpdateTitle(ctx context.Context, id int64, tit
 	_, err := r.db.ExecContext(ctx, query, title, id)
 	if err != nil {
 		return fmt.Errorf("failed to update document title: %w", err)
+	}
+
+	return nil
+}
+
+func (r *smartDocumentRepository) UpdateFileInfo(ctx context.Context, id int64, title, fileName, s3Key, s3URL string, thumbnailKey string) error {
+	query := `UPDATE smart_documents SET title = ?, file_name = ?, s3_key = ?, s3_url = ?, thumbnail_key = ? WHERE id = ?`
+
+	var thumbParam interface{} = thumbnailKey
+	if thumbnailKey == "" {
+		thumbParam = nil
+	}
+
+	_, err := r.db.ExecContext(ctx, query, title, fileName, s3Key, s3URL, thumbParam, id)
+	if err != nil {
+		return fmt.Errorf("failed to update document file info: %w", err)
+	}
+
+	return nil
+}
+
+func (r *smartDocumentRepository) UpdateThumbnailKey(ctx context.Context, id int64, thumbnailKey string) error {
+	query := `UPDATE smart_documents SET thumbnail_key = ? WHERE id = ?`
+
+	_, err := r.db.ExecContext(ctx, query, thumbnailKey, id)
+	if err != nil {
+		return fmt.Errorf("failed to update thumbnail key: %w", err)
 	}
 
 	return nil

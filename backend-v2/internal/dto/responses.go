@@ -156,6 +156,7 @@ type SmartDocumentResponse struct {
 	OCRStatus     string               `json:"ocr_status"`
 	Metadata      *DocumentMetadataDTO `json:"metadata,omitempty"`
 	OCRError      *string              `json:"ocr_error,omitempty"`
+	ThumbnailURL  *string              `json:"thumbnail_url,omitempty"`
 	CreatedAt     time.Time            `json:"created_at"`
 	UpdatedAt     time.Time            `json:"updated_at"`
 }

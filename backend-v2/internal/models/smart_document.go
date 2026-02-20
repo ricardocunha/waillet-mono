@@ -28,6 +28,7 @@ type SmartDocument struct {
 	OCRRawText    sql.NullString `db:"ocr_raw_text" json:"ocr_raw_text,omitempty"`
 	MetadataJSON  sql.NullString `db:"metadata_json" json:"metadata_json,omitempty"`
 	OCRError      sql.NullString `db:"ocr_error" json:"ocr_error,omitempty"`
+	ThumbnailKey  sql.NullString `db:"thumbnail_key" json:"thumbnail_key,omitempty"`
 	CreatedAt     time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time      `db:"updated_at" json:"updated_at"`
 }
