@@ -927,6 +927,39 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 
 ---
 
+
+## Test 23: Multi-Account Support ❌ MANUAL ONLY
+
+### Test 23.1: Add Second Account
+1. Open extension → Accounts tab (if available)
+2. Click "Add Account"
+
+**Expected:**
+- [ ] New derived account created from same seed
+- [ ] Account appears in account selector
+- [ ] Each account has a distinct address
+
+### Test 23.2: Switch Between Accounts
+1. Switch to Account 2
+2. Check balance and transaction history
+
+**Expected:**
+- [ ] Balance reflects Account 2 holdings
+- [ ] Activity limited to Account 2 transactions
+- [ ] Active account shown in header
+
+### Test 23.3: Per-Account Connection State
+1. Connect Account 1 to a dApp
+2. Switch to Account 2
+3. Check dApp connection status
+
+**Expected:**
+- [ ] dApp sees Account 2 after switch
+- [ ] `accountsChanged` event emitted to dApp
+- [ ] No cross-account data leakage
+
+---
+
 ## Test 22: Network Switching ❌ MANUAL ONLY
 
 ### Test 22.1: Switch Between Networks
