@@ -118,6 +118,18 @@ The extension auto-authenticates when the wallet is unlocked:
 3. Tokens stored in `chrome.storage.local`
 4. `api.ts` auto-includes JWT in protected requests
 
+## Rate Limiting
+
+Auth endpoints are rate-limited to prevent brute-force attacks:
+
+| Endpoint | Limit |
+|----------|-------|
+| `GET /api/auth/nonce` | 10 req/min per IP |
+| `POST /api/auth/verify` | 5 req/min per IP |
+| `POST /api/auth/refresh` | 20 req/min per IP |
+
+Exceeding the limit returns `429 Too Many Requests`.
+
 ## SIWE Message Format
 
 The Sign-In with Ethereum message follows [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361):
