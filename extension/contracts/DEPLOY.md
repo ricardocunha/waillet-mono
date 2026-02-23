@@ -15,6 +15,13 @@ PRIVATE_KEY=your_private_key_here
 
 ## Commands
 
+### Test
+```bash
+npm test
+```
+
+Run this before every deploy to catch regressions.
+
 ### Compile
 ```bash
 npm run compile
