@@ -182,6 +182,7 @@ The server starts on `http://localhost:8000`. Database tables are created automa
 | POST | `/api/rpc/proxy` | Proxy blockchain RPC calls |
 | POST | `/api/simulate/risk-analysis` | Analyze transaction risk |
 | DELETE | `/api/favorites/{wallet}/{id}` | Delete a saved favorite |
+| PATCH | `/api/favorites/{id}` | Update alias or asset of a favorite |
 
 ## Running the Extension
 
