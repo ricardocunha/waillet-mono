@@ -202,6 +202,16 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## Parallel Execution
+
+By default tests run sequentially (Chrome extension tests cannot share a browser context). To parallelise across multiple workers, each worker needs its own extension instance — this is not yet configured.
+
+For now, run with a single worker:
+
+```bash
+npx playwright test --workers=1
+```
+
 ## Screenshots on Failure
 
 Playwright saves screenshots automatically when a test fails. Find them in:
