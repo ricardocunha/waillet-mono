@@ -43,6 +43,12 @@ If all four pass, proceed with the full checklist below.
 - [ ] Warning messages are prominent
 - [ ] Transitions are smooth
 
+**Password Strength Checks:**
+- [ ] Short password (< 8 chars) → rejected with clear error
+- [ ] Weak password (`password123`) → warning shown
+- [ ] Strong password (`T3stP@ssw0rd!`) → accepted without warnings
+- [ ] Passwords must match on confirm step
+
 ### Manual Test: Lock/Unlock
 
 **Steps:**
