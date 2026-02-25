@@ -183,6 +183,8 @@ The server starts on `http://localhost:8000`. Database tables are created automa
 | POST | `/api/simulate/risk-analysis` | Analyze transaction risk |
 | DELETE | `/api/favorites/{wallet}/{id}` | Delete a saved favorite |
 | PATCH | `/api/favorites/{id}` | Update alias or asset of a favorite |
+| GET | `/api/auth/nonce` | Get SIWE nonce for wallet sign-in |
+| POST | `/api/auth/verify` | Verify SIWE signature, return JWT tokens |
 
 ## Running the Extension
 
