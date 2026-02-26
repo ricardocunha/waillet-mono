@@ -164,6 +164,22 @@ test.describe('My Feature', () => {
 
 ```yaml
 # GitHub Actions example
+- name: Install Playwright browsers
+  run: npx playwright install chromium --with-deps
+
 - name: Run E2E tests
   run: xvfb-run npm run test:e2e
+
+- name: Upload test report
+  uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: playwright-report
+    path: playwright-report/
 ```
+
+## Known Limitations
+
+- Extension popups require programmatic interaction — no real user-click simulation
+- Uniswap tests are flaky on slow networks; increase `timeout` in `playwright.config.ts` if needed
+- Tests must be run from the `extension/` directory (not the repo root)
