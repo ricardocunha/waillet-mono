@@ -118,6 +118,16 @@ The extension auto-authenticates when the wallet is unlocked:
 3. Tokens stored in `chrome.storage.local`
 4. `api.ts` auto-includes JWT in protected requests
 
+## CORS
+
+The auth endpoints accept requests from the extension origin. In production, set `CORS_ORIGINS` to restrict allowed origins:
+
+```env
+CORS_ORIGINS=chrome-extension://your-extension-id,https://your-dapp.com
+```
+
+During local development the default allows all origins (`*`).
+
 ## Rate Limiting
 
 Auth endpoints are rate-limited to prevent brute-force attacks:
