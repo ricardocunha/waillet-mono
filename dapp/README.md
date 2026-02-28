@@ -81,6 +81,12 @@ dapp (React + Vite)
   └── wAIllet backend    — bridge coordination & token prices
 ```
 
+## Contributing
+
+1. Fork the repo and create a branch: `git checkout -b feat/my-feature`
+2. Make changes, run `npm run lint` and `npm run typecheck`
+3. Open a pull request against `main`
+
 ## License
 
 MIT
