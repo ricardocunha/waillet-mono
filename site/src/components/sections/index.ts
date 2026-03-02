@@ -1,0 +1,8 @@
+export { Hero } from './Hero.tsx'
+export { Features } from './Features.tsx'
+export { HowItWorks } from './HowItWorks.tsx'
+export { Benefits } from './Benefits.tsx'
+export { Screenshots } from './Screenshots.tsx'
+export { Downloads } from './Downloads.tsx'
+export { Community } from './Community.tsx'
+export { FinalCTA } from './FinalCTA.tsx'
