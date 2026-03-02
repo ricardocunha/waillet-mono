@@ -15,7 +15,7 @@ const communityLinks = [
     icon: MessageCircle,
     title: 'Discord',
     description: 'Join our community to chat with other users and the team.',
-    href: 'https://discord.gg/waillet',
+    href: 'https://discord.gg/shWtQ4FpJS',
     cta: 'Join Discord',
   },
   {
