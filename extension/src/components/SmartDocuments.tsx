@@ -1,16 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FileText, RefreshCw, Upload, Clock, CheckCircle, XCircle, Trash2, AlertCircle } from 'lucide-react';
+import { FileText, RefreshCw, Upload, Clock, CheckCircle, XCircle, Trash2, AlertCircle, Share2 } from 'lucide-react';
 import { api } from '../services/api';
-import type { SmartDocument } from '../types/documents';
+import type { SmartDocument, SharedDocumentView } from '../types/documents';
 import { UploadDocumentModal } from './UploadDocumentModal';
 import { DocumentDetailModal } from './DocumentDetailModal';
+import { SharedDocumentViewer } from './SharedDocumentViewer';
 
-export function SmartDocuments() {
+interface SmartDocumentsProps {
+  privateKey: string;
+  walletAddress: string;
+}
+
+export function SmartDocuments({ privateKey, walletAddress }: SmartDocumentsProps) {
+  const [activeTab, setActiveTab] = useState<'my-docs' | 'shared-with-me'>('my-docs');
   const [documents, setDocuments] = useState<SmartDocument[]>([]);
+  const [sharedDocs, setSharedDocs] = useState<SharedDocumentView[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<SmartDocument | null>(null);
+  const [selectedSharedDoc, setSelectedSharedDoc] = useState<SharedDocumentView | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   const loadDocuments = useCallback(async () => {
@@ -27,9 +36,27 @@ export function SmartDocuments() {
     }
   }, []);
 
+  const loadSharedDocs = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const docs = await api.getSharedWithMe();
+      setSharedDocs(docs);
+    } catch (err) {
+      setError('Failed to load shared documents');
+      console.error('Shared docs load error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
+    if (activeTab === 'my-docs') {
+      loadDocuments();
+    } else {
+      loadSharedDocs();
+    }
+  }, [activeTab, loadDocuments, loadSharedDocs]);
 
   // Auto-poll if any documents are pending/processing
   useEffect(() => {
@@ -107,21 +134,48 @@ export function SmartDocuments() {
         <h2 className="text-sm font-semibold text-white">Smart Documents</h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={loadDocuments}
+            onClick={activeTab === 'my-docs' ? loadDocuments : loadSharedDocs}
             disabled={isLoading}
             className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            Upload
-          </button>
+          {activeTab === 'my-docs' && (
+            <button
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Upload
+            </button>
+          )}
         </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="flex gap-1 mb-3 bg-slate-800 rounded-lg p-0.5">
+        <button
+          onClick={() => setActiveTab('my-docs')}
+          className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${
+            activeTab === 'my-docs'
+              ? 'bg-slate-700 text-white font-medium'
+              : 'text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          My Docs
+        </button>
+        <button
+          onClick={() => setActiveTab('shared-with-me')}
+          className={`flex-1 text-xs py-1.5 rounded-md transition-colors flex items-center justify-center gap-1 ${
+            activeTab === 'shared-with-me'
+              ? 'bg-slate-700 text-white font-medium'
+              : 'text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          <Share2 className="w-3 h-3" />
+          Shared with Me
+        </button>
       </div>
 
       {/* Error */}
@@ -134,98 +188,148 @@ export function SmartDocuments() {
 
       {/* Document List */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {isLoading && documents.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
-            Loading documents...
-          </div>
-        ) : documents.length === 0 && !error ? (
-          <div className="flex flex-col items-center justify-center h-48 gap-3">
-            <FileText className="w-10 h-10 text-slate-600" />
-            <p className="text-slate-400 text-sm">No documents yet</p>
-            <button
-              onClick={() => setShowUpload(true)}
-              className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors"
-            >
-              Upload your first document
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {documents.map((doc) => (
-              <div
-                key={doc.id}
-                className="p-2.5 bg-slate-800 hover:bg-slate-750 rounded-lg transition-colors cursor-pointer group"
-                onClick={() => setSelectedDoc(doc)}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {doc.thumbnail_url ? (
-                      <img
-                        src={doc.thumbnail_url}
-                        alt=""
-                        className="w-12 h-12 rounded-lg object-cover shrink-0 bg-slate-700"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-lg shrink-0">
-                        <FileText className="w-5 h-5 text-purple-400" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-white text-xs font-medium truncate max-w-[140px]">
-                          {doc.metadata?.title || doc.title || doc.file_name}
-                        </span>
-                        {getStatusIcon(doc.ocr_status)}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {doc.document_type && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${getDocTypeColor(doc.document_type)}`}>
-                            {doc.document_type.replace('_', ' ')}
-                          </span>
+        {activeTab === 'my-docs' ? (
+          <>
+            {isLoading && documents.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
+                Loading documents...
+              </div>
+            ) : documents.length === 0 && !error ? (
+              <div className="flex flex-col items-center justify-center h-48 gap-3">
+                <FileText className="w-10 h-10 text-slate-600" />
+                <p className="text-slate-400 text-sm">No documents yet</p>
+                <button
+                  onClick={() => setShowUpload(true)}
+                  className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors"
+                >
+                  Upload your first document
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="p-2.5 bg-slate-800 hover:bg-slate-750 rounded-lg transition-colors cursor-pointer group"
+                    onClick={() => setSelectedDoc(doc)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {doc.thumbnail_url ? (
+                          <img
+                            src={doc.thumbnail_url}
+                            alt=""
+                            className="w-12 h-12 rounded-lg object-cover shrink-0 bg-slate-700"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-lg shrink-0">
+                            <FileText className="w-5 h-5 text-purple-400" />
+                          </div>
                         )}
-                        <span className="text-slate-500 text-[10px]">
-                          {formatFileSize(doc.file_size)}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white text-xs font-medium truncate max-w-[140px]">
+                              {doc.metadata?.title || doc.title || doc.file_name}
+                            </span>
+                            {getStatusIcon(doc.ocr_status)}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {doc.document_type && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${getDocTypeColor(doc.document_type)}`}>
+                                {doc.document_type.replace('_', ' ')}
+                              </span>
+                            )}
+                            <span className="text-slate-500 text-[10px]">
+                              {formatFileSize(doc.file_size)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500 text-[10px] shrink-0">
+                          {formatDate(doc.created_at)}
                         </span>
+                        {deleteConfirm === doc.id ? (
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => handleDelete(doc.id)}
+                              className="text-[10px] text-red-400 hover:text-red-300 font-medium"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="text-[10px] text-slate-400 hover:text-slate-300"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirm(doc.id);
+                            }}
+                            className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 text-[10px] shrink-0">
-                      {formatDate(doc.created_at)}
-                    </span>
-                    {deleteConfirm === doc.id ? (
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => handleDelete(doc.id)}
-                          className="text-[10px] text-red-400 hover:text-red-300 font-medium"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="text-[10px] text-slate-400 hover:text-slate-300"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirm(doc.id);
-                        }}
-                        className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
+        ) : (
+          /* Shared with Me Tab */
+          <>
+            {isLoading && sharedDocs.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
+                Loading shared documents...
+              </div>
+            ) : sharedDocs.length === 0 && !error ? (
+              <div className="flex flex-col items-center justify-center h-48 gap-3">
+                <Share2 className="w-10 h-10 text-slate-600" />
+                <p className="text-slate-400 text-sm">No shared documents</p>
+                <p className="text-slate-500 text-xs text-center px-4">
+                  Documents shared with you via NFT will appear here
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {sharedDocs.map((sd) => (
+                  <div
+                    key={sd.share.id}
+                    className="p-2.5 bg-slate-800 hover:bg-slate-750 rounded-lg transition-colors cursor-pointer"
+                    onClick={() => setSelectedSharedDoc(sd)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 flex items-center justify-center bg-purple-900/30 rounded-lg shrink-0">
+                        <Share2 className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-white text-xs font-medium truncate block">
+                          {sd.document.title || sd.document.file_name}
+                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-slate-500 text-[10px]">
+                            From: {sd.share.owner_address.slice(0, 6)}...{sd.share.owner_address.slice(-4)}
+                          </span>
+                          <span className="text-slate-500 text-[10px]">
+                            Expires: {new Date(sd.share.expires_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -243,12 +347,21 @@ export function SmartDocuments() {
       {selectedDoc && (
         <DocumentDetailModal
           document={selectedDoc}
+          privateKey={privateKey}
           onClose={() => setSelectedDoc(null)}
           onDelete={() => {
             handleDelete(selectedDoc.id);
             setSelectedDoc(null);
           }}
           onRename={handleRename}
+        />
+      )}
+
+      {selectedSharedDoc && (
+        <SharedDocumentViewer
+          sharedDoc={selectedSharedDoc}
+          viewerAddress={walletAddress}
+          onClose={() => setSelectedSharedDoc(null)}
         />
       )}
     </div>

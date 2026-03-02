@@ -1,16 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { X, FileText, Calendar, Users, DollarSign, Hash, Globe, Loader2, AlertCircle, Pencil } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { X, FileText, Calendar, Users, DollarSign, Hash, Globe, Loader2, AlertCircle, Pencil, Send, Share2, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
-import type { SmartDocument } from '../types/documents';
+import { SmartDocumentShareService } from '../services/smartDocumentShare';
+import type { SmartDocument, DocumentShare } from '../types/documents';
+import { ShareDocumentModal } from './ShareDocumentModal';
 
 interface DocumentDetailModalProps {
   document: SmartDocument;
+  privateKey: string;
   onClose: () => void;
   onDelete: () => void;
   onRename: (updated: SmartDocument) => void;
 }
 
-export function DocumentDetailModal({ document, onClose, onDelete, onRename }: DocumentDetailModalProps) {
+export function DocumentDetailModal({ document, privateKey, onClose, onDelete, onRename }: DocumentDetailModalProps) {
   const meta = document.metadata;
   const [previewURL, setPreviewURL] = useState<string | null>(document.thumbnail_url || null);
   const [isEditing, setIsEditing] = useState(false);
@@ -19,8 +22,47 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [editFileName, setEditFileName] = useState(document.file_name);
   const [isSavingFileName, setIsSavingFileName] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shares, setShares] = useState<DocumentShare[]>([]);
+  const [isLoadingShares, setIsLoadingShares] = useState(false);
+  const [revokingShareId, setRevokingShareId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileNameInputRef = useRef<HTMLInputElement>(null);
+
+  const loadShares = useCallback(async () => {
+    setIsLoadingShares(true);
+    try {
+      const data = await api.getDocumentShares(document.id);
+      setShares(data);
+    } catch {
+      // Silently fail — shares section just won't show data
+    } finally {
+      setIsLoadingShares(false);
+    }
+  }, [document.id]);
+
+  useEffect(() => {
+    loadShares();
+  }, [loadShares]);
+
+  const handleRevokeShare = async (share: DocumentShare) => {
+    if (!share.token_id) return;
+    setRevokingShareId(share.id);
+    try {
+      // Burn NFT on-chain
+      const result = await SmartDocumentShareService.revokeShare(privateKey, share.token_id);
+      // Revoke on backend
+      await api.revokeShare(document.id, share.id);
+      // Confirm revoke with tx hash
+      await api.confirmRevoke(share.id, result.txHash);
+      // Refresh shares list
+      await loadShares();
+    } catch (err) {
+      console.error('Revoke failed:', err);
+    } finally {
+      setRevokingShareId(null);
+    }
+  };
 
   const isImage = document.file_type.startsWith('image/');
 
@@ -371,6 +413,57 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
               )}
             </>
           )}
+
+          {/* Sharing History */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Share2 className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-medium text-slate-300">Sharing History</span>
+              {isLoadingShares && <Loader2 className="w-3 h-3 text-slate-500 animate-spin" />}
+            </div>
+            {shares.length === 0 && !isLoadingShares ? (
+              <p className="text-slate-500 text-xs">No shares yet</p>
+            ) : (
+              <div className="space-y-1.5">
+                {shares.map((share) => (
+                  <div key={share.id} className="bg-slate-700/50 rounded-lg p-2 flex items-center justify-between">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-mono text-white truncate">
+                        {share.recipient_address.slice(0, 6)}...{share.recipient_address.slice(-4)}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                          share.status === 'active' ? 'bg-green-900/50 text-green-300' :
+                          share.status === 'pending' ? 'bg-amber-900/50 text-amber-300' :
+                          share.status === 'revoked' ? 'bg-red-900/50 text-red-300' :
+                          'bg-slate-600 text-slate-300'
+                        }`}>
+                          {share.status}
+                        </span>
+                        <span className="text-[9px] text-slate-500">
+                          Expires: {new Date(share.expires_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    {share.status === 'active' && (
+                      <button
+                        onClick={() => handleRevokeShare(share)}
+                        disabled={revokingShareId === share.id}
+                        className="p-1 text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors shrink-0"
+                        title="Revoke share"
+                      >
+                        {revokingShareId === share.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
@@ -382,6 +475,13 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
             Delete
           </button>
           <button
+            onClick={() => setShowShareModal(true)}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+          >
+            <Send className="w-3.5 h-3.5" />
+            Share
+          </button>
+          <button
             onClick={onClose}
             className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-medium transition-colors"
           >
@@ -389,6 +489,19 @@ export function DocumentDetailModal({ document, onClose, onDelete, onRename }: D
           </button>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareDocumentModal
+          document={document}
+          privateKey={privateKey}
+          onClose={() => setShowShareModal(false)}
+          onSuccess={() => {
+            setShowShareModal(false);
+            loadShares();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Favorite, FavoriteCreate, IntentRequest, IntentResponse } from '../types/api';
-import type { SmartDocument } from '../types/documents';
+import type { SmartDocument, DocumentShare, SharedDocumentView, InitiateShareResponse } from '../types/documents';
 import { authService } from './auth';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -158,6 +158,51 @@ class WailletAPI {
   async deleteDocument(id: number): Promise<void> {
     return this.request<void>(`/documents/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // ==================== DOCUMENT SHARING ====================
+
+  async initiateShare(docId: number, recipientAddress: string, expiresAt: number): Promise<InitiateShareResponse> {
+    return this.request<InitiateShareResponse>(`/documents/${docId}/share`, {
+      method: 'POST',
+      body: JSON.stringify({
+        recipient_address: recipientAddress,
+        expires_at: expiresAt,
+      }),
+    });
+  }
+
+  async confirmShare(shareId: number, tokenId: number, txHash: string): Promise<void> {
+    return this.request<void>(`/documents/shares/${shareId}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify({ token_id: tokenId, tx_hash: txHash }),
+    });
+  }
+
+  async getDocumentShares(docId: number): Promise<DocumentShare[]> {
+    return this.request<DocumentShare[]>(`/documents/${docId}/shares`);
+  }
+
+  async getSharedWithMe(): Promise<SharedDocumentView[]> {
+    return this.request<SharedDocumentView[]>('/documents/shared-with-me');
+  }
+
+  async getSharedDocumentURL(shareId: number): Promise<string> {
+    const res = await this.request<{ url: string }>(`/documents/shares/${shareId}/url`);
+    return res.url;
+  }
+
+  async revokeShare(docId: number, shareId: number): Promise<void> {
+    return this.request<void>(`/documents/${docId}/shares/${shareId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async confirmRevoke(shareId: number, txHash: string): Promise<void> {
+    return this.request<void>(`/documents/shares/${shareId}/confirm-revoke`, {
+      method: 'POST',
+      body: JSON.stringify({ tx_hash: txHash }),
     });
   }
 

@@ -463,7 +463,7 @@ function AppContent() {
           <div className="flex-1 overflow-hidden">
             {mode === 'wallet' && <Dashboard onAIKeyChanged={refreshAIStatus} />}
             {mode === 'history' && <TransactionHistory currentChain={currentChain} address={account?.address || null} />}
-            {mode === 'documents' && <SmartDocuments />}
+            {mode === 'documents' && <SmartDocuments privateKey={account?.privateKey || ''} walletAddress={account?.address || ''} />}
             {mode === 'agent' && <AgentChat />}
           </div>
         </div>

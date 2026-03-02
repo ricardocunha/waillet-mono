@@ -175,6 +175,25 @@ func RunMigrations(db *sqlx.DB) error {
 			INDEX idx_wallet_nonce (wallet_address),
 			INDEX idx_expires (expires_at)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+		`CREATE TABLE IF NOT EXISTS document_shares (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			document_id INT NOT NULL,
+			document_hash VARCHAR(66) NOT NULL,
+			owner_address VARCHAR(42) NOT NULL,
+			recipient_address VARCHAR(42) NOT NULL,
+			token_id INT DEFAULT NULL,
+			tx_hash VARCHAR(66) DEFAULT NULL,
+			expires_at TIMESTAMP NOT NULL,
+			status ENUM('pending','active','revoked','expired') DEFAULT 'pending',
+			revoke_tx_hash VARCHAR(66) DEFAULT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			FOREIGN KEY (document_id) REFERENCES smart_documents(id) ON DELETE CASCADE,
+			INDEX idx_shares_doc (document_id),
+			INDEX idx_shares_recipient (recipient_address),
+			INDEX idx_shares_status (status)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 	}
 
 	for i, stmt := range statements {

@@ -1,34 +1,6 @@
 version: '3.8'
 
 services:
-  backend-v2:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8000
-      - DEBUG=true
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USER=waillet
-      - DB_PASSWORD=waillet_secret
-      - DB_NAME=waillet
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
-      - CORS_ORIGINS=*
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - S3_BUCKET=${S3_BUCKET:-waillet-documents}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    depends_on:
-      waillet:
-        condition: service_healthy
-    networks:
-      - waillet-network
-
   waillet:
     image: mysql:8.0
     ports:

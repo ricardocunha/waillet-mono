@@ -407,6 +407,24 @@ func (s *DocumentService) GetPresignedURL(ctx context.Context, id int64, walletA
 	return presignedReq.URL, nil
 }
 
+// GeneratePresignedURLForKey generates a presigned URL for a given S3 key (used by share service)
+func (s *DocumentService) GeneratePresignedURLForKey(ctx context.Context, s3Key string) (string, error) {
+	if s.s3Client == nil {
+		return "", fmt.Errorf("S3 client not configured")
+	}
+
+	presignClient := s3.NewPresignClient(s.s3Client)
+	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.s3Bucket),
+		Key:    aws.String(s3Key),
+	}, s3.WithPresignExpires(15*time.Minute))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignedReq.URL, nil
+}
+
 func (s *DocumentService) RenameDocument(ctx context.Context, id int64, walletAddress, newTitle, newFileName string) (*models.SmartDocument, error) {
 	doc, err := s.docRepo.GetByID(ctx, id)
 	if err != nil {

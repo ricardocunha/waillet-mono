@@ -59,6 +59,7 @@ func main() {
 	authRepo := repository.NewAuthRepository(db)
 	chainTypeConfigRepo := repository.NewChainTypeConfigRepository(db)
 	docRepo := repository.NewSmartDocumentRepository(db)
+	shareRepo := repository.NewDocumentShareRepository(db)
 
 	// Initialize services
 	rpcService := service.NewRPCService(&cfg.RPC, networkRepo)
@@ -70,6 +71,7 @@ func main() {
 	authService := auth.NewAuthService(&cfg.Auth, authRepo)
 	lifiService := service.NewLifiService(&cfg.Lifi)
 	docService := service.NewDocumentService(&cfg.S3, &cfg.OpenAI, docRepo)
+	shareService := service.NewDocumentShareService(shareRepo, docRepo, docService)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -85,6 +87,7 @@ func main() {
 	chainTypeConfigHandler := handler.NewChainTypeConfigHandler(chainTypeConfigRepo)
 	lifiHandler := handler.NewLifiHandler(lifiService)
 	documentHandler := handler.NewDocumentHandler(docService)
+	shareHandler := handler.NewDocumentShareHandler(shareService)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -182,10 +185,19 @@ func main() {
 			r.Route("/documents", func(r chi.Router) {
 				r.Get("/", documentHandler.GetAll)
 				r.Post("/upload", documentHandler.Upload)
+				r.Get("/shared-with-me", shareHandler.GetSharedWithMe)
 				r.Get("/{id}", documentHandler.GetByID)
 				r.Get("/{id}/url", documentHandler.GetPresignedURL)
 				r.Put("/{id}", documentHandler.Rename)
 				r.Delete("/{id}", documentHandler.Delete)
+
+				// Document sharing
+				r.Post("/{id}/share", shareHandler.InitiateShare)
+				r.Get("/{id}/shares", shareHandler.GetDocumentShares)
+				r.Delete("/{id}/shares/{shareId}", shareHandler.RevokeShare)
+				r.Post("/shares/{shareId}/confirm", shareHandler.ConfirmShare)
+				r.Post("/shares/{shareId}/confirm-revoke", shareHandler.ConfirmRevoke)
+				r.Get("/shares/{shareId}/url", shareHandler.GetSharedDocumentURL)
 			})
 
 			// Settings (protected)

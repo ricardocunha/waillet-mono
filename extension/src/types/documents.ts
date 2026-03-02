@@ -42,3 +42,40 @@ export interface Amount {
   value: string;
   currency: string;
 }
+
+// Document sharing types
+
+export interface DocumentShare {
+  id: number;
+  document_id: number;
+  document_hash: string;
+  owner_address: string;
+  recipient_address: string;
+  token_id?: number;
+  tx_hash?: string;
+  expires_at: string;
+  status: 'pending' | 'active' | 'revoked' | 'expired';
+  revoke_tx_hash?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SharedDocumentInfo {
+  id: number;
+  title: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  document_type?: string;
+  created_at: string;
+}
+
+export interface SharedDocumentView {
+  share: DocumentShare;
+  document: SharedDocumentInfo;
+}
+
+export interface InitiateShareResponse {
+  share_id: number;
+  document_hash: string;
+}

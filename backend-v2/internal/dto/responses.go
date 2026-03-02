@@ -210,3 +210,40 @@ type AuthTokenResponse struct {
 type CurrentUserResponse struct {
 	WalletAddress string `json:"wallet_address"`
 }
+
+// Document sharing responses
+
+type InitiateShareResponse struct {
+	ShareID      int64  `json:"share_id"`
+	DocumentHash string `json:"document_hash"`
+}
+
+type DocumentShareResponse struct {
+	ID               int64     `json:"id"`
+	DocumentID       int64     `json:"document_id"`
+	DocumentHash     string    `json:"document_hash"`
+	OwnerAddress     string    `json:"owner_address"`
+	RecipientAddress string    `json:"recipient_address"`
+	TokenID          *int64    `json:"token_id,omitempty"`
+	TxHash           *string   `json:"tx_hash,omitempty"`
+	ExpiresAt        time.Time `json:"expires_at"`
+	Status           string    `json:"status"`
+	RevokeTxHash     *string   `json:"revoke_tx_hash,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type SharedDocumentInfo struct {
+	ID           int64     `json:"id"`
+	Title        string    `json:"title"`
+	FileName     string    `json:"file_name"`
+	FileType     string    `json:"file_type"`
+	FileSize     int       `json:"file_size"`
+	DocumentType *string   `json:"document_type,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type SharedDocumentViewDTO struct {
+	Share    DocumentShareResponse `json:"share"`
+	Document SharedDocumentInfo    `json:"document"`
+}

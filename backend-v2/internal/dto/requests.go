@@ -70,3 +70,19 @@ type VerifySignatureRequest struct {
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+// Document sharing requests
+
+type InitiateShareRequest struct {
+	RecipientAddress string `json:"recipient_address"`
+	ExpiresAt        int64  `json:"expires_at"` // Unix timestamp
+}
+
+type ConfirmShareRequest struct {
+	TokenID int64  `json:"token_id"`
+	TxHash  string `json:"tx_hash"`
+}
+
+type ConfirmRevokeRequest struct {
+	TxHash string `json:"tx_hash"`
+}

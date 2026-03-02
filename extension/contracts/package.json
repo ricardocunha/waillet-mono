@@ -6,6 +6,8 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy:base-sepolia": "hardhat run scripts/deploy-registry.ts --network baseSepolia",
+    "deploy:share-base-sepolia": "hardhat run scripts/deploy-share.ts --network baseSepolia",
+    "upgrade:share-base-sepolia": "hardhat run scripts/upgrade-share.ts --network baseSepolia",
     "verify": "hardhat verify --network baseSepolia"
   },
   "devDependencies": {
