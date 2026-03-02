@@ -2,42 +2,44 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Container, Section, SectionHeader } from '../ui/index.ts'
 
+const screenshotBaseUrl = `${import.meta.env.BASE_URL}screenshots/`
+
 const screenshots = [
   {
     id: 'extension-dashboard',
     title: 'Wallet Dashboard',
     description: 'View your balances and recent activity at a glance',
-    src: '/screenshots/extension-dashboard.png',
+    src: `${screenshotBaseUrl}extension-dashboard.png`,
   },
   {
     id: 'extension-ai',
     title: 'AI Agent',
     description: 'Chat with your wallet using natural language',
-    src: '/screenshots/extension-ai.png',
+    src: `${screenshotBaseUrl}extension-ai.png`,
   },
   {
     id: 'extension-networks',
     title: 'Multi-Chain Support',
     description: 'Switch between networks seamlessly',
-    src: '/screenshots/extension-networks.png',
+    src: `${screenshotBaseUrl}extension-networks.png`,
   },
   {
     id: 'extension-send',
     title: 'Send Crypto',
     description: 'Easily send tokens to any address or saved favorite',
-    src: '/screenshots/extension-send.png',
+    src: `${screenshotBaseUrl}extension-send.png`,
   },
   {
     id: 'extension-settings',
     title: 'Account Settings',
     description: 'Manage your wallet, export keys, and configure AI',
-    src: '/screenshots/extension-settings.png',
+    src: `${screenshotBaseUrl}extension-settings.png`,
   },
   {
     id: 'extension-favorite',
     title: 'Save Favorites',
     description: 'Save frequently used addresses for quick access',
-    src: '/screenshots/extension-favorite.png',
+    src: `${screenshotBaseUrl}extension-favorite.png`,
   },
 ]
 

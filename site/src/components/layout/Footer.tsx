@@ -9,8 +9,8 @@ const footerLinks = {
     { label: 'Downloads', href: '#downloads' },
   ],
   resources: [
-    { label: 'Documentation', href: 'https://github.com/waillet/waillet', external: true },
-    { label: 'GitHub', href: 'https://github.com/waillet/waillet', external: true },
+    { label: 'Documentation', href: 'https://github.com/ricardocunha/waillet-mono', external: true },
+    { label: 'GitHub', href: 'https://github.com/ricardocunha/waillet-mono', external: true },
     { label: 'Community', href: '#community' },
   ],
   legal: [
@@ -20,7 +20,7 @@ const footerLinks = {
 }
 
 const socialLinks = [
-  { icon: Github, href: 'https://github.com/waillet/waillet', label: 'GitHub' },
+  { icon: Github, href: 'https://github.com/ricardocunha/waillet-mono', label: 'GitHub' },
   { icon: Twitter, href: 'https://twitter.com/waillet', label: 'Twitter' },
 ]
 

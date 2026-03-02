@@ -7,7 +7,7 @@ const communityLinks = [
     icon: Github,
     title: 'GitHub',
     description: 'Contribute to the open-source codebase, report issues, or explore the code.',
-    href: 'https://github.com/waillet/waillet',
+    href: 'https://github.com/ricardocunha/waillet-mono',
     cta: 'View Repository',
   },
   {

@@ -65,7 +65,7 @@ export function Hero() {
           <div className="relative">
             <div className="absolute inset-0 bg-purple-600/20 rounded-full blur-3xl" />
             <img
-              src="/images/freepik_smart_wallet.png"
+              src={`${import.meta.env.BASE_URL}images/freepik_smart_wallet.png`}
               alt="wAIllet - AI-Powered Smart Wallet"
               className="relative w-full h-auto"
             />
