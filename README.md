@@ -164,7 +164,7 @@ go run cmd/server/main.go
 
 > **Tip:** For hot-reload during development, use [air](https://github.com/air-verse/air): `air` (run from `backend-v2/`).
 
-The server starts on `http://localhost:8000`. Database tables are created automatically on startup, and default networks are seeded if the `networks` table is empty.
+The server starts on `http://localhost:8000`. Database tables are created automatically on startup via GORM auto-migrate, and default networks are seeded if the `networks` table is empty. No manual migration step is needed.
 
 ### API Endpoints
 
