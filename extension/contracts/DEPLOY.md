@@ -66,6 +66,22 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+## Hardhat Config
+
+Network settings live in `hardhat.config.ts`. To add a new network:
+
+```ts
+networks: {
+  myNetwork: {
+    url: process.env.MY_NETWORK_RPC_URL,
+    accounts: [process.env.PRIVATE_KEY!],
+    chainId: 12345,
+  },
+},
+```
+
+Then deploy with `--network myNetwork`.
+
 ## After Deployment
 
 1. Copy the **proxy** address from terminal output
