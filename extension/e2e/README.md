@@ -202,6 +202,16 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## Retry on Failure
+
+To automatically retry flaky tests, add to `playwright.config.ts`:
+
+```ts
+retries: process.env.CI ? 2 : 0,
+```
+
+This retries failed tests up to 2 times in CI, keeping the local dev cycle fast with no retries.
+
 ## Parallel Execution
 
 By default tests run sequentially (Chrome extension tests cannot share a browser context). To parallelise across multiple workers, each worker needs its own extension instance — this is not yet configured.
