@@ -934,6 +934,32 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 ---
 
 
+
+
+
+## Accessibility Checklist ❌ MANUAL ONLY
+
+Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
+
+### Keyboard Navigation
+- [ ] Tab key cycles through all interactive elements
+- [ ] Enter/Space activates buttons and links
+- [ ] Escape closes modals
+- [ ] Focus ring is always visible
+
+### Screen Reader
+- [ ] Wallet address announced correctly
+- [ ] Balance amounts read with units ("0.05 ETH")
+- [ ] Error messages announced when they appear
+- [ ] Modal open/close state announced
+
+### Color & Contrast
+- [ ] All text meets WCAG AA contrast (4.5:1 minimum)
+- [ ] Error states not conveyed by color alone (also icon/text)
+- [ ] Purple theme maintains readable contrast throughout
+
+---
+
 ## Test 23: Multi-Account Support ❌ MANUAL ONLY
 
 ### Test 23.1: Add Second Account
