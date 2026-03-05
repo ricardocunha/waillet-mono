@@ -188,6 +188,32 @@ The server starts on `http://localhost:8000`. Database tables are created automa
 | GET | `/api/auth/nonce` | Get SIWE nonce for wallet sign-in |
 | POST | `/api/auth/verify` | Verify SIWE signature, return JWT tokens |
 
+
+## Testing
+
+### Backend
+
+```bash
+cd backend-v2
+go test ./...
+```
+
+### Extension
+
+```bash
+cd extension
+npm test
+```
+
+### E2E
+
+```bash
+cd extension
+npm run test:e2e
+```
+
+See `extension/e2e/README.md` for full E2E setup instructions.
+
 ## Running the Extension
 
 **1. Install dependencies:**
