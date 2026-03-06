@@ -81,6 +81,12 @@ dapp (React + Vite)
   └── wAIllet backend    — bridge coordination & token prices
 ```
 
+## Related
+
+- [wAIllet Extension](../extension/) — Chrome/Firefox wallet extension
+- [wAIllet Backend](../backend-v2/) — Go REST API
+- [Manual Testing](../manual-testing/checklist.md) — QA checklist
+
 ## Contributing
 
 1. Fork the repo and create a branch: `git checkout -b feat/my-feature`
