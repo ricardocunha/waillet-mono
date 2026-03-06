@@ -160,6 +160,20 @@ Expiration Time: 2026-01-01T00:10:00.000Z
 
 The backend validates the domain, chain ID, and expiration before accepting the signature.
 
+## Token Storage
+
+The extension stores tokens in `chrome.storage.local` under the key `auth_tokens`:
+
+```json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "expires_at": 1700000000
+}
+```
+
+`api.ts` reads this on every request and auto-refreshes the access token when `expires_at` is within 60 seconds of the current time.
+
 ## Security Notes
 
 - Nonces are single-use and expire in 10 minutes — prevents replay attacks
