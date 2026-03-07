@@ -66,6 +66,16 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+## Gas Optimization
+
+Before deploying, estimate gas to avoid surprises:
+
+```bash
+npx hardhat run scripts/deploy-registry.ts --network baseSepolia 2>&1 | grep "gas"
+```
+
+The UUPS proxy pattern is already gas-efficient for upgrades — only the implementation changes, the proxy storage stays.
+
 ## Hardhat Config
 
 Network settings live in `hardhat.config.ts`. To add a new network:
