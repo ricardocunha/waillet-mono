@@ -223,7 +223,14 @@ cd extension
 npm install
 ```
 
-**2. Build:**
+**2. Lint and type-check (optional but recommended):**
+
+```bash
+npm run lint
+npm run typecheck
+```
+
+**3. Build:**
 
 ```bash
 npm run build
