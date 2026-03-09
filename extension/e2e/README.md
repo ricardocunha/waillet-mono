@@ -202,6 +202,23 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## Running Specific Tests
+
+Filter tests by tag or name to speed up focused testing:
+
+```bash
+# Run only onboarding tests
+npx playwright test onboarding
+
+# Run tests matching a name pattern
+npx playwright test -g "should unlock wallet"
+
+# Tag tests with @smoke and run only smoke tests
+npx playwright test --grep @smoke
+```
+
+Add `@smoke` to critical test titles to create a fast smoke suite.
+
 ## Retry on Failure
 
 To automatically retry flaky tests, add to `playwright.config.ts`:
