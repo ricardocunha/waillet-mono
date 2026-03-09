@@ -942,10 +942,14 @@ curl http://localhost:8000/api/favorites/YOUR_WALLET_ADDRESS | python3 -m json.t
 Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 
 ### Keyboard Navigation
-- [ ] Tab key cycles through all interactive elements
+- 
+- 
+- [ ] Tab key cycles through all interactive elements in logical order
 - [ ] Enter/Space activates buttons and links
-- [ ] Escape closes modals
-- [ ] Focus ring is always visible
+- [ ] Escape closes modals and dropdowns
+- [ ] Focus ring is always visible (not hidden by CSS)
+- [ ] Skip-to-content link present (or not needed at 360px)
+- [ ] No keyboard traps — can always Tab out of any component
 
 ### Screen Reader
 - [ ] Wallet address announced correctly
