@@ -18,13 +18,13 @@ This project is being built incrementally. Check back for updates!
 ## Supported Networks
 
 ### Mainnet
-- Ethereum
-- Base
-- BNB Smart Chain
+- Ethereum (chain ID: 1)
+- Base (chain ID: 8453)
+- BNB Smart Chain (chain ID: 56)
 
 ### Testnet
-- Sepolia
-- Base Sepolia
+- Sepolia (chain ID: 11155111)
+- Base Sepolia (chain ID: 84532)
 
 ## Bridge Pairs
 
