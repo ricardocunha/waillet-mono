@@ -160,6 +160,13 @@ Expiration Time: 2026-01-01T00:10:00.000Z
 
 The backend validates the domain, chain ID, and expiration before accepting the signature.
 
+
+## Session Invalidation
+
+Calling `POST /api/auth/logout` invalidates the refresh token server-side. The access token remains technically valid until it expires (15 min TTL) but the extension clears it from storage immediately.
+
+For stricter security, rotate `JWT_SECRET` — this invalidates all existing tokens across all sessions instantly.
+
 ## Token Storage
 
 The extension stores tokens in `chrome.storage.local` under the key `auth_tokens`:
