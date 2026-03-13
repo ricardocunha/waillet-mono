@@ -2,10 +2,6 @@ aws_region          = "us-east-1"
 lambda_package_path = "../../artifacts/waillet-lambda.zip"
 app_version         = "2026.03.12"
 
-# Secrets
-db_password = "replace-with-strong-password"
-jwt_secret  = "replace-with-long-random-secret"
-
 # Optional API keys (can be left empty)
 alchemy_api_key = ""
 infura_api_key  = ""

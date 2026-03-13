@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 
   # Remote state - configure your backend
@@ -50,19 +54,6 @@ variable "app_version" {
   default     = "latest"
 }
 
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
-}
-
-variable "jwt_secret" {
-  description = "JWT signing secret"
-  type        = string
-  sensitive   = true
-}
-
-
 variable "alchemy_api_key" {
   description = "Alchemy API key"
   type        = string
@@ -89,6 +80,38 @@ locals {
   availability_zones = ["${var.aws_region}a", "${var.aws_region}b", "${var.aws_region}c"]
 }
 
+# Secrets: generate and store in AWS Secrets Manager
+resource "random_password" "db_password" {
+  length           = 32
+  special          = true
+  override_special = "!@#%^*()-_=+[]{}"
+}
+
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "db_password" {
+  name        = "waillet/${local.environment}/db_password"
+  description = "RDS master password for ${local.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = random_password.db_password.result
+}
+
+resource "aws_secretsmanager_secret" "jwt_secret" {
+  name        = "waillet/${local.environment}/jwt_secret"
+  description = "JWT signing secret for ${local.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_secret" {
+  secret_id     = aws_secretsmanager_secret.jwt_secret.id
+  secret_string = random_password.jwt_secret.result
+}
+
 # VPC Module
 module "vpc" {
   source = "../../modules/vpc"
@@ -109,7 +132,7 @@ module "rds" {
 
   db_name     = "waillet"
   db_username = "waillet_admin"
-  db_password = var.db_password
+  db_password = random_password.db_password.result
 
   # Production-specific settings
   instance_class          = "db.t3.small"
@@ -134,10 +157,10 @@ module "lambda" {
   db_port     = module.rds.port
   db_name     = module.rds.database_name
   db_username = "waillet_admin"
-  db_password = var.db_password
+  db_password = random_password.db_password.result
 
   # API Keys
-  jwt_secret      = var.jwt_secret
+  jwt_secret      = random_password.jwt_secret.result
   alchemy_api_key = var.alchemy_api_key
   infura_api_key  = var.infura_api_key
   cmc_api_key     = var.cmc_api_key
