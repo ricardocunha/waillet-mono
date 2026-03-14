@@ -230,13 +230,20 @@ npm run lint
 npm run typecheck
 ```
 
-**3. Build:**
+
+**4. Build:**
 
 ```bash
 npm run build
 ```
 
-**3. Load in Chrome:**
+**5. Watch mode (auto-rebuild on file change):**
+
+```bash
+npm run dev:watch
+```
+
+**6. Load in Chrome:**
 
 1. Open `chrome://extensions/`
 2. Enable **Developer mode** (top right toggle)
