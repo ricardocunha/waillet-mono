@@ -66,6 +66,15 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+## Network Configuration
+
+| Network | Chain ID | RPC Env Var | Explorer |
+|---------|----------|-------------|----------|
+| Base Sepolia | 84532 | `BASE_SEPOLIA_RPC_URL` | basescan.org/sepolia |
+| Base Mainnet | 8453 | `BASE_MAINNET_RPC_URL` | basescan.org |
+| Sepolia | 11155111 | `SEPOLIA_RPC_URL` | sepolia.etherscan.io |
+| Ethereum | 1 | `MAINNET_RPC_URL` | etherscan.io |
+
 ## Gas Optimization
 
 Before deploying, estimate gas to avoid surprises:
