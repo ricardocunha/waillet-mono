@@ -11,9 +11,13 @@ A decentralized application for the wAIllet ecosystem.
 
 ## Status
 
-**Under Construction**
+**Beta** — core bridge functionality working. The following is done:
 
-This project is being built incrementally. Check back for updates!
+- ✅ Wallet connection (MetaMask, wAIllet)
+- ✅ Network switching
+- ✅ Token balance display
+- 🚧 Bridge UI (in progress)
+- ⬜ Transaction history
 
 ## Tech Stack
 
