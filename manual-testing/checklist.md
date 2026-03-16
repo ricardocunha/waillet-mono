@@ -1057,6 +1057,24 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 - Extension unit tests: Partially automated (some require full context)
 - E2E browser tests: Playwright suite available — see `extension/e2e/README.md`
 
+
+
+### Performance Benchmarks
+
+Use these targets when testing on a standard laptop with local backend:
+
+| Operation | Target | Fail if |
+|-----------|--------|---------|
+| Extension load | < 500ms | > 1s |
+| Wallet unlock | < 300ms | > 700ms |
+| AI intent parse | < 3s | > 6s |
+| Risk analysis | < 3s | > 6s |
+| Transaction simulation | < 2s | > 5s |
+| Favorites API response | < 500ms | > 1s |
+| RPC proxy response | < 2s | > 5s |
+
+---
+
 ### Test Coverage Summary
 
 | Area | Coverage | Notes |
