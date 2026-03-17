@@ -2,7 +2,7 @@ aws_region          = "us-east-1"
 lambda_package_path = "../../artifacts/waillet-lambda.zip"
 app_version         = "2026.03.12"
 
-# Optional API keys (can be left empty)
-alchemy_api_key = ""
-infura_api_key  = ""
-cmc_api_key     = ""
+# Optional API keys (recommended to set via TF_VAR_* environment variables)
+# alchemy_api_key = "..."
+# infura_api_key  = "..."
+# cmc_api_key     = "..."

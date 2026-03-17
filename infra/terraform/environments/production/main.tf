@@ -112,6 +112,36 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
   secret_string = random_password.jwt_secret.result
 }
 
+resource "aws_secretsmanager_secret" "alchemy_api_key" {
+  name        = "waillet/${local.environment}/alchemy_api_key"
+  description = "Alchemy API key for ${local.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "alchemy_api_key" {
+  secret_id     = aws_secretsmanager_secret.alchemy_api_key.id
+  secret_string = var.alchemy_api_key
+}
+
+resource "aws_secretsmanager_secret" "infura_api_key" {
+  name        = "waillet/${local.environment}/infura_api_key"
+  description = "Infura API key for ${local.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "infura_api_key" {
+  secret_id     = aws_secretsmanager_secret.infura_api_key.id
+  secret_string = var.infura_api_key
+}
+
+resource "aws_secretsmanager_secret" "cmc_api_key" {
+  name        = "waillet/${local.environment}/cmc_api_key"
+  description = "CoinMarketCap API key for ${local.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "cmc_api_key" {
+  secret_id     = aws_secretsmanager_secret.cmc_api_key.id
+  secret_string = var.cmc_api_key
+}
+
 # VPC Module
 module "vpc" {
   source = "../../modules/vpc"
