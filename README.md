@@ -282,6 +282,22 @@ This auto-reloads the extension when files change.
 
 For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser.
 
+## Troubleshooting
+
+**Backend fails to start:**
+- Check `.env` exists and has valid `DB_HOST`, `DB_USER`, `DB_PASSWORD`
+- Ensure MySQL container is running: `docker ps | grep mysql`
+- Check port 8000 isn't already in use: `lsof -i :8000`
+
+**Extension not loading in Chrome:**
+- Make sure `npm run build` completed without errors
+- Verify `extension/dist/manifest.json` exists
+- Check the Chrome extension error log at `chrome://extensions/`
+
+**RPC calls failing:**
+- Confirm `ALCHEMY_API_KEY` is set in `.env`
+- The free Alchemy tier may rate-limit heavy testing — use a dedicated key
+
 ## Architecture
 
 ```
