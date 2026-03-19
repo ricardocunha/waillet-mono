@@ -202,6 +202,22 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## RPC: Mock vs Real
+
+Extension tests use a **real RPC endpoint** via the backend proxy by default. This requires the backend to be running.
+
+To run tests without the backend, you can mock the RPC at the extension level by setting a local Hardhat/Anvil node:
+
+```bash
+# Start a local Ethereum node
+npx hardhat node
+
+# Point backend to it
+ALCHEMY_API_KEY="" ETH_RPC_URL=http://localhost:8545 go run cmd/server/main.go
+```
+
+This gives deterministic blockchain state and fast tests without network calls.
+
 ## Running Specific Tests
 
 Filter tests by tag or name to speed up focused testing:
