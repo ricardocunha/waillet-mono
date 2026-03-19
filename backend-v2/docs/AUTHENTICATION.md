@@ -161,6 +161,12 @@ Expiration Time: 2026-01-01T00:10:00.000Z
 The backend validates the domain, chain ID, and expiration before accepting the signature.
 
 
+## Concurrent Sessions
+
+Each wallet address can have multiple active sessions (e.g. wallet unlocked on two devices). Each session gets its own refresh token. Logging out on one device does not affect other sessions.
+
+To revoke all sessions for a wallet, rotate the `JWT_SECRET` — all tokens signed with the old secret become invalid immediately.
+
 ## Session Invalidation
 
 Calling `POST /api/auth/logout` invalidates the refresh token server-side. The access token remains technically valid until it expires (15 min TTL) but the extension clears it from storage immediately.
