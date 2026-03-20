@@ -118,6 +118,7 @@ resource "aws_secretsmanager_secret" "alchemy_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "alchemy_api_key" {
+  count         = var.alchemy_api_key != "" ? 1 : 0
   secret_id     = aws_secretsmanager_secret.alchemy_api_key.id
   secret_string = var.alchemy_api_key
 }
@@ -128,6 +129,7 @@ resource "aws_secretsmanager_secret" "infura_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "infura_api_key" {
+  count         = var.infura_api_key != "" ? 1 : 0
   secret_id     = aws_secretsmanager_secret.infura_api_key.id
   secret_string = var.infura_api_key
 }
@@ -138,6 +140,7 @@ resource "aws_secretsmanager_secret" "cmc_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "cmc_api_key" {
+  count         = var.cmc_api_key != "" ? 1 : 0
   secret_id     = aws_secretsmanager_secret.cmc_api_key.id
   secret_string = var.cmc_api_key
 }
