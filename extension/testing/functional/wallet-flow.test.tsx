@@ -41,7 +41,8 @@ describe('Wallet Flow - Create Wallet', () => {
       </WalletProvider>
     );
 
-    expect(screen.getByText('Welcome to Waillet')).toBeInTheDocument();
+    expect(screen.getByText(/welcome to/i)).toBeInTheDocument();
+    expect(screen.getByText('wAIllet')).toBeInTheDocument();
     expect(screen.getByText('Create New Wallet')).toBeInTheDocument();
     expect(screen.getByText('Import Existing Wallet')).toBeInTheDocument();
   });
@@ -194,7 +195,8 @@ describe('Wallet Flow - Unlock', () => {
       </WalletProvider>
     );
 
-    expect(screen.getByText('Welcome Back')).toBeInTheDocument();
+    expect(screen.getByText('wAIllet')).toBeInTheDocument();
+    expect(screen.getByText('Enter your password to unlock')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
   });
 });
@@ -213,4 +215,3 @@ describe('Wallet Flow - Dashboard', () => {
     expect(screen.getByText('$0.00')).toBeInTheDocument();
   });
 });
-
