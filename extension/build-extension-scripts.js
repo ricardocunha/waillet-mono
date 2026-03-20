@@ -13,10 +13,12 @@ const apiBaseUrl = env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL || '';
 async function buildScript(scriptName) {
   await build({
     configFile: false,
+    publicDir: false,
     define: {
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiBaseUrl),
     },
     build: {
+      copyPublicDir: false,
       lib: {
         entry: resolve(process.cwd(), `src/${scriptName}.ts`),
         name: scriptName,
