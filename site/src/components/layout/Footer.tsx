@@ -25,6 +25,8 @@ const socialLinks = [
 ]
 
 export function Footer() {
+  const staticPrivacyUrl = `${import.meta.env.BASE_URL}privacy-policy.html`
+
   return (
     <footer className="bg-slate-900 border-t border-slate-800">
       <Container className="py-12">
@@ -98,12 +100,21 @@ export function Footer() {
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-slate-400 hover:text-white transition-colors"
-                  >
-                    {link.label}
-                  </Link>
+                  {link.label === 'Privacy Policy' ? (
+                    <a
+                      href={staticPrivacyUrl}
+                      className="text-slate-400 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.href}
+                      className="text-slate-400 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
