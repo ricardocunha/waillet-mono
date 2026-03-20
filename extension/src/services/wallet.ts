@@ -3,8 +3,7 @@ import { ChainType } from '../types/chainTypes';
 import { chainAdapterRegistry } from '../adapters';
 import { networkService } from './networkService';
 import { api } from './api';
-
-const BACKEND_RPC_PROXY = 'http://localhost:8000/api/rpc/proxy';
+import { RPC_PROXY_URL } from '../config/backend';
 
 // Ethers error codes
 enum EthersErrorCode {
@@ -21,7 +20,7 @@ class ProxiedJsonRpcProvider extends JsonRpcProvider {
   private chainName: string;
 
   constructor(chainName: string) {
-    super(BACKEND_RPC_PROXY);
+    super(RPC_PROXY_URL);
     this.chainName = chainName;
   }
 
@@ -42,7 +41,7 @@ class ProxiedJsonRpcProvider extends JsonRpcProvider {
 
       const responses = await Promise.all(
         requests.map(async (request) => {
-          const response = await fetch(BACKEND_RPC_PROXY, {
+          const response = await fetch(RPC_PROXY_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -480,5 +479,4 @@ export class WalletService {
     return await wallet.signTypedData(domain, cleanTypes, value);
   }
 }
-
 

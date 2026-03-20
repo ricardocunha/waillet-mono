@@ -1,5 +1,6 @@
 import { BackgroundMessageType, EthMethod, PendingRequestType, WindowMessageType } from './types/messaging';
 import { browserAPI } from './utils/browser-api';
+import { RPC_PROXY_URL } from './config/backend';
 
 console.log('Waillet background loaded');
 
@@ -277,7 +278,7 @@ async function executeRPCCall(method: string, params: any[], tabId: number, mess
 
       console.log(`[Waillet] 📡 Sending to RPC proxy:`, rpcBody);
 
-      const response = await fetch('http://localhost:8000/api/rpc/proxy', {
+      const response = await fetch(RPC_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rpcBody)
@@ -944,4 +945,3 @@ setInterval(() => {
     }
   }
 }, 60000); // Run every minute
-

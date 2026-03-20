@@ -1,7 +1,7 @@
 import { WalletService } from './wallet';
 import { browserAPI } from '../utils/browser-api';
+import { API_BASE_URL } from '../config/backend';
 
-const API_BASE_URL = 'http://localhost:8000/api';
 const AUTH_STORAGE_KEY = 'auth_tokens';
 
 export interface AuthTokens {

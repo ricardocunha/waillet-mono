@@ -1,7 +1,6 @@
 import type { Favorite, FavoriteCreate, IntentRequest, IntentResponse } from '../types/api';
 import { authService } from './auth';
-
-const API_BASE_URL = 'http://localhost:8000/api';
+import { API_BASE_URL, HEALTH_URL } from '../config/backend';
 
 // Endpoints that require authentication
 const PROTECTED_ENDPOINTS = [
@@ -109,7 +108,7 @@ class WailletAPI {
   }
 
   async healthCheck(): Promise<{ status: string }> {
-    const response = await fetch('http://localhost:8000/health');
+    const response = await fetch(HEALTH_URL);
     return response.json();
   }
 
@@ -330,5 +329,4 @@ export interface RiskAnalysisResponse {
   is_contract: boolean;
   value_usd: number;
 }
-
 

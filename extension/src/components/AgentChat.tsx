@@ -8,6 +8,7 @@ import { getAllChains } from '../services/wallet';
 import type { IntentResponse } from '../types/api';
 import { MessageType, IntentAction } from '../constants/enums';
 import { loadChatHistory, saveChatHistory, toStoredMessage, fromStoredMessage } from '../utils/chatStorage';
+import { BASE_URL } from '../config/backend';
 
 interface Message {
   id: string;
@@ -121,7 +122,7 @@ export const AgentChat: React.FC = () => {
         if (error.message.includes('timeout')) {
           errorMsg = '⏱️ Request timed out. Check:\n• Backend running?\n• OpenAI API key set?\n• Internet connection?';
         } else if (error.message.includes('fetch')) {
-          errorMsg = '🔌 Cannot connect to backend.\n• Is it running on http://localhost:8000?\n• Try: cd backend && uv run uvicorn app.main:app --reload';
+          errorMsg = `🔌 Cannot connect to backend.\n• Is it reachable at ${BASE_URL}?\n• If this is a staging build, ensure VITE_API_BASE_URL is set.`;
         } else if (error.message.includes('CORS')) {
           errorMsg = '🚫 CORS error. Restart backend to apply CORS fix.';
         } else {
@@ -524,4 +525,3 @@ export const AgentChat: React.FC = () => {
     </div>
   );
 };
-

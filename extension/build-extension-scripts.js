@@ -2,14 +2,20 @@
  * Build extension scripts as standalone IIFE bundles
  * No external imports, all dependencies inlined
  */
-import { build } from 'vite';
+import { build, loadEnv } from 'vite';
 import { resolve } from 'path';
 
 const scripts = ['background', 'content', 'inpage'];
+const mode = process.env.MODE || 'production';
+const env = loadEnv(mode, process.cwd(), 'VITE_');
+const apiBaseUrl = env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL || '';
 
 async function buildScript(scriptName) {
   await build({
     configFile: false,
+    define: {
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiBaseUrl),
+    },
     build: {
       lib: {
         entry: resolve(process.cwd(), `src/${scriptName}.ts`),
