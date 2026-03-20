@@ -432,3 +432,4 @@ coverage/
 # pnpm-lock.yaml
 /ignore/
 /temp/
+/backend-v2/bootstrap
