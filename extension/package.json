@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node copy-icons.js && tsc && vite build && node build-extension-scripts.js",
-    "build:staging": "node copy-icons.js && tsc && vite build --mode staging && MODE=staging node build-extension-scripts.js",
+    "build:staging": "node copy-icons.js && tsc && vite build --mode staging && MODE=staging node build-extension-scripts.js && node scripts/patch-manifest-beta.js",
     "build:firefox": "npm run build && node build-firefox.js",
     "build:all": "npm run build && node build-firefox.js",
     "dev:firefox": "npm run build:firefox && npx web-ext run --source-dir=./dist-firefox --firefox=firefox",
