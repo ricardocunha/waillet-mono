@@ -293,6 +293,8 @@ For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser
 - Make sure `npm run build` completed without errors
 - Verify `extension/dist/manifest.json` exists
 - Check the Chrome extension error log at `chrome://extensions/`
+- Try removing the extension and re-loading the unpacked folder
+- Open `chrome://extensions/` → click "Errors" on the extension tile for details
 
 **RPC calls failing:**
 - Confirm `ALCHEMY_API_KEY` is set in `.env`
