@@ -66,6 +66,16 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+## Exporting the ABI
+
+After compilation, the ABI is in `artifacts/contracts/AddressRegistry.sol/AddressRegistry.json`. To extract just the ABI for use in the frontend:
+
+```bash
+cat artifacts/contracts/AddressRegistry.sol/AddressRegistry.json | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin)['abi'], indent=2))" > abi.json
+```
+
+Copy `abi.json` to `extension/src/constants/` and import it where needed.
+
 ## Network Configuration
 
 | Network | Chain ID | RPC Env Var | Explorer |
