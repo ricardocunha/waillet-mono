@@ -1,5 +1,18 @@
 # Manual Testing Checklist
 
+
+## Test Environment Setup (Updated)
+- [ ] Chrome v120+ installed
+- [ ] Node.js 20+ installed
+- [ ] Extension built (`npm run build`)
+- [ ] Extension loaded in Chrome (`chrome://extensions/`)
+- [ ] Backend running: `cd backend-v2 && go run cmd/server/main.go`
+- [ ] MySQL running: `docker ps | grep mysql`
+- [ ] Backend health check passes: `curl http://localhost:8000/health`
+- [ ] `.env` file in `backend-v2/` configured with valid API keys
+
+---
+
 ## Quick Smoke Test
 
 Run this before any full manual session to verify the environment is healthy:
