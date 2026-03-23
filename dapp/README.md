@@ -11,7 +11,7 @@ A decentralized application for the wAIllet ecosystem.
 
 ## Status
 
-**Beta** — core bridge functionality working. The following is done:
+**Beta** — core features shipped. The following is done:
 
 - ✅ Wallet connection (MetaMask, wAIllet)
 - ✅ Network switching
