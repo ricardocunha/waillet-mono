@@ -57,7 +57,11 @@ JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=168h
 AUTH_NONCE_TTL=10m
 AUTH_DOMAIN=localhost
+# Optional: set to "production" to enforce HTTPS-only cookies
+APP_ENV=development
 ```
+
+> Generate a strong secret with: `openssl rand -hex 32`
 
 ## Example
 
