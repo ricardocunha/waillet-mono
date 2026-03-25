@@ -300,6 +300,12 @@ For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser
 - Confirm `ALCHEMY_API_KEY` is set in `.env`
 - The free Alchemy tier may rate-limit heavy testing — use a dedicated key
 
+
+**Debugging the extension:**
+1. Open `chrome://extensions/` → click "service worker" link on the wAIllet tile
+2. This opens DevTools for the background script
+3. Use the Console and Network tabs to trace RPC and API calls
+
 ## Architecture
 
 ```
