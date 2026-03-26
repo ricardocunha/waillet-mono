@@ -202,6 +202,21 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+## Adding Test Data
+
+To seed a test wallet with specific state before a test, use the `helpers.ts` utilities:
+
+```typescript
+import { importWallet, sendTestETH } from './fixtures/helpers';
+
+test.beforeEach(async ({ extensionPage }) => {
+  await importWallet(extensionPage);
+  // Wallet now has the default test mnemonic loaded
+});
+```
+
+For balance-dependent tests, fund the test address via the faucet before the test run (the test wallet address is always `0x9858EfFD232B4033E47d90003D41EC34EcaEda94`).
+
 ## RPC: Mock vs Real
 
 Extension tests use a **real RPC endpoint** via the backend proxy by default. This requires the backend to be running.
