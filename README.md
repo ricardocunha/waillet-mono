@@ -4,6 +4,11 @@
 <h1 align="center" style="font-family: 'Comic Sans MS', 'Comic Sans', cursive;">wAIllet</h1>
 
 <p align="center"><b>The AI-Powered Wallet That Actually Protects You</b></p>
+<p align="center">
+  <a href="https://www.loom.com/share/0689551755124a29ba8dfd02597f2dc9">
+    <img alt="Watch Demo on Loom" src="https://img.shields.io/badge/Watch%20Demo%20on%20Loom-Click%20Here-ff6b35?style=for-the-badge&logo=loom&logoColor=white">
+  </a>
+</p>
 
 ## Demo Video
 
