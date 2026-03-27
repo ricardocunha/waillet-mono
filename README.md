@@ -5,6 +5,10 @@
 
 <p align="center"><b>The AI-Powered Wallet That Actually Protects You</b></p>
 
+## Demo Video
+
+[![Watch the demo](https://cdn.loom.com/sessions/thumbnails/0689551755124a29ba8dfd02597f2dc9-with-play.gif)](https://www.loom.com/share/0689551755124a29ba8dfd02597f2dc9)
+
 ## Prerequisites
 
 - **Go** 1.23+
