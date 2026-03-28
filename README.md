@@ -278,7 +278,8 @@ npm run dev:firefox
 
 This auto-reloads the extension when files change.
 
-**Note:** Temporary add-ons are removed when Firefox closes. For persistent installation, the extension needs to be signed by Mozilla or installed in Firefox Developer Edition/Nightly with `xpinstall.signatures.required` set to `false` in `about:config`.
+
+**Note:** Temporary add-ons are removed when Firefox closes. To keep the extension across sessions, use Firefox Developer Edition and set `xpinstall.signatures.required` to `false` in `about:config`, then reload the extension as a permanent add-on. For persistent installation, the extension needs to be signed by Mozilla or installed in Firefox Developer Edition/Nightly with `xpinstall.signatures.required` set to `false` in `about:config`.
 
 For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser.
 
