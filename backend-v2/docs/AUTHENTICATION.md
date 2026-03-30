@@ -161,6 +161,25 @@ Expiration Time: 2026-01-01T00:10:00.000Z
 The backend validates the domain, chain ID, and expiration before accepting the signature.
 
 
+
+## Testing Auth in Development
+
+To quickly get a valid token for API testing without the extension:
+
+```bash
+# 1. Get nonce (save the message field)
+NONCE_RESP=$(curl -s "http://localhost:8000/api/auth/nonce?wallet_address=0x9858EfFD232B4033E47d90003D41EC34EcaEda94")
+MESSAGE=$(echo $NONCE_RESP | python3 -c "import sys,json; print(json.load(sys.stdin)['message'])")
+
+# 2. Sign with the default test private key using cast (Foundry)
+SIG=$(cast wallet sign --private-key 0x1234...testkey "$MESSAGE")
+
+# 3. Verify and get tokens
+curl -X POST "http://localhost:8000/api/auth/verify" \
+  -H "Content-Type: application/json" \
+  -d "{\"message\": \"$MESSAGE\", \"signature\": \"$SIG\"}"
+```
+
 ## Concurrent Sessions
 
 Each wallet address can have multiple active sessions (e.g. wallet unlocked on two devices). Each session gets its own refresh token. Logging out on one device does not affect other sessions.
