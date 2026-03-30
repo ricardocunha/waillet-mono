@@ -1033,6 +1033,38 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 
 ---
 
+## Test 24: Token Balance Display ❌ MANUAL ONLY
+
+### Test 24.1: Native Token Balance
+1. Unlock wallet with Sepolia network selected
+2. Check dashboard balance display
+
+**Expected:**
+- [ ] ETH balance shown with correct decimal places (e.g., `0.05230 ETH`)
+- [ ] USD equivalent shown (e.g., `≈ $185.12`)
+- [ ] Balance updates within 10 seconds of page load
+- [ ] Loading skeleton shown while balance is fetching
+
+### Test 24.2: ERC-20 Token Balances
+1. Switch to a network with token balances
+2. Open token list
+
+**Expected:**
+- [ ] Each token shows name, symbol, and balance
+- [ ] Token logos load correctly (or fallback icon shown)
+- [ ] Zero-balance tokens hidden (or shown with toggle)
+- [ ] Token list sorted by USD value descending
+
+### Test 24.3: Balance Refresh
+1. Send a small amount of ETH from another wallet to the test wallet
+2. Wait for balance to refresh
+
+**Expected:**
+- [ ] Balance updates automatically without manual refresh
+- [ ] Update happens within one block (~12s on Ethereum)
+
+---
+
 ## Test 21: Settings Management ❌ MANUAL ONLY
 
 ### Test 21.1: Change Backend URL
