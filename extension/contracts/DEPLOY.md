@@ -66,6 +66,16 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+## Security Considerations
+
+- **Never commit your `.env` file** — it contains `PRIVATE_KEY`
+- Add `.env` to `.gitignore` if not already present
+- Use a dedicated deployer wallet with only enough ETH for gas — never your main wallet
+- After deployment, verify the proxy owner is the expected address:
+  ```bash
+  cast call <PROXY_ADDRESS> "owner()(address)" --rpc-url $BASE_SEPOLIA_RPC_URL
+  ```
+
 ## Exporting the ABI
 
 After compilation, the ABI is in `artifacts/contracts/AddressRegistry.sol/AddressRegistry.json`. To extract just the ABI for use in the frontend:
