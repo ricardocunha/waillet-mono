@@ -202,6 +202,16 @@ test.describe('My Feature', () => {
     path: playwright-report/
 ```
 
+
+## Test Isolation
+
+Each test should start from a clean state. The `beforeEach` in `fixtures/extension.ts` clears `localStorage` and reloads the extension page. Additional isolation tips:
+
+- Never share wallet state between tests — always re-import or re-create the wallet
+- Use `extensionPage.evaluate(() => chrome.storage.local.clear())` to wipe extension storage
+- If a test modifies backend data (favorites, risk logs), clean it up in `afterEach`
+- Avoid hardcoded delays (`page.waitForTimeout`) — use `waitForSelector` or `waitForResponse` instead
+
 ## Adding Test Data
 
 To seed a test wallet with specific state before a test, use the `helpers.ts` utilities:
