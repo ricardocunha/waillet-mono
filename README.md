@@ -310,6 +310,8 @@ For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser
 ## Architecture
 
 ```
+DApp (React/Vite)  ──────┐
+                          │
 Browser Extension  ──────>  Go Backend  ──────>  MySQL
 (Chrome/Firefox)     HTTP     (Chi)       sqlx    (Data)
   (React UI)                       │
