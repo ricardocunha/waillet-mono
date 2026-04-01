@@ -69,6 +69,8 @@ AUTH_NONCE_TTL=10m
 AUTH_DOMAIN=localhost
 # Optional: set to "production" to enforce HTTPS-only cookies
 APP_ENV=development
+# Optional: rate limit auth endpoints (requests per minute per IP)
+AUTH_RATE_LIMIT=10
 ```
 
 > Generate a strong secret with: `openssl rand -hex 32`
