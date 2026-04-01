@@ -66,6 +66,20 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
+
+## Multi-Sig Deployment (Mainnet Recommendation)
+
+For mainnet, transfer proxy ownership to a Gnosis Safe after initial deployment:
+
+```bash
+# After deploying, transfer ownership to Safe
+cast send <PROXY_ADDRESS> "transferOwnership(address)" <SAFE_ADDRESS> \
+  --private-key $PRIVATE_KEY \
+  --rpc-url $BASE_MAINNET_RPC_URL
+```
+
+Upgrades then require multi-sig approval, preventing single-key compromise from changing the contract.
+
 ## Security Considerations
 
 - **Never commit your `.env` file** — it contains `PRIVATE_KEY`
