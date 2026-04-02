@@ -1,4 +1,4 @@
-import { Github, Twitter, MessageCircle } from 'lucide-react'
+import { Github, MessageCircle } from 'lucide-react'
 import { Container, Section, SectionHeader, Card } from '../ui/index.ts'
 
 const communityLinks = [
@@ -18,14 +18,7 @@ const communityLinks = [
     href: 'https://discord.gg/shWtQ4FpJS',
     cta: 'Join Discord',
   },
-  {
-    id: 'twitter',
-    icon: Twitter,
-    title: 'Twitter',
-    description: 'Follow us for updates, announcements, and crypto insights.',
-    href: 'https://twitter.com/waillet',
-    cta: 'Follow Us',
-  },
+
 ]
 
 export function Community() {
