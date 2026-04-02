@@ -10,6 +10,11 @@
   </a>
 </p>
 
+## Browser Extensions
+
+- Firefox: [Install wAIllet (beta)](https://addons.mozilla.org/pt-BR/firefox/addon/waillet-beta/)
+- Chrome: Coming soon
+
 ## Prerequisites
 
 - **Go** 1.23+

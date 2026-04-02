@@ -7,9 +7,9 @@ const downloads = [
     icon: Chrome,
     title: 'Chrome Extension',
     description: 'Install wAIllet on Chrome, Brave, Edge, and other Chromium browsers.',
-    cta: 'Add to Chrome',
+    cta: 'Coming soon',
     href: '#', // Will be updated when published
-    available: true,
+    available: false,
   },
   {
     id: 'firefox',
@@ -17,7 +17,7 @@ const downloads = [
     title: 'Firefox Add-on',
     description: 'Install wAIllet on Firefox for secure, private browsing.',
     cta: 'Add to Firefox',
-    href: '#', // Will be updated when published
+    href: 'https://addons.mozilla.org/pt-BR/firefox/addon/waillet-beta/',
     available: true,
   },
   {
@@ -25,9 +25,9 @@ const downloads = [
     icon: Globe,
     title: 'Web DApp',
     description: 'Access wAIllet directly in your browser without installing anything.',
-    cta: 'Launch DApp',
-    href: '/dapp',
-    available: true,
+    cta: 'Coming soon',
+    href: '#',
+    available: false,
   },
 ]
 
