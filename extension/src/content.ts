@@ -96,22 +96,30 @@ window.addEventListener('message', async (event) => {
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         max-width: 300px;
       `;
-      notification.innerHTML = `
-        <strong style="color: #a855f7;">wAIllet Updated</strong><br>
-        Please refresh this page to reconnect.
-        <button onclick="window.location.reload()" style="
-          display: block;
-          margin-top: 12px;
-          width: 100%;
-          padding: 8px;
-          background: #a855f7;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 600;
-        ">Refresh Now</button>
-      `;
+      const title = document.createElement('strong');
+      title.textContent = 'wAIllet Updated';
+      title.style.color = '#a855f7';
+
+      const messageText = document.createElement('div');
+      messageText.textContent = 'Please refresh this page to reconnect.';
+      messageText.style.marginTop = '6px';
+
+      const refreshButton = document.createElement('button');
+      refreshButton.type = 'button';
+      refreshButton.textContent = 'Refresh Now';
+      refreshButton.style.display = 'block';
+      refreshButton.style.marginTop = '12px';
+      refreshButton.style.width = '100%';
+      refreshButton.style.padding = '8px';
+      refreshButton.style.background = '#a855f7';
+      refreshButton.style.color = 'white';
+      refreshButton.style.border = 'none';
+      refreshButton.style.borderRadius = '4px';
+      refreshButton.style.cursor = 'pointer';
+      refreshButton.style.fontWeight = '600';
+      refreshButton.addEventListener('click', () => window.location.reload());
+
+      notification.append(title, messageText, refreshButton);
       document.body.appendChild(notification);
 
       // Auto-remove after 10 seconds if not clicked

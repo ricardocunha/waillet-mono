@@ -13,6 +13,10 @@ func NewConnection(cfg *config.DatabaseConfig) (*sqlx.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&multiStatements=true",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
 
+	if cfg.TLS != "" {
+		dsn += "&tls=" + cfg.TLS
+	}
+
 	db, err := sqlx.Connect("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
