@@ -426,6 +426,9 @@ coverage/
 *.tar.gz
 *.rar
 
+# Local archive exports
+waillet-mozilla-source-*/
+
 # Lock files (optional - uncomment if you want to ignore them)
 # package-lock.json
 # yarn.lock

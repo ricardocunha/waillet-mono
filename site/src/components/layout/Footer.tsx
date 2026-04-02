@@ -1,4 +1,4 @@
-import { Wallet, Github, Twitter } from 'lucide-react'
+import { Wallet, Github } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Container } from '../ui/index.ts'
 
@@ -21,7 +21,6 @@ const footerLinks = {
 
 const socialLinks = [
   { icon: Github, href: 'https://github.com/ricardocunha/waillet-mono', label: 'GitHub' },
-  { icon: Twitter, href: 'https://twitter.com/waillet', label: 'Twitter' },
 ]
 
 export function Footer() {
