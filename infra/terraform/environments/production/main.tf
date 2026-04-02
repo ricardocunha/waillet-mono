@@ -1,4 +1,4 @@
-# Production Environment Configuration
+# Production Environment - Low Cost (Lambda + TiDB Serverless + CloudFront)
 
 terraform {
   required_version = ">= 1.6.0"
@@ -14,7 +14,6 @@ terraform {
     }
   }
 
-  # Remote state - configure your backend
   backend "s3" {
     bucket         = "waillet-terraform-state"
     key            = "production/terraform.tfstate"
@@ -25,7 +24,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 
   default_tags {
     tags = {
@@ -37,12 +36,6 @@ provider "aws" {
 }
 
 # Variables
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
 variable "lambda_package_path" {
   description = "Path to Lambda deployment package"
   type        = string
@@ -52,6 +45,34 @@ variable "app_version" {
   description = "Application version"
   type        = string
   default     = "latest"
+}
+
+variable "db_host" {
+  description = "TiDB Serverless host"
+  type        = string
+}
+
+variable "db_port" {
+  description = "TiDB Serverless port"
+  type        = string
+  default     = "4000"
+}
+
+variable "db_name" {
+  description = "Database name"
+  type        = string
+  default     = "waillet"
+}
+
+variable "db_user" {
+  description = "Database username"
+  type        = string
+}
+
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
 }
 
 variable "alchemy_api_key" {
@@ -76,149 +97,303 @@ variable "cmc_api_key" {
 }
 
 locals {
-  environment        = "production"
-  availability_zones = ["${var.aws_region}a", "${var.aws_region}b", "${var.aws_region}c"]
+  environment = "production"
+  domain      = "waillet.link"
+  api_domain  = "api.waillet.link"
 }
 
-# Secrets: generate and store in AWS Secrets Manager
-resource "random_password" "db_password" {
-  length           = 32
-  special          = true
-  override_special = "!@#%^*()-_=+[]{}"
-}
-
+# ──────────────────────────────────────────────
+# JWT Secret
+# ──────────────────────────────────────────────
 resource "random_password" "jwt_secret" {
   length  = 64
   special = false
 }
 
-resource "aws_secretsmanager_secret" "db_password" {
-  name        = "waillet/${local.environment}/db_password"
-  description = "RDS master password for ${local.environment}"
+# ──────────────────────────────────────────────
+# Route53 Hosted Zone
+# ──────────────────────────────────────────────
+resource "aws_route53_zone" "main" {
+  name = local.domain
 }
 
-resource "aws_secretsmanager_secret_version" "db_password" {
-  secret_id     = aws_secretsmanager_secret.db_password.id
-  secret_string = random_password.db_password.result
+# ──────────────────────────────────────────────
+# ACM Certificate (wildcard)
+# ──────────────────────────────────────────────
+resource "aws_acm_certificate" "main" {
+  domain_name               = local.domain
+  subject_alternative_names = ["*.${local.domain}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-resource "aws_secretsmanager_secret" "jwt_secret" {
-  name        = "waillet/${local.environment}/jwt_secret"
-  description = "JWT signing secret for ${local.environment}"
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.main.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  zone_id         = aws_route53_zone.main.zone_id
+  name            = each.value.name
+  type            = each.value.type
+  ttl             = 60
+  records         = [each.value.record]
 }
 
-resource "aws_secretsmanager_secret_version" "jwt_secret" {
-  secret_id     = aws_secretsmanager_secret.jwt_secret.id
-  secret_string = random_password.jwt_secret.result
+resource "aws_acm_certificate_validation" "main" {
+  certificate_arn         = aws_acm_certificate.main.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-resource "aws_secretsmanager_secret" "alchemy_api_key" {
-  name        = "waillet/${local.environment}/alchemy_api_key"
-  description = "Alchemy API key for ${local.environment}"
+# ──────────────────────────────────────────────
+# Lambda IAM Role
+# ──────────────────────────────────────────────
+resource "aws_iam_role" "lambda" {
+  name = "waillet-production-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
 }
 
-resource "aws_secretsmanager_secret_version" "alchemy_api_key" {
-  count         = var.alchemy_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.alchemy_api_key.id
-  secret_string = var.alchemy_api_key
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_secretsmanager_secret" "infura_api_key" {
-  name        = "waillet/${local.environment}/infura_api_key"
-  description = "Infura API key for ${local.environment}"
+# ──────────────────────────────────────────────
+# Lambda Function (no VPC)
+# ──────────────────────────────────────────────
+resource "aws_lambda_function" "api" {
+  function_name = "waillet-production-api"
+  role          = aws_iam_role.lambda.arn
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
+
+  filename         = var.lambda_package_path
+  source_code_hash = filebase64sha256(var.lambda_package_path)
+
+  memory_size = 256
+  timeout     = 30
+
+  environment {
+    variables = {
+      ENVIRONMENT     = local.environment
+      APP_VERSION     = var.app_version
+      DB_HOST         = var.db_host
+      DB_PORT         = var.db_port
+      DB_NAME         = var.db_name
+      DB_USER         = var.db_user
+      DB_PASSWORD     = var.db_password
+      DB_TLS          = "true"
+      JWT_SECRET      = random_password.jwt_secret.result
+      ALCHEMY_API_KEY = var.alchemy_api_key
+      INFURA_API_KEY  = var.infura_api_key
+      CMC_API_KEY     = var.cmc_api_key
+      CORS_ORIGINS    = "*"
+      AUTH_DOMAIN     = local.api_domain
+    }
+  }
 }
 
-resource "aws_secretsmanager_secret_version" "infura_api_key" {
-  count         = var.infura_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.infura_api_key.id
-  secret_string = var.infura_api_key
+# Lambda Function URL
+resource "aws_lambda_function_url" "api" {
+  function_name      = aws_lambda_function.api.function_name
+  authorization_type = "NONE"
+
+  cors {
+    allow_origins     = ["*"]
+    allow_methods     = ["GET", "POST", "PUT", "DELETE"]
+    allow_headers     = ["*"]
+    allow_credentials = false
+    max_age           = 86400
+  }
 }
 
-resource "aws_secretsmanager_secret" "cmc_api_key" {
-  name        = "waillet/${local.environment}/cmc_api_key"
-  description = "CoinMarketCap API key for ${local.environment}"
+# Allow public access to Lambda Function URL
+resource "aws_lambda_permission" "function_url" {
+  statement_id           = "FunctionURLAllowPublicAccess"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.api.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
 }
 
-resource "aws_secretsmanager_secret_version" "cmc_api_key" {
-  count         = var.cmc_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.cmc_api_key.id
-  secret_string = var.cmc_api_key
+# ──────────────────────────────────────────────
+# CloudFront - API (api.waillet.link)
+# ──────────────────────────────────────────────
+resource "aws_cloudfront_distribution" "api" {
+  enabled = true
+  aliases = [local.api_domain]
+  comment = "waillet API"
+
+  origin {
+    domain_name = replace(replace(aws_lambda_function_url.api.function_url, "https://", ""), "/", "")
+    origin_id   = "lambda-api"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "lambda-api"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # AllViewerExceptHostHeader
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.main.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
 }
 
-# VPC Module
-module "vpc" {
-  source = "../../modules/vpc"
-
-  environment        = local.environment
-  availability_zones = local.availability_zones
-  vpc_cidr           = "10.1.0.0/16"
+# ──────────────────────────────────────────────
+# CloudFront - Root domain redirect (waillet.link → GitHub Pages)
+# ──────────────────────────────────────────────
+resource "aws_cloudfront_function" "redirect" {
+  name    = "waillet-redirect-to-github"
+  runtime = "cloudfront-js-2.0"
+  code    = <<-EOF
+    function handler(event) {
+      return {
+        statusCode: 301,
+        statusDescription: 'Moved Permanently',
+        headers: {
+          location: { value: 'https://ricardocunha.github.io/waillet-mono/' }
+        }
+      };
+    }
+  EOF
 }
 
-# RDS Module
-module "rds" {
-  source = "../../modules/rds"
+resource "aws_cloudfront_distribution" "redirect" {
+  enabled = true
+  aliases = [local.domain]
+  comment = "waillet redirect to GitHub Pages"
 
-  environment    = local.environment
-  vpc_id         = module.vpc.vpc_id
-  subnet_ids     = module.vpc.private_subnet_ids
-  vpc_cidr_block = module.vpc.vpc_cidr_block
+  origin {
+    domain_name = "ricardocunha.github.io"
+    origin_id   = "github-pages"
 
-  db_name     = "waillet"
-  db_username = "waillet_admin"
-  db_password = random_password.db_password.result
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
 
-  # Production-specific settings
-  instance_class          = "db.t3.small"
-  allocated_storage       = 50
-  multi_az                = true
-  backup_retention_period = 14
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "github-pages"
+    viewer_protocol_policy = "redirect-to-https"
+
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.redirect.arn
+    }
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.main.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
 }
 
-# Lambda Module
-module "lambda" {
-  source = "../../modules/lambda"
+# ──────────────────────────────────────────────
+# Route53 DNS Records
+# ──────────────────────────────────────────────
+resource "aws_route53_record" "api" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = local.api_domain
+  type    = "A"
 
-  environment         = local.environment
-  vpc_id              = module.vpc.vpc_id
-  subnet_ids          = module.vpc.private_subnet_ids
-  vpc_cidr_block      = module.vpc.vpc_cidr_block
-  lambda_package_path = var.lambda_package_path
-  app_version         = var.app_version
-
-  # Database connection
-  db_host     = module.rds.address
-  db_port     = module.rds.port
-  db_name     = module.rds.database_name
-  db_username = "waillet_admin"
-  db_password = random_password.db_password.result
-
-  # API Keys
-  jwt_secret      = random_password.jwt_secret.result
-  alchemy_api_key = var.alchemy_api_key
-  infura_api_key  = var.infura_api_key
-  cmc_api_key     = var.cmc_api_key
-
-  # Production-specific settings
-  cors_origins = "https://waillet.com,https://app.waillet.com"
-  memory_size  = 512
-  timeout      = 30
-
-  depends_on = [module.rds]
+  alias {
+    name                   = aws_cloudfront_distribution.api.domain_name
+    zone_id                = aws_cloudfront_distribution.api.hosted_zone_id
+    evaluate_target_health = false
+  }
 }
 
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = local.domain
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.redirect.domain_name
+    zone_id                = aws_cloudfront_distribution.redirect.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# ──────────────────────────────────────────────
+# CloudWatch Log Group
+# ──────────────────────────────────────────────
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/waillet-production-api"
+  retention_in_days = 14
+}
+
+# ──────────────────────────────────────────────
 # Outputs
+# ──────────────────────────────────────────────
 output "api_url" {
-  description = "API URL"
-  value       = module.lambda.function_url
+  description = "Production API URL"
+  value       = "https://${local.api_domain}"
 }
 
-output "rds_endpoint" {
-  description = "RDS endpoint"
-  value       = module.rds.endpoint
-  sensitive   = true
+output "lambda_function_url" {
+  description = "Lambda Function URL (direct)"
+  value       = aws_lambda_function_url.api.function_url
 }
 
-output "vpc_id" {
-  description = "VPC ID"
-  value       = module.vpc.vpc_id
+output "nameservers" {
+  description = "Set these as nameservers for the domain after registration"
+  value       = aws_route53_zone.main.name_servers
+}
+
+output "cloudfront_api_domain" {
+  description = "CloudFront distribution domain for API"
+  value       = aws_cloudfront_distribution.api.domain_name
 }

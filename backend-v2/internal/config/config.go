@@ -45,6 +45,7 @@ type DatabaseConfig struct {
 	User            string
 	Password        string
 	DBName          string
+	TLS             string
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
@@ -94,6 +95,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("DB_USER", "root")
 	viper.SetDefault("DB_PASSWORD", "")
 	viper.SetDefault("DB_NAME", "waillet")
+	viper.SetDefault("DB_TLS", "")
 	viper.SetDefault("DB_MAX_OPEN_CONNS", 25)
 	viper.SetDefault("DB_MAX_IDLE_CONNS", 5)
 	viper.SetDefault("DB_CONN_MAX_LIFETIME", "5m")
@@ -166,6 +168,7 @@ func Load() (*Config, error) {
 			User:            viper.GetString("DB_USER"),
 			Password:        viper.GetString("DB_PASSWORD"),
 			DBName:          viper.GetString("DB_NAME"),
+			TLS:             viper.GetString("DB_TLS"),
 			MaxOpenConns:    viper.GetInt("DB_MAX_OPEN_CONNS"),
 			MaxIdleConns:    viper.GetInt("DB_MAX_IDLE_CONNS"),
 			ConnMaxLifetime: connMaxLifetime,
