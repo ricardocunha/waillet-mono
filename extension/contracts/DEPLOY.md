@@ -47,6 +47,8 @@ This deploys a new implementation and points the proxy to it. The proxy address 
 npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 ```
 
+> Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
+
 ## After Deployment
 
 1. Copy the **proxy** address from terminal output
