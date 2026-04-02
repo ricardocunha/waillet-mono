@@ -436,3 +436,10 @@ waillet-mozilla-source-*/
 /ignore/
 /temp/
 /backend-v2/bootstrap
+/backend-v2/function.zip
+
+# Terraform
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
