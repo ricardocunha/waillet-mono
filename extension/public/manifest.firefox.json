@@ -5,7 +5,7 @@
   "description": "AI-Powered Wallet with Security Firewall",
   "browser_specific_settings": {
     "gecko": {
-      "id": "waillet@waillet.com",
+      "id": "waillet@waillet.link",
       "strict_min_version": "109.0",
       "data_collection_permissions": {
         "required": [
