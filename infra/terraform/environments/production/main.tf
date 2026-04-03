@@ -210,27 +210,47 @@ resource "aws_lambda_function" "api" {
   }
 }
 
-# Lambda Function URL
-resource "aws_lambda_function_url" "api" {
-  function_name      = aws_lambda_function.api.function_name
-  authorization_type = "NONE"
 
-  cors {
+# ──────────────────────────────────────────────
+# API Gateway HTTP API (replaces Lambda Function URL)
+# ──────────────────────────────────────────────
+resource "aws_apigatewayv2_api" "api" {
+  name          = "waillet-production-api"
+  protocol_type = "HTTP"
+
+  cors_configuration {
     allow_origins     = ["*"]
-    allow_methods     = ["GET", "POST", "PUT", "DELETE"]
+    allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_headers     = ["*"]
-    allow_credentials = false
     max_age           = 86400
   }
 }
 
-# Allow public access to Lambda Function URL
-resource "aws_lambda_permission" "function_url" {
-  statement_id           = "FunctionURLAllowPublicAccess"
-  action                 = "lambda:InvokeFunctionUrl"
-  function_name          = aws_lambda_function.api.function_name
-  principal              = "*"
-  function_url_auth_type = "NONE"
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id                 = aws_apigatewayv2_api.api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_lambda_permission" "apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*"
 }
 
 # ──────────────────────────────────────────────
@@ -242,8 +262,8 @@ resource "aws_cloudfront_distribution" "api" {
   comment = "waillet API"
 
   origin {
-    domain_name = replace(replace(aws_lambda_function_url.api.function_url, "https://", ""), "/", "")
-    origin_id   = "lambda-api"
+    domain_name = replace(replace(aws_apigatewayv2_api.api.api_endpoint, "https://", ""), "/", "")
+    origin_id   = "api-gateway"
 
     custom_origin_config {
       http_port              = 80
@@ -256,7 +276,7 @@ resource "aws_cloudfront_distribution" "api" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "lambda-api"
+    target_origin_id       = "api-gateway"
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
@@ -383,9 +403,9 @@ output "api_url" {
   value       = "https://${local.api_domain}"
 }
 
-output "lambda_function_url" {
-  description = "Lambda Function URL (direct)"
-  value       = aws_lambda_function_url.api.function_url
+output "api_gateway_url" {
+  description = "API Gateway URL (direct)"
+  value       = aws_apigatewayv2_api.api.api_endpoint
 }
 
 output "nameservers" {
