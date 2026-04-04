@@ -1092,6 +1092,30 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 
 ---
 
+
+
+
+---
+
+## Sign-Off Checklist
+
+Use this before marking a release as ready:
+
+- [ ] All automated tests passing (`go test ./...`, `npm test`, `npm run test:e2e`)
+- [ ] Quick Smoke Test passed (see top of this document)
+- [ ] Test 6 visual checks completed
+- [ ] Test 8 security checks completed
+- [ ] Test 9 or Test 10 real transaction tested on Sepolia
+- [ ] Risk analysis tested for LOW, MEDIUM, and HIGH scenarios (Tests 11–13)
+- [ ] No console errors in background script, popup, or page
+- [ ] Performance benchmarks met (see benchmark table)
+- [ ] Tested on Chrome (latest stable)
+- [ ] Tested on Firefox (latest stable)
+
+**Signed off by:** ________________  **Date:** ________________
+
+---
+
 ## Known Issues / Notes
 
 ### ChainAbuse API
