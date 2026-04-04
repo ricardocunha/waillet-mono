@@ -322,3 +322,5 @@ Browser Extension  ──────>  Go Backend  ──────>  MySQL
 ```
 
 The backend follows a layered architecture: **Handlers** (HTTP) -> **Services** (business logic) -> **Repositories** (data access) -> **Database**.
+
+> **Future:** A Redis cache layer is planned between Services and external APIs (Alchemy, CoinMarketCap) to reduce latency and API costs.
