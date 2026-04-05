@@ -161,6 +161,16 @@ This generates address: `0x9858EfFD232B4033E47d90003D41EC34EcaEda94`
 - Extension popup requires user interaction
 - Tests use programmatic approval via extension page
 
+## Fixture Files
+
+| File | Purpose |
+|------|---------|
+| `fixtures/extension.ts` | Playwright fixture that loads the built extension into Chrome |
+| `fixtures/helpers.ts` | Shared helpers: `importWallet`, `unlockWallet`, `createWallet` |
+| `fixtures/constants.ts` | Test constants: `TEST_PASSWORD`, `TEST_MNEMONIC`, network slugs |
+
+Import from these fixtures rather than duplicating setup logic across test files.
+
 ## Writing New Tests
 
 ```typescript
