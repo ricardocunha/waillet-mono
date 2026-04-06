@@ -208,6 +208,10 @@ The extension stores tokens in `chrome.storage.local` under the key `auth_tokens
 
 `api.ts` reads this on every request and auto-refreshes the access token when `expires_at` is within 60 seconds of the current time.
 
+## JWT Clock Skew
+
+The backend accepts tokens up to **30 seconds** past their stated expiry to account for clock skew between the extension and server. If you see unexpected `401 Unauthorized` errors on tokens that appear valid, check that the system clocks are synchronized (NTP).
+
 ## Security Notes
 
 - Nonces are single-use and expire in 10 minutes — prevents replay attacks
