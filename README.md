@@ -109,6 +109,16 @@ waillet-mono/
 
 ## Running the Backend
 
+### Database Migrations
+
+Tables and seed data are managed automatically via GORM on startup. If you need to reset the database:
+
+```bash
+# Drop and recreate the database
+docker exec -it waillet-mysql mysql -u root -p -e "DROP DATABASE waillet; CREATE DATABASE waillet;"
+# Then restart the backend — it will re-create all tables and re-seed networks
+```
+
 ### Option 1: Docker Compose (recommended)
 
 Starts both MySQL and the backend in containers:
