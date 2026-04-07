@@ -1097,6 +1097,29 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 
 ---
 
+
+
+---
+
+## Regression Test Suite
+
+Run this focused set of tests after any code change to catch regressions before a full release:
+
+| # | Test | Priority |
+|---|------|----------|
+| 1 | Create Wallet (Test 1) | P0 |
+| 2 | Lock/Unlock (Test 1) | P0 |
+| 3 | Send ETH on Sepolia (Test 9) | P0 |
+| 4 | dApp Connection (Test 10.1, 10.2) | P0 |
+| 5 | Risk analysis — HIGH risk (Test 13) | P1 |
+| 6 | AI agent parse intent (Test 9 setup) | P1 |
+| 7 | Favorites: save and use (Test 20.1, 20.6) | P1 |
+| 8 | Transaction simulation (Test 14A.1) | P1 |
+
+P0 = must pass before any release. P1 = should pass; investigate before releasing.
+
+---
+
 ## Sign-Off Checklist
 
 Use this before marking a release as ready:
