@@ -67,6 +67,20 @@ npx hardhat verify --network baseSepolia <IMPLEMENTATION_ADDRESS>
 > Note: verify the **implementation** address, not the proxy. The proxy itself is auto-verified by the UUPS plugin.
 
 
+## Monitoring After Deployment
+
+After deploying or upgrading, verify the contract emits expected events using `cast`:
+
+```bash
+# Watch for AddressRegistered events on Base Sepolia
+cast logs --address <PROXY_ADDRESS> \
+  --sig "AddressRegistered(address indexed,string)" \
+  --rpc-url $BASE_SEPOLIA_RPC_URL \
+  --from-block latest
+```
+
+Set up a webhook or alert (e.g. via Tenderly or Alchemy Notify) for `Upgraded` events to be notified of any unauthorized upgrades.
+
 ## Multi-Sig Deployment (Mainnet Recommendation)
 
 For mainnet, transfer proxy ownership to a Gnosis Safe after initial deployment:
