@@ -1,10 +1,12 @@
 # Manual Testing Checklist
 
 ## Test Environment Setup
-- [ ] Chrome browser installed
+- [ ] Chrome browser installed (v120+)
+- [ ] Node.js 20+ installed
 - [ ] Extension built (`npm run build`)
 - [ ] Extension loaded in Chrome (`chrome://extensions/`)
-- [ ] Backend server running: `cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- [ ] Backend server running: `cd backend-v2 && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- [ ] `.env` file configured (copy from `.env.example`)
 
 ---
 
