@@ -117,11 +117,11 @@ jobs:
           jq --arg v "$VERSION" '.version = $v' public/manifest.firefox.json > tmp.json && mv tmp.json public/manifest.firefox.json
           echo "Updated manifests to version $VERSION"
 
-      - name: Build Chrome extension
-        run: npm run build
+      - name: Build Chrome extension (production)
+        run: npm run build:production
 
-      - name: Build Firefox extension
-        run: npm run build:firefox
+      - name: Build Firefox extension (production)
+        run: node build-firefox.js
 
       - name: Create Chrome ZIP
         run: |
@@ -134,6 +134,22 @@ jobs:
           cd dist-firefox
           zip -r ../waillet-firefox-${{ needs.prepare.outputs.version }}.zip .
           cd ..
+
+      - name: Create source code ZIP (for Mozilla review)
+        run: |
+          mkdir -p ../waillet-source
+          cp -r src public package.json package-lock.json tsconfig.json tsconfig.node.json vite.config.ts tailwind.config.js postcss.config.js index.html build-extension-scripts.js build-firefox.js copy-icons.js .env.production ../waillet-source/
+          cd ../waillet-source
+          zip -r ../extension/waillet-source-${{ needs.prepare.outputs.version }}.zip .
+          cd ../extension
+          rm -rf ../waillet-source
+
+      - name: Upload Source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-zip
+          path: extension/waillet-source-${{ needs.prepare.outputs.version }}.zip
+          retention-days: 90
 
       - name: Upload Chrome ZIP
         uses: actions/upload-artifact@v4
@@ -249,6 +265,12 @@ jobs:
           name: firefox-zip
           path: ./artifacts/
 
+      - name: Download Source ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: source-zip
+          path: ./artifacts/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -259,5 +281,6 @@ jobs:
           files: |
             ./artifacts/waillet-chrome-${{ needs.prepare.outputs.version }}.zip
             ./artifacts/waillet-firefox-${{ needs.prepare.outputs.version }}.zip
+            ./artifacts/waillet-source-${{ needs.prepare.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
