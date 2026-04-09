@@ -17,6 +17,8 @@
     "build:all:production": "npm run build:production && node build-firefox.js",
     "dev:firefox": "npm run build:firefox && npx web-ext run --source-dir=./dist-firefox --firefox=firefox",
     "dev:firefox:nightly": "npm run build:firefox && npx web-ext run --source-dir=./dist-firefox --firefox=nightly",
+    "dev:firefox:production": "npm run build:firefox:production && npx web-ext run --source-dir=./dist-firefox --firefox=firefox",
+    "dev:chrome:production": "npm run build:production && echo '' && echo '✅ Chrome build ready at ./dist' && echo '   Load it in Chrome: chrome://extensions → Enable Developer mode → Load unpacked → select dist/'",
     "lint:firefox": "npx web-ext lint --source-dir=./dist-firefox",
     "test": "vitest",
     "test:ui": "vitest --ui",
