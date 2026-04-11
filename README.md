@@ -293,6 +293,17 @@ This auto-reloads the extension when files change.
 
 For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser.
 
+## Useful Make Targets
+
+If a `Makefile` is present at the repo root, these targets are available:
+
+```bash
+make backend      # Start backend with docker-compose
+make extension    # Build the Chrome extension
+make test         # Run all tests (backend + extension)
+make lint         # Run linters across all packages
+```
+
 ## Troubleshooting
 
 **Backend fails to start:**
