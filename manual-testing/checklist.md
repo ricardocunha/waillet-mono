@@ -1101,6 +1101,24 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 
 ---
 
+
+
+
+---
+
+## Test Frequency Guidelines
+
+| When | Run |
+|------|-----|
+| Every PR | Quick Smoke Test + Regression Suite (P0 only) |
+| Before release | Full regression suite (P0 + P1) |
+| Weekly | Full manual checklist (Tests 1–20) |
+| After backend deploy | Tests 9, 14B, 15 (API-dependent tests) |
+| After UI changes | Test 6 + Accessibility Checklist |
+| After contract upgrade | Test 10, verify proxy address unchanged |
+
+---
+
 ## Regression Test Suite
 
 Run this focused set of tests after any code change to catch regressions before a full release:
