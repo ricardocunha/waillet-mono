@@ -293,6 +293,15 @@ This auto-reloads the extension when files change.
 
 For a detailed visual guide, open `extension/FIREFOX_SETUP.html` in your browser.
 
+## Contributing
+
+1. Fork the repo and create a feature branch: `git checkout -b feat/my-feature`
+2. Run lint and tests before committing
+3. Open a pull request against `main` with a clear description
+4. All CI checks must pass before merge
+
+For large changes, open an issue first to discuss the approach.
+
 ## Useful Make Targets
 
 If a `Makefile` is present at the repo root, these targets are available:
