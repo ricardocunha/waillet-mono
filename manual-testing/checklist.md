@@ -111,6 +111,17 @@ If all four pass, proceed with the full checklist below.
 - [ ] All cryptographic operations are local-only
 - [ ] Only backend API calls when explicitly triggered (transactions, risk analysis)
 
+
+### CSP Headers Check:
+1. Inspect `extension/dist/manifest.json` for `content_security_policy` field
+2. Inspect backend API response headers
+
+**Expected:**
+- [ ] Extension `manifest.json` has a strict `content_security_policy`
+- [ ] No `unsafe-inline` or `unsafe-eval` in the extension CSP
+- [ ] Backend responses include `X-Content-Type-Options: nosniff`
+- [ ] No mixed content warnings (HTTPS in production)
+
 ---
 
 ## Test 9: Native Token Transfers ❌ MANUAL ONLY
