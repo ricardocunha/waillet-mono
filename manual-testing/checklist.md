@@ -112,6 +112,7 @@ If all four pass, proceed with the full checklist below.
 - [ ] Only backend API calls when explicitly triggered (transactions, risk analysis)
 
 
+
 ### CSP Headers Check:
 1. Inspect `extension/dist/manifest.json` for `content_security_policy` field
 2. Inspect backend API response headers
@@ -1041,6 +1042,42 @@ Run with a screen reader (e.g. ChromeVox) or accessibility audit tool.
 - [ ] Form validates URL format
 - [ ] Custom network appears in selector after adding
 - [ ] Connection tested before saving
+
+---
+
+## Test 25: Import Wallet Flow ❌ MANUAL ONLY
+
+### Test 25.1: Import with Valid Mnemonic
+1. Open extension on a fresh install (or after reset)
+2. Click "Import Existing Wallet"
+3. Enter the 12-word test mnemonic: `abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about`
+4. Set password: `TestPassword123`
+5. Click "Import"
+
+**Expected:**
+- [ ] Mnemonic field accepts 12 words with space separation
+- [ ] Incorrect word count shows validation error
+- [ ] Import succeeds and shows dashboard with correct address
+- [ ] Address matches: `0x9858EfFD232B4033E47d90003D41EC34EcaEda94`
+
+### Test 25.2: Import with Invalid Mnemonic
+1. Enter an invalid mnemonic: `cat dog bird fish apple orange grape lemon lime peach berry fig`
+2. Click "Import"
+
+**Expected:**
+- [ ] Error shown: "Invalid recovery phrase" or similar
+- [ ] Import does not proceed
+- [ ] User can correct and retry
+
+### Test 25.3: Duplicate Import
+1. Create a wallet with the test mnemonic
+2. Reset extension
+3. Import the same mnemonic again
+
+**Expected:**
+- [ ] Same address derived correctly
+- [ ] No data from previous session persists
+- [ ] Clean state after re-import
 
 ---
 
