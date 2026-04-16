@@ -129,13 +129,12 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ onAddAccount }
             {chainTypeOrder.map((chainType) => {
               const chainAccounts = accountsByChainType[chainType];
               const config = CHAIN_TYPE_CONFIG[chainType];
+              const isEvm = chainType === ChainType.EVM;
 
               return (
-                <div key={chainType}>
+                <div key={chainType} className={!isEvm ? 'opacity-50' : undefined}>
                   {/* Chain Type Header */}
-                  <div
-                    className="sticky top-0 bg-slate-700/90 backdrop-blur-sm px-3 py-1.5 border-b border-slate-600 flex items-center gap-2"
-                  >
+                  <div className="sticky top-0 bg-slate-700/90 backdrop-blur-sm px-3 py-1.5 border-b border-slate-600 flex items-center gap-2">
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: config.color }}
@@ -143,80 +142,92 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({ onAddAccount }
                     <span className="text-xs font-medium" style={{ color: config.color }}>
                       {config.label}
                     </span>
-                    <span className="text-xs text-slate-500">
-                      ({chainAccounts.length})
-                    </span>
+                    {isEvm ? (
+                      <span className="text-xs text-slate-500">
+                        ({chainAccounts.length})
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">
+                        Coming soon
+                      </span>
+                    )}
                   </div>
 
                   {/* Accounts for this chain type */}
-                  {chainAccounts.length === 0 ? (
-                    <div className="px-3 py-2 text-center text-slate-500 text-xs">
-                      No accounts
-                    </div>
-                  ) : (
-                    chainAccounts.map((acc) => {
-                      const index = accounts.indexOf(acc);
-                      return (
-                        <div
-                          key={acc.address}
-                          onClick={() => handleSwitchAccount(index)}
-                          className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
-                            index === activeAccountIndex
-                              ? 'bg-purple-600/20 border-l-2'
-                              : 'hover:bg-slate-700 border-l-2 border-transparent'
-                          }`}
-                          style={index === activeAccountIndex ? { borderLeftColor: config.color } : {}}
-                        >
+                  {isEvm ? (
+                    chainAccounts.length === 0 ? (
+                      <div className="px-3 py-2 text-center text-slate-500 text-xs">
+                        No accounts
+                      </div>
+                    ) : (
+                      chainAccounts.map((acc) => {
+                        const index = accounts.indexOf(acc);
+                        return (
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: config.color + '30' }}
+                            key={acc.address}
+                            onClick={() => handleSwitchAccount(index)}
+                            className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                              index === activeAccountIndex
+                                ? 'bg-purple-600/20 border-l-2'
+                                : 'hover:bg-slate-700 border-l-2 border-transparent'
+                            }`}
+                            style={index === activeAccountIndex ? { borderLeftColor: config.color } : {}}
                           >
-                            <User className="w-4 h-4" style={{ color: config.color }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-white truncate">
-                                {acc.name || `Account ${index + 1}`}
-                              </span>
-                              {acc.imported && (
-                                <span className="text-xs bg-slate-600 text-slate-300 px-1.5 py-0.5 rounded">
-                                  Imported
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: config.color + '30' }}
+                            >
+                              <User className="w-4 h-4" style={{ color: config.color }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-white truncate">
+                                  {acc.name || `Account ${index + 1}`}
                                 </span>
+                                {acc.imported && (
+                                  <span className="text-xs bg-slate-600 text-slate-300 px-1.5 py-0.5 rounded">
+                                    Imported
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-400 font-mono">
+                                {formatAddress(acc.address)}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {/* Copy button */}
+                              <button
+                                onClick={(e) => handleCopyAddress(acc.address, index, e)}
+                                className="p-1.5 hover:bg-slate-600 rounded transition-colors"
+                                title="Copy address"
+                              >
+                                {copiedIndex === index ? (
+                                  <Check className="w-3.5 h-3.5 text-green-400" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                )}
+                              </button>
+                              {/* Explorer button */}
+                              <button
+                                onClick={(e) => handleViewExplorer(acc.address, acc.chainType, e)}
+                                className="p-1.5 hover:bg-slate-600 rounded transition-colors"
+                                title="View on explorer"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                              </button>
+                              {/* Selected indicator */}
+                              {index === activeAccountIndex && (
+                                <Check className="w-4 h-4 ml-1" style={{ color: config.color }} />
                               )}
                             </div>
-                            <div className="text-xs text-slate-400 font-mono">
-                              {formatAddress(acc.address)}
-                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {/* Copy button */}
-                            <button
-                              onClick={(e) => handleCopyAddress(acc.address, index, e)}
-                              className="p-1.5 hover:bg-slate-600 rounded transition-colors"
-                              title="Copy address"
-                            >
-                              {copiedIndex === index ? (
-                                <Check className="w-3.5 h-3.5 text-green-400" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                              )}
-                            </button>
-                            {/* Explorer button */}
-                            <button
-                              onClick={(e) => handleViewExplorer(acc.address, acc.chainType, e)}
-                              className="p-1.5 hover:bg-slate-600 rounded transition-colors"
-                              title="View on explorer"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                            </button>
-                            {/* Selected indicator */}
-                            {index === activeAccountIndex && (
-                              <Check className="w-4 h-4 ml-1" style={{ color: config.color }} />
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
+                        );
+                      })
+                    )
+                  ) : (
+                    <div className="px-3 py-2 text-center text-slate-600 text-xs">
+                      Not available yet
+                    </div>
                   )}
                 </div>
               );
