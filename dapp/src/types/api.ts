@@ -12,6 +12,19 @@ export interface Favorite {
   updated_at: string
 }
 
+// Token signal derived from market data
+export interface TokenSignal {
+  symbol: string
+  name: string
+  price: number
+  percentChange24h: number
+  percentChange7d: number
+  marketCap: number
+  volume24h: number
+  direction: 'bullish' | 'bearish' | 'neutral'
+  confidence: number
+}
+
 // AI Intent action types
 export type IntentAction =
   | 'TRANSFER'

@@ -13,16 +13,20 @@ interface Tab {
 const tabs: Tab[] = [
   { id: 'bridge', label: 'Bridge', icon: <ArrowLeftRight className="w-4 h-4" />, comingSoon: false },
   { id: 'swap', label: 'Swap', icon: <ArrowUpDown className="w-4 h-4" />, comingSoon: false },
-  { id: 'send', label: 'Send', icon: <Send className="w-4 h-4" />, comingSoon: true },
+  { id: 'send', label: 'Send', icon: <Send className="w-4 h-4" />, comingSoon: false },
   { id: 'signals', label: 'AI Signals', icon: <Bot className="w-4 h-4" />, comingSoon: false },
 ]
 
 interface ActionTabsProps {
   children: (activeTab: ActionTab) => React.ReactNode
+  activeTab?: ActionTab
+  onTabChange?: (tab: ActionTab) => void
 }
 
-export function ActionTabs({ children }: ActionTabsProps) {
-  const [activeTab, setActiveTab] = useState<ActionTab>('bridge')
+export function ActionTabs({ children, activeTab: controlledTab, onTabChange }: ActionTabsProps) {
+  const [internalTab, setInternalTab] = useState<ActionTab>('bridge')
+  const activeTab = controlledTab ?? internalTab
+  const setActiveTab = onTabChange ?? setInternalTab
 
   return (
     <div>

@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, AlertCircle, CheckCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Send, Bot, User, AlertCircle, CheckCircle, ArrowRight, Loader2, Trash2 } from 'lucide-react'
 import { JsonRpcSigner } from 'ethers'
 import type { IntentResponse, LifiQuoteResponse } from '../types'
 import { Chain } from '../types'
@@ -29,6 +29,28 @@ interface AgentChatProps {
 }
 
 const TIMEOUT_MS = 30000
+const STORAGE_KEY = 'waillet_chat_messages'
+
+const WELCOME_MESSAGE: Message = {
+  id: '1',
+  type: 'system',
+  content: 'Welcome! I can help you swap tokens, bridge across chains, send transfers, and manage favorites. Try:\n\n• "swap 100 USDC to ETH on base"\n• "bridge 0.1 ETH from ethereum to base"\n• "send 0.1 ETH to vitalik.eth"\n• "show signals for ETH"',
+  timestamp: new Date(),
+}
+
+function loadMessages(): Message[] {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY)
+    if (!stored) return [WELCOME_MESSAGE]
+    const parsed = JSON.parse(stored)
+    return parsed.map((m: Message & { timestamp: string }) => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+    }))
+  } catch {
+    return [WELCOME_MESSAGE]
+  }
+}
 
 export function AgentChat({
   walletAddress,
@@ -39,14 +61,7 @@ export function AgentChat({
   onTransfer,
   onSaveFavorite,
 }: AgentChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'system',
-      content: 'Welcome! I can help you swap tokens, bridge across chains, send transfers, and manage favorites. Try:\n\n• "swap 100 USDC to ETH on base"\n• "bridge 0.1 ETH from ethereum to base"\n• "send 0.1 ETH to vitalik.eth"\n• "show signals for ETH"',
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>(loadMessages)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showSwapConfirmModal, setShowSwapConfirmModal] = useState(false)
@@ -55,9 +70,30 @@ export function AgentChat({
 
   const swap = useSwap()
 
+  // Persist messages to sessionStorage
+  useEffect(() => {
+    try {
+      const serializable = messages.map((m) => ({
+        ...m,
+        timestamp: m.timestamp.toISOString(),
+        quote: undefined, // Don't persist quote objects
+      }))
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serializable))
+    } catch {
+      // Ignore storage errors
+    }
+  }, [messages])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const clearChat = useCallback(() => {
+    setMessages([WELCOME_MESSAGE])
+    sessionStorage.removeItem(STORAGE_KEY)
+    setPendingQuote(null)
+    swap.reset()
+  }, [swap])
 
   const addMessage = (msg: Omit<Message, 'id' | 'timestamp'>) => {
     setMessages((prev) => [
@@ -295,11 +331,30 @@ export function AgentChat({
         }
 
         case 'SIGNAL': {
-          const tokenHint = intent.token ? ` for ${intent.token}` : ''
-          addMessage({
-            type: 'assistant',
-            content: `AI Signals${tokenHint} are coming soon! This feature will provide:\n\n• Real-time market analysis\n• Bullish/bearish indicators\n• Risk assessments\n• Price trend predictions\n\nCheck the AI Signals tab for a preview.`,
-          })
+          const tokenSymbol = intent.token?.toUpperCase()
+          if (tokenSymbol) {
+            try {
+              const prices = await api.getTokenPrices([tokenSymbol])
+              const data = prices[tokenSymbol]
+              if (data) {
+                const direction = data.percent_change_24h > 2 ? 'Bullish' : data.percent_change_24h < -2 ? 'Bearish' : 'Neutral'
+                const arrow = data.percent_change_24h >= 0 ? '+' : ''
+                addMessage({
+                  type: 'assistant',
+                  content: `${tokenSymbol} Signal: ${direction}\n\nPrice: $${data.price_usd.toLocaleString(undefined, { maximumFractionDigits: 2 })}\n24h: ${arrow}${data.percent_change_24h.toFixed(2)}%\n7d: ${data.percent_change_7d >= 0 ? '+' : ''}${data.percent_change_7d.toFixed(2)}%\n\nCheck the AI Signals tab for more tokens.`,
+                })
+              } else {
+                addMessage({ type: 'assistant', content: `No data available for ${tokenSymbol}. Check the AI Signals tab for supported tokens.` })
+              }
+            } catch {
+              addMessage({ type: 'assistant', content: `Could not fetch signal data for ${tokenSymbol}. Check the AI Signals tab for a full view.` })
+            }
+          } else {
+            addMessage({
+              type: 'assistant',
+              content: 'Check the AI Signals tab for market insights across all tracked tokens.\n\nYou can also ask about a specific token: "show signals for ETH"',
+            })
+          }
           break
         }
 
@@ -500,10 +555,21 @@ export function AgentChat({
 
   return (
     <div className="flex flex-col h-full">
-      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-        <Bot className="w-5 h-5 text-purple-400" />
-        AI Agent
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+          <Bot className="w-5 h-5 text-purple-400" />
+          AI Agent
+        </h2>
+        {messages.length > 1 && (
+          <button
+            onClick={clearChat}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+            title="Clear chat"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4 mb-4">
