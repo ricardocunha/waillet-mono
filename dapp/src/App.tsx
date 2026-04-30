@@ -1,21 +1,58 @@
-import { useState } from 'react'
-import { useWallet } from './hooks'
+import { useState, useCallback, useEffect } from 'react'
+import { useWallet, useAuth, useFavorites } from './hooks'
 import {
   Header,
   WalletModal,
   ConnectWallet,
   MainLayout,
   ActionTabs,
-  SendComingSoon,
   SwapForm,
   SignalsPanel,
   AgentChat,
+  SendForm,
+  FavoritesPanel,
+  useToast,
 } from './components'
+import type { ActionTab } from './components'
+import type { IntentResponse } from './types'
+import { Token } from './types'
 import { BridgeForm } from './components/BridgeForm'
+import { TransferHistory } from './components/TransferHistory'
 
 function App() {
   const wallet = useWallet()
+  useAuth(wallet.signer)
+  const favorites = useFavorites(wallet.address)
+  const { showToast } = useToast()
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<ActionTab>('bridge')
+  const [sendPrefill, setSendPrefill] = useState<{ to?: string; amount?: string; token?: Token }>({})
+
+  // Show wallet errors as toasts
+  useEffect(() => {
+    if (wallet.error) {
+      showToast('error', wallet.error)
+    }
+  }, [wallet.error, showToast])
+
+  const handleTransfer = useCallback((intent: IntentResponse) => {
+    setSendPrefill({
+      to: intent.to || '',
+      amount: intent.value || '',
+      token: (intent.token as Token) || Token.ETH,
+    })
+    setActiveTab('send')
+  }, [])
+
+  const handleSaveFavorite = useCallback(async (intent: IntentResponse) => {
+    if (!wallet.address || !intent.to) return
+    await favorites.saveFavorite({
+      wallet_address: wallet.address,
+      alias: intent.alias || intent.to,
+      address: intent.to,
+      chain: intent.chain || '',
+    })
+  }, [wallet.address, favorites])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -32,9 +69,9 @@ function App() {
       {/* Main Content */}
       <MainLayout
         actionArea={
-          <ActionTabs>
-            {(activeTab) => {
-              switch (activeTab) {
+          <ActionTabs activeTab={activeTab} onTabChange={setActiveTab}>
+            {(currentTab) => {
+              switch (currentTab) {
                 case 'bridge':
                   return (
                     <BridgeForm
@@ -54,7 +91,17 @@ function App() {
                     />
                   )
                 case 'send':
-                  return <SendComingSoon />
+                  return (
+                    <SendForm
+                      currentChain={wallet.chain}
+                      signer={wallet.signer}
+                      isConnected={wallet.isConnected}
+                      onSwitchChain={wallet.switchChain}
+                      prefillTo={sendPrefill.to}
+                      prefillAmount={sendPrefill.amount}
+                      prefillToken={sendPrefill.token}
+                    />
+                  )
                 case 'signals':
                   return <SignalsPanel />
                 default:
@@ -64,10 +111,21 @@ function App() {
           </ActionTabs>
         }
         historyArea={
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Transaction History</h2>
-            <p className="text-slate-400">History will be added in a later phase</p>
-          </div>
+          <>
+            <TransferHistory address={wallet.address} chain={wallet.chain} />
+            <FavoritesPanel
+              favorites={favorites.favorites}
+              isLoading={favorites.isLoading}
+              error={favorites.error}
+              walletAddress={wallet.address}
+              onSave={favorites.saveFavorite}
+              onDelete={favorites.deleteFavorite}
+              onSelect={(address) => {
+                setSendPrefill((prev) => ({ ...prev, to: address }))
+                setActiveTab('send')
+              }}
+            />
+          </>
         }
         agentArea={
           <AgentChat
@@ -76,6 +134,8 @@ function App() {
             chainId={wallet.chainId}
             signer={wallet.signer}
             onSwitchChain={wallet.switchChain}
+            onTransfer={handleTransfer}
+            onSaveFavorite={handleSaveFavorite}
           />
         }
       />
@@ -90,13 +150,6 @@ function App() {
         }}
         isConnecting={wallet.isConnecting}
       />
-
-      {/* Error Display */}
-      {wallet.error && (
-        <div className="fixed bottom-4 right-4 bg-red-900/90 border border-red-700 text-red-200 px-4 py-3 rounded-lg max-w-md">
-          {wallet.error}
-        </div>
-      )}
     </div>
   )
 }
