@@ -34,3 +34,11 @@
   }
 }
 
+/* ── Disable non-EVM networks (Solana, Sui, TON) ──────────────────────── */
+/* Non-EVM chain type sections in AccountSelector are rendered with       */
+/* className="opacity-50". Hiding them completely removes Solana, Sui,    */
+/* and TON from the account dropdown without deleting any code.           */
+.max-h-80 > .opacity-50 {
+  display: none !important;
+}
+
